@@ -1,4 +1,5 @@
 import type { PropsWithChildren, ReactElement } from 'react'
+
 import { Links, Meta, Outlet, Scripts, ScrollRestoration } from 'react-router'
 
 export function Layout({ children }: PropsWithChildren): ReactElement {

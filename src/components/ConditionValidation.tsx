@@ -1,10 +1,12 @@
-import Client from 'fhirclient/lib/Client'
 import { useQuery } from '@tanstack/react-query'
 import type { Condition } from 'fhir/r4'
-import { Severity, Validation } from '../utils/Validation'
-import ValidationTable from './validation-table/ValidationTable'
+import Client from 'fhirclient/lib/Client'
+
 import { handleError } from '../utils/ErrorHandler'
+import { Severity, Validation } from '../utils/Validation'
+
 import Spinner from './spinner/Spinner'
+import ValidationTable from './validation-table/ValidationTable'
 
 export interface ConditionValidationProps {
   readonly client: Client

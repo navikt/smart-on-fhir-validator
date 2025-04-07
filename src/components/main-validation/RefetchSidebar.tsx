@@ -1,5 +1,6 @@
-import { useSmart } from '../../smart/use-smart'
 import { Link } from 'react-router'
+
+import { useSmart } from '../../smart/use-smart'
 
 const RefetchSidebar = () => {
   const { client, isLoading } = useSmart()

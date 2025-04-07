@@ -1,4 +1,5 @@
 import type { DocumentReference } from 'fhir/r4'
+
 import { Severity, Validation } from '../utils/Validation'
 
 export function validateDocumentReference(documentReference: DocumentReference | null): Validation[] {

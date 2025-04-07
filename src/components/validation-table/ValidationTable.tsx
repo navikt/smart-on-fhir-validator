@@ -1,4 +1,5 @@
 import { Severity, Validation } from '../../utils/Validation'
+
 import Pill from './Pill'
 
 const severityRank = {

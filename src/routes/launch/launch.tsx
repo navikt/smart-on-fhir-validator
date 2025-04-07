@@ -1,10 +1,11 @@
-import { oauth2 as SMART } from 'fhirclient'
-import { authOptions } from '../../fhir/FhirAuth'
 import { useQuery } from '@tanstack/react-query'
+import { oauth2 as SMART } from 'fhirclient'
+
+import ErrorPage from '../../components/layout/ErrorPage'
 import Header from '../../components/layout/Header'
 import Page from '../../components/layout/Page'
-import ErrorPage from '../../components/layout/ErrorPage'
 import Spinner from '../../components/spinner/Spinner'
+import { authOptions } from '../../fhir/FhirAuth'
 
 export default function Launch() {
   /**

@@ -1,4 +1,5 @@
 import { type ReactElement, useEffect, useState } from 'react'
+
 import { useMutation, useQuery } from '@tanstack/react-query'
 import { oauth2 as SMART } from 'fhirclient'
 import Client from 'fhirclient/lib/Client'

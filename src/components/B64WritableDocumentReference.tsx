@@ -1,14 +1,17 @@
-import Client from 'fhirclient/lib/Client'
-import type { DocumentReference } from 'fhir/r4'
-import { pdf } from '../mocks/base64pdf'
 import { useState } from 'react'
+
 import { useMutation } from '@tanstack/react-query'
+import type { DocumentReference } from 'fhir/r4'
+import Client from 'fhirclient/lib/Client'
+
+import { pdf } from '../mocks/base64pdf'
+import { handleError } from '../utils/ErrorHandler'
 import { Severity, Validation } from '../utils/Validation'
+
+import Spinner from './spinner/Spinner'
+import { useDocumentReferenceQuery } from './useDocumentReferenceQuery'
 import { validateDocumentReference } from './validateDocRef'
 import ValidationTable from './validation-table/ValidationTable'
-import { handleError } from '../utils/ErrorHandler'
-import { useDocumentReferenceQuery } from './useDocumentReferenceQuery'
-import Spinner from './spinner/Spinner'
 
 export interface B64WritableDocumentReferenceProps {
   readonly client: Client
