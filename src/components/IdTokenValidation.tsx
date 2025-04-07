@@ -1,7 +1,7 @@
 import Client from 'fhirclient/lib/Client'
 
 import { authOptions } from '../fhir/FhirAuth'
-import { Severity, Validation } from '../utils/Validation'
+import { Validation } from '../utils/Validation'
 
 import ValidationTable from './validation-table/ValidationTable'
 
@@ -42,7 +42,7 @@ function validateIdToken(client: Client) {
      * {Practitioner | Patient | RelatedPerson}/{resource-id}
      */
     if (!fhirUser) {
-      newValidations.push(new Validation(`ID token is missing the "fhirUser" claim`, Severity.ERROR))
+      newValidations.push(new Validation(`ID token is missing the "fhirUser" claim`, 'ERROR'))
     } else {
       const split = fhirUser.split('/').slice(-2) // Take the last two segments (resourceType/resourceId)
 
@@ -50,7 +50,7 @@ function validateIdToken(client: Client) {
         newValidations.push(
           new Validation(
             `"fhirUser" claim is not properly formatted, expected {ResourceType}/{ResourceID} but was ${fhirUser}`,
-            Severity.ERROR,
+            'ERROR',
           ),
         )
       } else {
@@ -67,36 +67,33 @@ function validateIdToken(client: Client) {
           newValidations.push(
             new Validation(
               `"fhirUser" claim MUST contain the resource type Practitioner, Patient, or RelatedPerson, but was ${resourceType}`,
-              Severity.ERROR,
+              'ERROR',
             ),
           )
         }
 
         // Validate resource ID is present
         if (!resourceId.trim()) {
-          newValidations.push(new Validation(`"fhirUser" resource ID must be present`, Severity.ERROR))
+          newValidations.push(new Validation(`"fhirUser" resource ID must be present`, 'ERROR'))
         }
       }
     }
 
     if (!issuer) {
-      newValidations.push(new Validation(`ID token is missing the "issuer" claim`, Severity.ERROR))
+      newValidations.push(new Validation(`ID token is missing the "issuer" claim`, 'ERROR'))
     }
 
     if (audience) {
       if (audience !== clientId) {
         newValidations.push(
-          new Validation(
-            `ID token audience incorrect, it should be ${clientId}, but was ${idToken.aud}`,
-            Severity.ERROR,
-          ),
+          new Validation(`ID token audience incorrect, it should be ${clientId}, but was ${idToken.aud}`, 'ERROR'),
         )
       }
     } else {
-      newValidations.push(new Validation(`ID token is missing the "aud" claim`, Severity.ERROR))
+      newValidations.push(new Validation(`ID token is missing the "aud" claim`, 'ERROR'))
     }
   } else {
-    newValidations.push(new Validation(`Missing ID token which was requested by the openid scope.`, Severity.ERROR))
+    newValidations.push(new Validation(`Missing ID token which was requested by the openid scope.`, 'ERROR'))
   }
 
   return newValidations

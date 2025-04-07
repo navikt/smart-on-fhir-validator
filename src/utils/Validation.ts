@@ -1,9 +1,4 @@
-export enum Severity {
-  OK = 'OK',
-  INFO = 'INFO',
-  WARNING = 'WARNING',
-  ERROR = 'ERROR',
-}
+export type Severity = 'OK' | 'INFO' | 'WARNING' | 'ERROR'
 
 export class Validation {
   message: string

@@ -3,7 +3,7 @@ import type { Patient } from 'fhir/r4'
 import Client from 'fhirclient/lib/Client'
 
 import { handleError } from '../utils/ErrorHandler'
-import { Severity, Validation } from '../utils/Validation'
+import { Validation } from '../utils/Validation'
 
 import Spinner from './spinner/Spinner'
 import ValidationTable from './validation-table/ValidationTable'
@@ -33,9 +33,7 @@ export default function PatientValidation({ client }: PatientValidationProps) {
     <div>
       {isLoading && <Spinner text="Loading Patient data..." />}
       {error ? (
-        <ValidationTable
-          validations={[new Validation(handleError('Unable to fetch Patient', error), Severity.ERROR)]}
-        />
+        <ValidationTable validations={[new Validation(handleError('Unable to fetch Patient', error), 'ERROR')]} />
       ) : (
         <ValidationTable validations={validations} />
       )}
@@ -49,11 +47,11 @@ function validatePatient(fhirPatient: Patient): Validation[] {
   const meta = fhirPatient.meta
 
   if (!meta) {
-    newValidations.push(new Validation('Patient object does not contain a meta reference', Severity.ERROR))
+    newValidations.push(new Validation('Patient object does not contain a meta reference', 'ERROR'))
   } else if (!meta.profile) {
-    newValidations.push(new Validation('The Patient Meta object does not contain a profile reference', Severity.ERROR))
+    newValidations.push(new Validation('The Patient Meta object does not contain a profile reference', 'ERROR'))
   } else if (!meta.profile.includes('http://hl7.no/fhir/StructureDefinition/no-basis-Patient')) {
-    newValidations.push(new Validation('The Patient must be of type no-basis-Patient', Severity.ERROR))
+    newValidations.push(new Validation('The Patient must be of type no-basis-Patient', 'ERROR'))
   }
 
   /**
@@ -71,25 +69,25 @@ function validatePatient(fhirPatient: Patient): Validation[] {
       newValidations.push(
         new Validation(
           `The Patient does not have a Norwegian national identity number (FNR) from OID "${personalIdentifierSystem}"`,
-          Severity.ERROR,
+          'ERROR',
         ),
       )
       newValidations.push(
-        new Validation(`The Patient does not have a Norwegian D-number from OID "${dNumberSystem}"`, Severity.ERROR),
+        new Validation(`The Patient does not have a Norwegian D-number from OID "${dNumberSystem}"`, 'ERROR'),
       )
     }
   }
 
   const patientNames = fhirPatient.name
   if (!patientNames || patientNames.length === 0) {
-    newValidations.push(new Validation(`The Patient does not have a name property`, Severity.ERROR))
+    newValidations.push(new Validation(`The Patient does not have a name property`, 'ERROR'))
   } else {
     const humanName = patientNames[0]
     if (!humanName.family) {
-      newValidations.push(new Validation('The Patient does not have a family name', Severity.ERROR))
+      newValidations.push(new Validation('The Patient does not have a family name', 'ERROR'))
     }
     if (!humanName.given || humanName.given.length === 0) {
-      newValidations.push(new Validation('The Patient does not have given name(s)', Severity.ERROR))
+      newValidations.push(new Validation('The Patient does not have given name(s)', 'ERROR'))
     }
   }
 

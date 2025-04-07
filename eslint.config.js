@@ -25,5 +25,5 @@ export default defineConfig([
       "@typescript-eslint/no-unused-expressions": "off",
     },
   },
-  globalIgnores(["dist", ".yarn"]),
+  globalIgnores(["dist", "build", ".react-router", ".yarn"]),
 ]);
