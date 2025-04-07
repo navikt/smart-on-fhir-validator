@@ -1,6 +1,7 @@
 import React from 'react'
 
 export interface UploadBinaryProps {
+  // eslint-disable-next-line no-unused-vars
   mutate: (file: File) => void
 }
 

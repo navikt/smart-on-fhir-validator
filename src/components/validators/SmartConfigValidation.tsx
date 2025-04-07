@@ -1,11 +1,10 @@
 import { useQuery } from '@tanstack/react-query'
 import Client from 'fhirclient/lib/Client'
 
-import type { SmartConfiguration } from '../smart/SmartConfiguration'
-import { Validation } from '../utils/Validation'
-
-import Spinner from './spinner/Spinner'
-import ValidationTable from './validation-table/ValidationTable'
+import type { SmartConfiguration } from '../../smart/SmartConfiguration'
+import { Validation } from '../../utils/Validation'
+import Spinner from '../spinner/Spinner'
+import ValidationTable from '../validation-table/ValidationTable'
 
 export interface SmartConfigValidationProps {
   readonly client: Client

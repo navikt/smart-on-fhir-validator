@@ -1,6 +1,6 @@
 import type { DocumentReference } from 'fhir/r4'
 
-import { Validation } from '../utils/Validation'
+import { Validation } from '../../../utils/Validation'
 
 export function validateDocumentReference(documentReference: DocumentReference | null): Validation[] {
   const newValidations: Validation[] = []

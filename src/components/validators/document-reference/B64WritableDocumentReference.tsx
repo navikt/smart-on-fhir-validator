@@ -4,14 +4,14 @@ import { useMutation } from '@tanstack/react-query'
 import type { DocumentReference } from 'fhir/r4'
 import Client from 'fhirclient/lib/Client'
 
-import { pdf } from '../mocks/base64pdf'
-import { handleError } from '../utils/ErrorHandler'
-import { Validation } from '../utils/Validation'
+import { pdf } from '../../../mocks/base64pdf'
+import { handleError } from '../../../utils/ErrorHandler'
+import { Validation } from '../../../utils/Validation'
+import Spinner from '../../spinner/Spinner'
+import ValidationTable from '../../validation-table/ValidationTable'
 
-import Spinner from './spinner/Spinner'
 import { useDocumentReferenceQuery } from './useDocumentReferenceQuery'
 import { validateDocumentReference } from './validateDocRef'
-import ValidationTable from './validation-table/ValidationTable'
 
 export interface B64WritableDocumentReferenceProps {
   readonly client: Client
