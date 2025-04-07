@@ -6,41 +6,46 @@
     "node": "22"
   },
   "scripts": {
-    "dev": "vite",
-    "build": "tsc -b && vite build",
+    "build": "react-router build",
+    "dev": "react-router dev",
+    "start": "react-router-serve ./build/server/index.js",
     "lint": "eslint . --ext ts,tsx --report-unused-disable-directives --max-warnings 0",
-    "preview": "vite preview",
-    "tsc": "tsc",
+    "tsc": "react-router typegen && tsc",
     "format": "prettier -w eslint.config.js src .yarnrc.yml postcss.config.js"
   },
   "dependencies": {
-    "@tanstack/react-query": "^5.71.5",
-    "@tanstack/react-query-devtools": "^5.71.5",
+    "@react-router/node": "^7.5.0",
+    "@react-router/serve": "^7.5.0",
+    "@tanstack/react-query": "^5.72.0",
+    "@tanstack/react-query-devtools": "^5.72.0",
     "clsx": "^2.1.1",
     "fhirclient": "^2.5.5",
+    "isbot": "^5",
     "react": "^19.1.0",
     "react-dom": "^19.1.0",
-    "react-router-dom": "^7.4.1"
+    "react-router": "^7.5.0"
   },
   "devDependencies": {
-    "@eslint/js": "^9.23.0",
-    "@tailwindcss/postcss": "^4.1.1",
-    "@tanstack/eslint-plugin-query": "^5.71.5",
+    "@eslint/js": "^9.24.0",
+    "@react-router/dev": "^7.5.0",
+    "@tailwindcss/postcss": "^4.1.3",
+    "@tailwindcss/vite": "^4.1.3",
+    "@tanstack/eslint-plugin-query": "^5.72.0",
     "@types/fhir": "^0.0.41",
     "@types/node": "^22.14.0",
     "@types/react": "^19.1.0",
     "@types/react-dom": "^19.1.1",
-    "@types/react-router-dom": "^5.3.3",
     "@vitejs/plugin-react": "^4.3.4",
-    "eslint": "^9.23.0",
-    "eslint-plugin-react": "^7.37.4",
+    "eslint": "^9.24.0",
+    "eslint-plugin-react": "^7.37.5",
     "globals": "^16.0.0",
     "postcss": "^8.5.3",
     "prettier": "^3.5.3",
-    "tailwindcss": "^4.1.1",
-    "typescript": "^5.8.2",
+    "tailwindcss": "^4.1.3",
+    "typescript": "^5.8.3",
     "typescript-eslint": "^8.29.0",
-    "vite": "^6.2.4"
+    "vite": "^6.2.5",
+    "vite-tsconfig-paths": "^5.1.4"
   },
   "packageManager": "yarn@4.6.0"
 }

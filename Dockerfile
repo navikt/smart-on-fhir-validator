@@ -9,7 +9,7 @@ RUN yarn run build
 FROM node:22-alpine AS runtime
 RUN apk add --no-cache libc6-compat
 WORKDIR /app
-COPY --from=build /app/dist /app/dist
+COPY --from=build /app/build/client /app/dist
 RUN npm add -g serve
 
 EXPOSE 8080

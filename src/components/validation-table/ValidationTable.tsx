@@ -1,5 +1,5 @@
-import { Severity, Validation } from '../../utils/Validation.ts'
-import Pill from './Pill.tsx'
+import { Severity, Validation } from '../../utils/Validation'
+import Pill from './Pill'
 
 const severityRank = {
   [Severity.ERROR]: 3,

@@ -1,5 +1,5 @@
-import { DocumentReference } from 'fhir/r4'
-import { Severity, Validation } from '../utils/Validation.ts'
+import type { DocumentReference } from 'fhir/r4'
+import { Severity, Validation } from '../utils/Validation'
 
 export function validateDocumentReference(documentReference: DocumentReference | null): Validation[] {
   const newValidations: Validation[] = []

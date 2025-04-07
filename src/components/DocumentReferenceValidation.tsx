@@ -1,11 +1,11 @@
 import Client from 'fhirclient/lib/Client'
-import { DocumentReference, Bundle } from 'fhir/r4'
+import type { DocumentReference, Bundle } from 'fhir/r4'
 import { useQuery } from '@tanstack/react-query'
-import { Severity, Validation } from '../utils/Validation.ts'
-import { handleError } from '../utils/ErrorHandler.ts'
-import ValidationTable from './validation-table/ValidationTable.tsx'
-import { validateDocumentReference } from './validateDocRef.ts'
-import Spinner from './spinner/Spinner.tsx'
+import { Severity, Validation } from '../utils/Validation'
+import { handleError } from '../utils/ErrorHandler'
+import ValidationTable from './validation-table/ValidationTable'
+import { validateDocumentReference } from './validateDocRef'
+import Spinner from './spinner/Spinner'
 
 export interface DocumentReferenceValidationProps {
   readonly client: Client

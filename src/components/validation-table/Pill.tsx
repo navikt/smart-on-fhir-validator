@@ -1,4 +1,4 @@
-import { Severity } from '../../utils/Validation.ts'
+import { Severity } from '../../utils/Validation'
 import clsx from 'clsx'
 
 type Props = {

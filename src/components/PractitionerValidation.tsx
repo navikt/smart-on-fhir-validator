@@ -1,10 +1,10 @@
 import Client from 'fhirclient/lib/Client'
-import { Practitioner } from 'fhir/r4'
+import type { Practitioner } from 'fhir/r4'
 import { useQuery } from '@tanstack/react-query'
-import { Severity, Validation } from '../utils/Validation.ts'
-import { handleError } from '../utils/ErrorHandler.ts'
-import ValidationTable from './validation-table/ValidationTable.tsx'
-import Spinner from './spinner/Spinner.tsx'
+import { Severity, Validation } from '../utils/Validation'
+import { handleError } from '../utils/ErrorHandler'
+import ValidationTable from './validation-table/ValidationTable'
+import Spinner from './spinner/Spinner'
 
 export interface PractitionerValidationProps {
   readonly client: Client
