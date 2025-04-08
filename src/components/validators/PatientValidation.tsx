@@ -3,7 +3,8 @@ import type { Patient } from 'fhir/r4'
 import Client from 'fhirclient/lib/Client'
 
 import { handleError } from '../../utils/ErrorHandler'
-import { validation, type Validation } from '../../validation/Validation'
+import { fhirRefs } from '../../validation/common-refs'
+import { type Validation, validation } from '../../validation/validation'
 import Spinner from '../spinner/Spinner'
 import ValidationTable from '../validation-table/ValidationTable'
 
@@ -46,11 +47,19 @@ function validatePatient(fhirPatient: Patient): Validation[] {
   const meta = fhirPatient.meta
 
   if (!meta) {
-    newValidations.push(validation('Patient object does not contain a meta reference', 'ERROR'))
+    newValidations.push(
+      validation('Patient object does not contain a meta reference', 'ERROR', { fhirRef: fhirRefs.noBasisPasient }),
+    )
   } else if (!meta.profile) {
-    newValidations.push(validation('The Patient Meta object does not contain a profile reference', 'ERROR'))
+    newValidations.push(
+      validation('The Patient Meta object does not contain a profile reference', 'ERROR', {
+        fhirRef: fhirRefs.noBasisPasient,
+      }),
+    )
   } else if (!meta.profile.includes('http://hl7.no/fhir/StructureDefinition/no-basis-Patient')) {
-    newValidations.push(validation('The Patient must be of type no-basis-Patient', 'ERROR'))
+    newValidations.push(
+      validation('The Patient must be of type no-basis-Patient', 'ERROR', { fhirRef: fhirRefs.noBasisPasient }),
+    )
   }
 
   /**

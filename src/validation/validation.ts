@@ -7,9 +7,18 @@ export type Validation = {
   navRef?: string
 }
 
-export function validation(message: string, severity: Severity): Validation {
+export function validation(
+  message: string,
+  severity: Severity,
+  refs?: {
+    fhirRef?: string
+    navRef?: string
+  },
+): Validation {
   return {
     message,
     severity,
+    fhirRef: refs?.fhirRef,
+    navRef: refs?.navRef,
   }
 }

@@ -1,7 +1,7 @@
 import Client from 'fhirclient/lib/Client'
 
 import { authOptions } from '../../fhir/FhirAuth'
-import { validation, type Validation } from '../../validation/Validation'
+import { validation, type Validation } from '../../validation/validation'
 import ValidationTable from '../validation-table/ValidationTable'
 
 export interface IdTokenValidationProps {

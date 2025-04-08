@@ -1,4 +1,4 @@
-import { type Severity, type Validation } from '../../validation/Validation'
+import { type Severity, type Validation } from '../../validation/validation'
 
 import Pill from './Pill'
 
@@ -36,7 +36,33 @@ export default function ValidationTable({ validations }: ValidationTableProps) {
                     <Pill severity={validation.severity} />
                   </div>
                 </td>
-                <td className="px-6 py-3 flex items-center justify-start h-full">{validation.message}</td>
+                <td className="px-6 py-3 flex flex-col justify-start h-full">
+                  <div>{validation.message}</div>
+                  {(validation.fhirRef || validation.navRef) && (
+                    <div className="text-xs align-middle inline-flex gap-3">
+                      {validation.fhirRef && (
+                        <a
+                          href={`${validation.fhirRef}`}
+                          target="_blank"
+                          rel="noreferrer"
+                          className="text-blue-900 inline-block"
+                        >
+                          🔥&#xFE0E; HL7 docs
+                        </a>
+                      )}
+                      {validation.navRef && (
+                        <a
+                          href={`${validation.navRef}`}
+                          target="_blank"
+                          rel="noreferrer"
+                          className="text-blue-900 inline-block"
+                        >
+                          🧾&#xFE0E; Nav docs
+                        </a>
+                      )}
+                    </div>
+                  )}
+                </td>
               </tr>
             ))}
           </tbody>
