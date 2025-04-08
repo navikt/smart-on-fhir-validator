@@ -6,7 +6,7 @@ import Client from 'fhirclient/lib/Client'
 
 import { pdf } from '../../../mocks/base64pdf'
 import { handleError } from '../../../utils/ErrorHandler'
-import { Validation } from '../../../utils/Validation'
+import { validation, type Validation } from '../../../validation/Validation'
 import Spinner from '../../spinner/Spinner'
 import ValidationTable from '../../validation-table/ValidationTable'
 
@@ -74,7 +74,7 @@ export default function B64WritableDocumentReference({ client }: B64WritableDocu
       <div>
         <ValidationTable
           validations={[
-            new Validation(
+            validation(
               handleError('Error while creating new DocumentReference based on b64 encoded data', error),
               'ERROR',
             ),
@@ -92,7 +92,7 @@ export default function B64WritableDocumentReference({ client }: B64WritableDocu
     return (
       <div>
         <ValidationTable
-          validations={[new Validation(handleError('Unable to fetch Writable DocumentReference', error), 'ERROR')]}
+          validations={[validation(handleError('Unable to fetch Writable DocumentReference', error), 'ERROR')]}
         />
       </div>
     )

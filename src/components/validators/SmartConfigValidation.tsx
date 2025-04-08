@@ -2,7 +2,7 @@ import { useQuery } from '@tanstack/react-query'
 import Client from 'fhirclient/lib/Client'
 
 import type { SmartConfiguration } from '../../smart/SmartConfiguration'
-import { Validation } from '../../utils/Validation'
+import { validation, type Validation } from '../../validation/Validation'
 import Spinner from '../spinner/Spinner'
 import ValidationTable from '../validation-table/ValidationTable'
 
@@ -33,59 +33,59 @@ function validateWellKnown(config: SmartConfiguration) {
 
   // REQUIRED fields
   if (!config.issuer) {
-    newValidations.push(new Validation(`issuer is REQUIRED`, 'ERROR'))
+    newValidations.push(validation(`issuer is REQUIRED`, 'ERROR'))
   }
   if (!config.jwks_uri) {
-    newValidations.push(new Validation(`field jwks_uri is REQUIRED`, 'ERROR'))
+    newValidations.push(validation(`field jwks_uri is REQUIRED`, 'ERROR'))
   }
   if (!config.authorization_endpoint) {
-    newValidations.push(new Validation(`authorization_endpoint is REQUIRED`, 'ERROR'))
+    newValidations.push(validation(`authorization_endpoint is REQUIRED`, 'ERROR'))
   }
   if (!config.grant_types_supported) {
-    newValidations.push(new Validation(`grant_types_supported is REQUIRED`, 'ERROR'))
+    newValidations.push(validation(`grant_types_supported is REQUIRED`, 'ERROR'))
   }
   if (!config.token_endpoint) {
-    newValidations.push(new Validation(`token_endpoint is REQUIRED`, 'ERROR'))
+    newValidations.push(validation(`token_endpoint is REQUIRED`, 'ERROR'))
   }
   if (!config.capabilities) {
-    newValidations.push(new Validation(`capabilities is REQUIRED`, 'ERROR'))
+    newValidations.push(validation(`capabilities is REQUIRED`, 'ERROR'))
   }
   if (!config.code_challenge_methods_supported) {
-    newValidations.push(new Validation(`code_challenge_methods_supported is REQUIRED`, 'ERROR'))
+    newValidations.push(validation(`code_challenge_methods_supported is REQUIRED`, 'ERROR'))
   }
 
   // RECOMMENDED fields
   if (!config.user_access_brand_bundle) {
-    newValidations.push(new Validation(`user_access_brand_bundle is RECOMMENDED`, 'WARNING'))
+    newValidations.push(validation(`user_access_brand_bundle is RECOMMENDED`, 'WARNING'))
   }
   if (!config.user_access_brand_identifier) {
-    newValidations.push(new Validation(`user_access_brand_identifier is RECOMMENDED`, 'WARNING'))
+    newValidations.push(validation(`user_access_brand_identifier is RECOMMENDED`, 'WARNING'))
   }
   if (!config.scopes_supported) {
-    newValidations.push(new Validation(`scopes_supported is RECOMMENDED`, 'WARNING'))
+    newValidations.push(validation(`scopes_supported is RECOMMENDED`, 'WARNING'))
   }
   if (!config.response_types_supported) {
-    newValidations.push(new Validation(`response_types_supported is RECOMMENDED`, 'WARNING'))
+    newValidations.push(validation(`response_types_supported is RECOMMENDED`, 'WARNING'))
   }
   if (!config.management_endpoint) {
-    newValidations.push(new Validation(`management_endpoint is RECOMMENDED`, 'WARNING'))
+    newValidations.push(validation(`management_endpoint is RECOMMENDED`, 'WARNING'))
   }
   if (!config.introspection_endpoint) {
-    newValidations.push(new Validation(`introspection_endpoint is RECOMMENDED`, 'WARNING'))
+    newValidations.push(validation(`introspection_endpoint is RECOMMENDED`, 'WARNING'))
   }
   if (!config.revocation_endpoint) {
-    newValidations.push(new Validation(`revocation_endpoint is RECOMMENDED`, 'WARNING'))
+    newValidations.push(validation(`revocation_endpoint is RECOMMENDED`, 'WARNING'))
   }
 
   // OPTIONAL fields
   if (!config.token_endpoint_auth_methods_supported) {
-    newValidations.push(new Validation(`token_endpoint_auth_methods_supported not found`, 'INFO'))
+    newValidations.push(validation(`token_endpoint_auth_methods_supported not found`, 'INFO'))
   }
   if (!config.registration_endpoint) {
-    newValidations.push(new Validation(`registration_endpoint not found`, 'INFO'))
+    newValidations.push(validation(`registration_endpoint not found`, 'INFO'))
   }
   if (!config.associated_endpoints) {
-    newValidations.push(new Validation(`associated_endpoints not found`, 'INFO'))
+    newValidations.push(validation(`associated_endpoints not found`, 'INFO'))
   }
 
   return newValidations

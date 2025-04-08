@@ -1,4 +1,4 @@
-import { type Severity, Validation } from '../../utils/Validation'
+import { type Severity, type Validation } from '../../validation/Validation'
 
 import Pill from './Pill'
 

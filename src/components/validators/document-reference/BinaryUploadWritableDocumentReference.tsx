@@ -6,7 +6,7 @@ import Client from 'fhirclient/lib/Client'
 
 import { pdf } from '../../../mocks/base64pdf'
 import { handleError } from '../../../utils/ErrorHandler'
-import { Validation } from '../../../utils/Validation'
+import { validation, type Validation } from '../../../validation/Validation'
 import Spinner from '../../spinner/Spinner'
 import ValidationTable from '../../validation-table/ValidationTable'
 
@@ -66,7 +66,7 @@ export default function BinaryUploadWritableDocumentReference({ client }: Binary
     return (
       <ValidationTable
         validations={[
-          new Validation(
+          validation(
             handleError('Error while creating new DocumentReference with a binary file reference', error),
             'ERROR',
           ),
@@ -99,7 +99,7 @@ export default function BinaryUploadWritableDocumentReference({ client }: Binary
     return (
       <ValidationTable
         validations={[
-          new Validation(
+          validation(
             handleError(
               'Error while creating new DocumentReference with a binary file reference, the binary id appears to be missing',
               error,
@@ -128,7 +128,7 @@ export default function BinaryUploadWritableDocumentReference({ client }: Binary
     return (
       <div>
         <ValidationTable
-          validations={[new Validation(handleError('Unable to fetch Writable DocumentReference', error), 'ERROR')]}
+          validations={[validation(handleError('Unable to fetch Writable DocumentReference', error), 'ERROR')]}
         />
       </div>
     )

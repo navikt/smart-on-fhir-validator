@@ -1,6 +1,6 @@
 import clsx from 'clsx'
 
-import type { Severity } from '../../utils/Validation'
+import type { Severity } from '../../validation/Validation'
 
 type Props = {
   severity: Severity
