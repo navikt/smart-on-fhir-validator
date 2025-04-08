@@ -11,7 +11,8 @@
     "start": "react-router-serve ./build/server/index.js",
     "lint": "eslint . --ext ts,tsx --report-unused-disable-directives --max-warnings 0",
     "tsc": "react-router typegen && tsc",
-    "format": "prettier -w eslint.config.js src .yarnrc.yml postcss.config.js"
+    "format": "prettier -w eslint.config.js src .yarnrc.yml postcss.config.js",
+    "postinstall": "husky"
   },
   "dependencies": {
     "@react-router/node": "^7.5.0",
@@ -40,6 +41,8 @@
     "eslint": "^9.24.0",
     "eslint-plugin-react": "^7.37.5",
     "globals": "^16.0.0",
+    "husky": "^9.1.7",
+    "lint-staged": "^15.5.0",
     "postcss": "^8.5.3",
     "prettier": "^3.5.3",
     "tailwindcss": "^4.1.3",
