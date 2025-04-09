@@ -39,11 +39,11 @@ export default function ValidationTable({ validations }: ValidationTableProps) {
                 </td>
                 <td className="px-6 py-3 flex flex-col justify-start h-full">
                   <div>{validation.message}</div>
-                  {(validation.fhirRef || validation.navRef) && (
+                  {validation && (
                     <div className="text-xs align-middle inline-flex gap-3">
-                      {validation.fhirRef && <RefLink href={validation.fhirRef} emoji="fhir" text="FHIR docs" />}
-                      {validation.hl7Ref && <RefLink href={validation.hl7Ref} emoji="hl7" text="HL7 docs" />}
-                      {validation.navRef && <RefLink href={validation.navRef} emoji="nav" text="Nav docs" />}
+                      {validation.refs?.hl7 && <RefLink href={validation.refs?.hl7} type="hl7" />}
+                      {validation.refs?.simplifier && <RefLink href={validation.refs?.simplifier} type="simplifier" />}
+                      {validation.refs?.nav && <RefLink href={validation.refs?.nav} type="nav" />}
                     </div>
                   )}
                 </td>

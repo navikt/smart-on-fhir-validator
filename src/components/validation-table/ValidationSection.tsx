@@ -1,16 +1,13 @@
 import { type PropsWithChildren } from 'react'
 
+import type { RefTypes } from '../../validation/common-refs'
 import RefLink from '../ref-link/RefLink'
 
 type Props = {
   title: string
   index: string
   description?: string
-  refs?: {
-    fhir?: string
-    hl7?: string
-    nav?: string
-  }
+  refs?: RefTypes
 }
 
 const ValidationSection = ({ title, index, description, refs, children }: PropsWithChildren<Props>) => {
@@ -20,11 +17,11 @@ const ValidationSection = ({ title, index, description, refs, children }: PropsW
         {index}. {title}
       </h3>
       {description && <p className="ml-4 text-sm -mt-2 mb-2 italic">{description}</p>}
-      {(refs?.fhir || refs?.nav || refs?.hl7) && (
+      {(refs?.simplifier || refs?.nav || refs?.simplifier) && (
         <div className="ml-4 -mt-6 text-xs align-middle inline-flex gap-3">
-          {refs.fhir && <RefLink href={refs.fhir} emoji="fhir" text="FHIR docs" />}
-          {refs.hl7 && <RefLink href={refs.hl7} emoji="hl7" text="HL7 docs" />}
-          {refs.nav && <RefLink href={refs.nav} emoji="nav" text="Nav docs" />}
+          {refs.hl7 && <RefLink href={refs.hl7} type="hl7" />}
+          {refs.simplifier && <RefLink href={refs.simplifier} type="simplifier" />}
+          {refs.nav && <RefLink href={refs.nav} type="nav" />}
         </div>
       )}
       {children}
