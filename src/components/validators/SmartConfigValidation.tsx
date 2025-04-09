@@ -2,7 +2,7 @@ import { useQuery } from '@tanstack/react-query'
 import Client from 'fhirclient/lib/Client'
 
 import type { SmartConfiguration } from '../../smart/SmartConfiguration'
-import { type Validation, validation } from '../../validation/validation'
+import { Validator } from '../../validation/Validator'
 import Spinner from '../spinner/Spinner'
 import ValidationTable from '../validation-table/ValidationTable'
 
@@ -29,68 +29,68 @@ function getWellKnownUrl(client: Client) {
 function validateWellKnown(config: SmartConfiguration) {
   console.debug('ℹ️ .well-known/smart-configuration:', config)
 
-  const newValidations: Validation[] = []
+  const validator = new Validator()
 
   // REQUIRED fields
   if (!config.issuer) {
-    newValidations.push(validation(`issuer is REQUIRED`, 'ERROR'))
+    validator.error(`issuer is REQUIRED`)
   }
   if (!config.jwks_uri) {
-    newValidations.push(validation(`field jwks_uri is REQUIRED`, 'ERROR'))
+    validator.error(`field jwks_uri is REQUIRED`)
   }
   if (!config.authorization_endpoint) {
-    newValidations.push(validation(`authorization_endpoint is REQUIRED`, 'ERROR'))
+    validator.error(`authorization_endpoint is REQUIRED`)
   }
   if (!config.grant_types_supported) {
-    newValidations.push(validation(`grant_types_supported is REQUIRED`, 'ERROR'))
+    validator.error(`grant_types_supported is REQUIRED`)
   }
   if (!config.token_endpoint) {
-    newValidations.push(validation(`token_endpoint is REQUIRED`, 'ERROR'))
+    validator.error(`token_endpoint is REQUIRED`)
   }
   if (!config.capabilities) {
-    newValidations.push(validation(`capabilities is REQUIRED`, 'ERROR'))
+    validator.error(`capabilities is REQUIRED`)
   }
   if (!config.code_challenge_methods_supported) {
-    newValidations.push(validation(`code_challenge_methods_supported is REQUIRED`, 'ERROR'))
+    validator.error(`code_challenge_methods_supported is REQUIRED`)
   }
 
   // RECOMMENDED fields
   // Removed to focus on the most important fields than Nav requires
   /*if (!config.user_access_brand_bundle) {
-    newValidations.push(validation(`user_access_brand_bundle is RECOMMENDED`, 'WARNING'))
+    validator.push(validation(`user_access_brand_bundle is RECOMMENDED`, 'WARNING'))
   }
   if (!config.user_access_brand_identifier) {
-    newValidations.push(validation(`user_access_brand_identifier is RECOMMENDED`, 'WARNING'))
+    validator.push(validation(`user_access_brand_identifier is RECOMMENDED`, 'WARNING'))
   }*/
 
   if (!config.scopes_supported) {
-    newValidations.push(validation(`scopes_supported is RECOMMENDED`, 'WARNING'))
+    validator.warn(`scopes_supported is RECOMMENDED`)
   }
   if (!config.response_types_supported) {
-    newValidations.push(validation(`response_types_supported is RECOMMENDED`, 'WARNING'))
+    validator.warn(`response_types_supported is RECOMMENDED`)
   }
   if (!config.management_endpoint) {
-    newValidations.push(validation(`management_endpoint is RECOMMENDED`, 'WARNING'))
+    validator.warn(`management_endpoint is RECOMMENDED`)
   }
   if (!config.introspection_endpoint) {
-    newValidations.push(validation(`introspection_endpoint is RECOMMENDED`, 'WARNING'))
+    validator.warn(`introspection_endpoint is RECOMMENDED`)
   }
   if (!config.revocation_endpoint) {
-    newValidations.push(validation(`revocation_endpoint is RECOMMENDED`, 'WARNING'))
+    validator.warn(`revocation_endpoint is RECOMMENDED`)
   }
 
   // OPTIONAL fields
   if (!config.token_endpoint_auth_methods_supported) {
-    newValidations.push(validation(`token_endpoint_auth_methods_supported not found`, 'INFO'))
+    validator.info(`token_endpoint_auth_methods_supported not found`)
   }
   if (!config.registration_endpoint) {
-    newValidations.push(validation(`registration_endpoint not found`, 'INFO'))
+    validator.info(`registration_endpoint not found`)
   }
   if (!config.associated_endpoints) {
-    newValidations.push(validation(`associated_endpoints not found`, 'INFO'))
+    validator.info(`associated_endpoints not found`)
   }
 
-  return newValidations
+  return validator.build()
 }
 
 /**
