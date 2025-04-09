@@ -1,4 +1,5 @@
 import { type Severity, type Validation } from '../../validation/validation'
+import RefLink from '../ref-link/RefLink'
 
 import Pill from './Pill'
 
@@ -40,26 +41,9 @@ export default function ValidationTable({ validations }: ValidationTableProps) {
                   <div>{validation.message}</div>
                   {(validation.fhirRef || validation.navRef) && (
                     <div className="text-xs align-middle inline-flex gap-3">
-                      {validation.fhirRef && (
-                        <a
-                          href={`${validation.fhirRef}`}
-                          target="_blank"
-                          rel="noreferrer"
-                          className="text-blue-900 inline-block"
-                        >
-                          🔥&#xFE0E; HL7 docs
-                        </a>
-                      )}
-                      {validation.navRef && (
-                        <a
-                          href={`${validation.navRef}`}
-                          target="_blank"
-                          rel="noreferrer"
-                          className="text-blue-900 inline-block"
-                        >
-                          🧾&#xFE0E; Nav docs
-                        </a>
-                      )}
+                      {validation.fhirRef && <RefLink href={validation.fhirRef} emoji="fhir" text="FHIR docs" />}
+                      {validation.hl7Ref && <RefLink href={validation.hl7Ref} emoji="hl7" text="HL7 docs" />}
+                      {validation.navRef && <RefLink href={validation.navRef} emoji="nav" text="Nav docs" />}
                     </div>
                   )}
                 </td>

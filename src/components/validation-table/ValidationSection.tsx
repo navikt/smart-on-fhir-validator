@@ -1,5 +1,7 @@
 import { type PropsWithChildren } from 'react'
 
+import RefLink from '../ref-link/RefLink'
+
 type Props = {
   title: string
   index: string
@@ -20,21 +22,9 @@ const ValidationSection = ({ title, index, description, refs, children }: PropsW
       {description && <p className="ml-4 text-sm -mt-2 mb-2 italic">{description}</p>}
       {(refs?.fhir || refs?.nav || refs?.hl7) && (
         <div className="ml-4 -mt-6 text-xs align-middle inline-flex gap-3">
-          {refs.fhir && (
-            <a href={`${refs.fhir}`} target="_blank" rel="noreferrer" className="text-blue-900 inline-block">
-              🔥&#xFE0E; FHIR docs
-            </a>
-          )}
-          {refs.hl7 && (
-            <a href={`${refs.hl7}`} target="_blank" rel="noreferrer" className="text-blue-900 inline-block">
-              ❤&#xFE0E; HL7 docs
-            </a>
-          )}
-          {refs.nav && (
-            <a href={`${refs.nav}`} target="_blank" rel="noreferrer" className="text-blue-900 inline-block">
-              🧾&#xFE0E; Nav docs
-            </a>
-          )}
+          {refs.fhir && <RefLink href={refs.fhir} emoji="fhir" text="FHIR docs" />}
+          {refs.hl7 && <RefLink href={refs.hl7} emoji="hl7" text="HL7 docs" />}
+          {refs.nav && <RefLink href={refs.nav} emoji="nav" text="Nav docs" />}
         </div>
       )}
       {children}
