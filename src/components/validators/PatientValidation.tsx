@@ -3,6 +3,7 @@ import type { Patient } from 'fhir/r4'
 import Client from 'fhirclient/lib/Client'
 
 import { handleError } from '../../utils/ErrorHandler'
+import { Validator } from '../../validation/Validator'
 import { hl7Refs, simplifierRefs } from '../../validation/common-refs'
 import { type Validation, validation } from '../../validation/validation'
 import Spinner from '../spinner/Spinner'
@@ -42,24 +43,18 @@ export default function PatientValidation({ client }: PatientValidationProps) {
 }
 
 function validatePatient(fhirPatient: Patient): Validation[] {
-  const newValidations: Validation[] = []
+  const validator = new Validator()
 
   const meta = fhirPatient.meta
 
   if (!meta) {
-    newValidations.push(
-      validation('Patient object does not contain a meta reference', 'ERROR', { hl7: hl7Refs.patient }),
-    )
+    validator.error('Patient object does not contain a meta reference', { hl7: hl7Refs.patient })
   } else if (!meta.profile) {
-    newValidations.push(
-      validation('The Patient Meta object does not contain a profile reference', 'ERROR', { hl7: hl7Refs.patient }),
-    )
+    validator.error('The Patient Meta object does not contain a profile reference', { hl7: hl7Refs.patient })
   } else if (!meta.profile.includes('http://hl7.no/fhir/StructureDefinition/no-basis-Patient')) {
-    newValidations.push(
-      validation('The Patient must be of type no-basis-Patient', 'ERROR', {
-        simplifier: simplifierRefs.noBasisPasient,
-      }),
-    )
+    validator.error('The Patient must be of type no-basis-Patient', {
+      simplifier: simplifierRefs.noBasisPasient,
+    })
   }
 
   /**
@@ -74,30 +69,25 @@ function validatePatient(fhirPatient: Patient): Validation[] {
   // If FNR is not present, a D-number is expected. If D-number is present the patient has a valid Norwegian identifier
   if (!norwegianNationalIdentifierSystem) {
     if (!norwegianDNumberSystem) {
-      newValidations.push(
-        validation(
-          `The Patient does not have a Norwegian national identity number (FNR) from OID "${personalIdentifierSystem}"`,
-          'ERROR',
-        ),
+      validator.error(
+        `The Patient does not have a Norwegian national identity number (FNR) from OID "${personalIdentifierSystem}"`,
       )
-      newValidations.push(
-        validation(`The Patient does not have a Norwegian D-number from OID "${dNumberSystem}"`, 'ERROR'),
-      )
+      validator.error(`The Patient does not have a Norwegian D-number from OID "${dNumberSystem}"`)
     }
   }
 
   const patientNames = fhirPatient.name
   if (!patientNames || patientNames.length === 0) {
-    newValidations.push(validation(`The Patient does not have a name property`, 'ERROR'))
+    validator.error(`The Patient does not have a name property`)
   } else {
     const humanName = patientNames[0]
     if (!humanName.family) {
-      newValidations.push(validation('The Patient does not have a family name', 'ERROR'))
+      validator.error('The Patient does not have a family name')
     }
     if (!humanName.given || humanName.given.length === 0) {
-      newValidations.push(validation('The Patient does not have given name(s)', 'ERROR'))
+      validator.error('The Patient does not have given name(s)')
     }
   }
 
-  return newValidations
+  return validator.build()
 }

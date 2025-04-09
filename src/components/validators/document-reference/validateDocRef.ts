@@ -1,132 +1,104 @@
 import type { DocumentReference } from 'fhir/r4'
+import { Validator } from 'src/validation/Validator'
 
-import { type Validation, validation } from '../../../validation/validation'
+import { type Validation } from '../../../validation/validation'
 
 export function validateDocumentReference(documentReference: DocumentReference | null): Validation[] {
-  const newValidations: Validation[] = []
+  const validator = new Validator()
 
   if (documentReference == null) {
-    newValidations.push(validation('No document reference found', 'ERROR'))
-    return newValidations
+    validator.error('No document reference found')
+    return validator.build()
   }
 
   if (documentReference.resourceType !== 'DocumentReference') {
-    newValidations.push(validation('Resource is not of type DocumentReference', 'ERROR'))
+    validator.error('Resource is not of type DocumentReference')
   }
 
   if (!documentReference.status) {
-    newValidations.push(validation('DocumentReference does not contain a status object', 'ERROR'))
+    validator.error('DocumentReference does not contain a status object')
   } else if (documentReference.status !== 'current') {
-    newValidations.push(validation('DocumentReference status must be current', 'ERROR'))
+    validator.error('DocumentReference status must be current')
   }
 
   if (!documentReference.type) {
-    newValidations.push(validation('DocumentReference does not contain a type object', 'ERROR'))
+    validator.error('DocumentReference does not contain a type object')
   } else if (!documentReference.type.coding) {
-    newValidations.push(validation('DocumentReference type object does not contain a coding object', 'ERROR'))
+    validator.error('DocumentReference type object does not contain a coding object')
   } else {
     documentReference.type.coding.forEach((coding) => {
       if (!coding.display) {
-        newValidations.push(
-          validation('DocumentReference type coding object does not contain a display object', 'ERROR'),
-        )
+        validator.error('DocumentReference type coding object does not contain a display object')
       }
       if (!coding.system || !coding.code) {
-        newValidations.push(
-          validation(
-            `DocumentReference type coding object does not contain a system or code object. System was: ${coding.system} and code was: ${coding.code}`,
-            'ERROR',
-          ),
+        validator.error(
+          `DocumentReference type coding object does not contain a system or code object. System was: ${coding.system} and code was: ${coding.code}`,
         )
       } else if (coding.system !== 'urn:oid:2.16.578.1.12.4.1.1.9602' || coding.code !== 'J01-2') {
-        newValidations.push(
-          validation(
-            `DocumentReference type coding system must be "urn:oid:2.16.578.1.12.4.1.1.9602" and code must be ""J01-2", but was "${coding.system}" and "${coding.code}"`,
-            'ERROR',
-          ),
+        validator.error(
+          `DocumentReference type coding system must be "urn:oid:2.16.578.1.12.4.1.1.9602" and code must be ""J01-2", but was "${coding.system}" and "${coding.code}"`,
         )
       }
     })
   }
 
   if (!documentReference.subject) {
-    newValidations.push(validation('DocumentReference does not contain a subject object', 'ERROR'))
+    validator.error('DocumentReference does not contain a subject object')
   } else {
     if (!documentReference.subject.reference) {
-      newValidations.push(validation('DocumentReference subject object does not contain a reference', 'ERROR'))
+      validator.error('DocumentReference subject object does not contain a reference')
     }
   }
 
   if (!documentReference.author) {
-    newValidations.push(validation('DocumentReference does not contain an author object', 'ERROR'))
+    validator.error('DocumentReference does not contain an author object')
   } else {
     documentReference.author.forEach((author) => {
       if (!author.reference) {
-        newValidations.push(
-          validation(
-            'DocumentReference author object does not contain a reference to the Practitioner who authorized the document',
-            'ERROR',
-          ),
+        validator.error(
+          'DocumentReference author object does not contain a reference to the Practitioner who authorized the document',
         )
       }
     })
   }
   if (!documentReference.content) {
-    newValidations.push(validation('DocumentReference does not contain a content object', 'ERROR'))
+    validator.error('DocumentReference does not contain a content object')
   } else {
     documentReference.content.forEach((content) => {
       if (!content.attachment) {
-        newValidations.push(
-          validation('DocumentReference content object does not contain an attachment object', 'ERROR'),
-        )
+        validator.error('DocumentReference content object does not contain an attachment object')
         return
       }
       if (!content.attachment.title) {
-        newValidations.push(validation('DocumentReference content attachment object does not contain a title', 'ERROR'))
+        validator.error('DocumentReference content attachment object does not contain a title')
       }
       if (!content.attachment.data && !content.attachment.url) {
-        newValidations.push(
-          validation(
-            `DocumentReference content attachment object does not contain a "data" or "url" object. DocumentReference must either have a b64-encoded PDF in the data field, or a reference to a Binary on the FHIR-server in the url field, i.e: "Binary/<reference>"`,
-            'ERROR',
-          ),
+        validator.error(
+          `DocumentReference content attachment object does not contain a "data" or "url" object. DocumentReference must either have a b64-encoded PDF in the data field, or a reference to a Binary on the FHIR-server in the url field, i.e: "Binary/<reference>"`,
         )
       } else if (content.attachment.url) {
-        newValidations.push(
-          validation(
-            'DocumentReference content attachment object contains "url" with a reference to a binary file on the FHIR-server - all good"',
-            'INFO',
-          ),
+        validator.info(
+          'DocumentReference content attachment object contains "url" with a reference to a binary file on the FHIR-server - all good"',
         )
       }
       if (!content.attachment.contentType && !content.attachment.url) {
-        newValidations.push(
-          validation(
-            'DocumentReference content attachment object does not contain the contentType object, should be "application/pdf. This is required when sending b64 encoded files in the "data" object. "',
-            'ERROR',
-          ),
+        validator.error(
+          'DocumentReference content attachment object does not contain the contentType object, should be "application/pdf. This is required when sending b64 encoded files in the "data" object. "',
         )
       } else if (content.attachment.data && content.attachment.contentType === 'application/pdf') {
-        newValidations.push(
-          validation(
-            'DocumentReference content attachment object contains "data" with b64 encoded PDF - all good"',
-            'INFO',
-          ),
-        )
+        validator.info('DocumentReference content attachment object contains "data" with b64 encoded PDF - all good"')
       }
       if (!content.attachment.language) {
-        newValidations.push(
-          validation('DocumentReference content attachment object does not contain a language object', 'ERROR'),
-        )
+        validator.error('DocumentReference content attachment object does not contain a language object')
       }
     })
   }
 
   if (!documentReference.context) {
-    newValidations.push(validation('DocumentReference does not contain a context object', 'ERROR'))
+    validator.error('DocumentReference does not contain a context object')
   } else if (!documentReference.context.encounter) {
-    newValidations.push(validation('DocumentReference context object does not contain an encounter object', 'ERROR'))
+    validator.error('DocumentReference context object does not contain an encounter object')
   }
 
-  return newValidations
+  return validator.build()
 }

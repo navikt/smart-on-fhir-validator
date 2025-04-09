@@ -3,6 +3,7 @@ import type { Condition } from 'fhir/r4'
 import Client from 'fhirclient/lib/Client'
 
 import { handleError } from '../../utils/ErrorHandler'
+import { Validator } from '../../validation/Validator'
 import { type Validation, validation } from '../../validation/validation'
 import Spinner from '../spinner/Spinner'
 import ValidationTable from '../validation-table/ValidationTable'
@@ -45,27 +46,25 @@ export default function ConditionValidation({ client }: ConditionValidationProps
 }
 
 function validateCondition(condition: Condition): Validation[] {
-  const newValidations: Validation[] = []
+  const validator = new Validator()
 
   if (condition.resourceType !== 'Condition') {
-    newValidations.push(validation('Resource is not of type Condition', 'ERROR'))
+    validator.error('Resource is not of type Condition')
   }
   if (!condition.subject) {
-    newValidations.push(validation('Condition object does not contain a subject reference', 'ERROR'))
+    validator.error('Condition object does not contain a subject reference')
   } else if (!condition.subject.reference) {
-    newValidations.push(validation('The Condition subject object does not contain a reference', 'ERROR'))
+    validator.error('The Condition subject object does not contain a reference')
   } else if (!condition.subject.type) {
-    newValidations.push(validation('The Condition subject object does not contain a type', 'ERROR'))
+    validator.error('The Condition subject object does not contain a type')
   } else if (!condition.subject.type.includes('Patient')) {
-    newValidations.push(
-      validation(`The Condition subject must be of type Patient, but was "${condition.subject.type}"`, 'ERROR'),
-    )
+    validator.error(`The Condition subject must be of type Patient, but was "${condition.subject.type}"`)
   }
 
   if (!condition.code) {
-    newValidations.push(validation('Condition object does not contain a code reference', 'ERROR'))
+    validator.error('Condition object does not contain a code reference')
   } else if (!condition.code.coding) {
-    newValidations.push(validation('The Condition code object does not contain a coding reference', 'ERROR'))
+    validator.error('The Condition code object does not contain a coding reference')
   } else {
     const ICD10 = 'urn:oid:2.16.578.1.12.4.1.1.7110'
     const ICPC2 = 'urn:oid:2.16.578.1.12.4.1.1.7170'
@@ -73,18 +72,18 @@ function validateCondition(condition: Condition): Validation[] {
     const validCodings = condition.code.coding.filter((code) => code.system === ICD10 || code.system === ICPC2)
 
     if (validCodings.length === 0) {
-      newValidations.push(validation('The Condition code object does not contain a valid coding reference', 'ERROR'))
+      validator.error('The Condition code object does not contain a valid coding reference')
     }
 
     validCodings.forEach((coding) => {
       if (!coding.code) {
-        newValidations.push(validation('The Condition coding object does not contain a code', 'ERROR'))
+        validator.error('The Condition coding object does not contain a code')
       }
       if (!coding.display) {
-        newValidations.push(validation('The Condition coding object does not contain a display name', 'WARNING'))
+        validator.warn('The Condition coding object does not contain a display name')
       }
     })
   }
 
-  return newValidations
+  return validator.build()
 }

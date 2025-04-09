@@ -1,7 +1,7 @@
 import Client from 'fhirclient/lib/Client'
 
 import { authOptions } from '../../fhir/FhirAuth'
-import { type Validation, validation } from '../../validation/validation'
+import { Validator } from '../../validation/Validator'
 import ValidationTable from '../validation-table/ValidationTable'
 
 export interface IdTokenValidationProps {
@@ -22,7 +22,7 @@ function validateIdToken(client: Client) {
   console.debug('ℹ️ Requested OIDC scope(s):', scopes)
   console.debug('ℹ️ ID Token as requested via openid scope:', JSON.stringify(idToken))
 
-  const newValidations: Validation[] = []
+  const validator = new Validator()
 
   if (idToken) {
     const fhirUser = idToken['fhirUser'] as string
@@ -41,16 +41,13 @@ function validateIdToken(client: Client) {
      * {Practitioner | Patient | RelatedPerson}/{resource-id}
      */
     if (!fhirUser) {
-      newValidations.push(validation(`ID token is missing the "fhirUser" claim`, 'ERROR'))
+      validator.error(`ID token is missing the "fhirUser" claim`)
     } else {
       const split = fhirUser.split('/').slice(-2) // Take the last two segments (resourceType/resourceId)
 
       if (split.length !== 2) {
-        newValidations.push(
-          validation(
-            `"fhirUser" claim is not properly formatted, expected {ResourceType}/{ResourceID} but was ${fhirUser}`,
-            'ERROR',
-          ),
+        validator.error(
+          `"fhirUser" claim is not properly formatted, expected {ResourceType}/{ResourceID} but was ${fhirUser}`,
         )
       } else {
         const [resourceType, resourceId] = split
@@ -63,39 +60,34 @@ function validateIdToken(client: Client) {
             allowedResourceTypes.RelatedPerson,
           ].includes(resourceType)
         ) {
-          newValidations.push(
-            validation(
-              `"fhirUser" claim MUST contain the resource type Practitioner, Patient, or RelatedPerson, but was ${resourceType}`,
-              'ERROR',
-            ),
+          validator.error(
+            `"fhirUser" claim MUST contain the resource type Practitioner, Patient, or RelatedPerson, but was ${resourceType}`,
           )
         }
 
         // Validate resource ID is present
         if (!resourceId.trim()) {
-          newValidations.push(validation(`"fhirUser" resource ID must be present`, 'ERROR'))
+          validator.error(`"fhirUser" resource ID must be present`)
         }
       }
     }
 
     if (!issuer) {
-      newValidations.push(validation(`ID token is missing the "issuer" claim`, 'ERROR'))
+      validator.error(`ID token is missing the "issuer" claim`)
     }
 
     if (audience) {
       if (audience !== clientId) {
-        newValidations.push(
-          validation(`ID token audience incorrect, it should be ${clientId}, but was ${idToken.aud}`, 'ERROR'),
-        )
+        validator.error(`ID token audience incorrect, it should be ${clientId}, but was ${idToken.aud}`)
       }
     } else {
-      newValidations.push(validation(`ID token is missing the "aud" claim`, 'ERROR'))
+      validator.error(`ID token is missing the "aud" claim`)
     }
   } else {
-    newValidations.push(validation(`Missing ID token which was requested by the openid scope.`, 'ERROR'))
+    validator.error(`Missing ID token which was requested by the openid scope.`)
   }
 
-  return newValidations
+  return validator.build()
 }
 
 /**

@@ -3,6 +3,7 @@ import type { Encounter } from 'fhir/r4'
 import Client from 'fhirclient/lib/Client'
 
 import { handleError } from '../../utils/ErrorHandler'
+import { Validator } from '../../validation/Validator'
 import { type Validation, validation } from '../../validation/validation'
 import Spinner from '../spinner/Spinner'
 import ValidationTable from '../validation-table/ValidationTable'
@@ -41,77 +42,70 @@ export default function EncounterValidation({ client }: EncounterValidationProps
 }
 
 function validateEncounter(encounter: Encounter): Validation[] {
-  const newValidations: Validation[] = []
+  const validator = new Validator()
 
   if (encounter.resourceType !== 'Encounter') {
-    newValidations.push(validation('Resource is not of type Encounter', 'ERROR'))
+    validator.error('Resource is not of type Encounter')
   }
 
   if (!encounter.class) {
-    newValidations.push(validation('Encounter does not contain a class object', 'ERROR'))
+    validator.error('Encounter does not contain a class object')
   } else {
     if (encounter.class.system !== 'http://terminology.hl7.org/CodeSystem/v3-ActCode') {
-      newValidations.push(validation('Class system is not http://terminology.hl7.org/CodeSystem/v3-ActCode', 'ERROR'))
+      validator.error('Class system is not http://terminology.hl7.org/CodeSystem/v3-ActCode')
     }
     if (!encounter.class.code) {
-      newValidations.push(validation('class object is missing code', 'ERROR'))
+      validator.error('class object is missing code')
     } else if (!['AMB', 'VR'].includes(encounter.class.code)) {
-      newValidations.push(validation(`Class object code must be AMB, VR, but was "${encounter.class.code}"`, 'ERROR'))
+      validator.error(`Class object code must be AMB, VR, but was "${encounter.class.code}"`)
     }
   }
 
   if (!encounter.subject) {
-    newValidations.push(validation('Subject object does not contain a subject', 'ERROR'))
+    validator.error('Subject object does not contain a subject')
   } else if (!encounter.subject.reference) {
-    newValidations.push(validation('reference subject reference is not set', 'ERROR'))
+    validator.error('reference subject reference is not set')
   } else if (!encounter.subject.type) {
-    newValidations.push(validation('Subject object does not contain a type', 'ERROR'))
+    validator.error('Subject object does not contain a type')
   } else if (!encounter.subject.type.includes('Patient')) {
-    newValidations.push(
-      validation(`Subject reference is not of type Patient, but was "${encounter.subject.type}"`, 'ERROR'),
-    )
+    validator.error(`Subject reference is not of type Patient, but was "${encounter.subject.type}"`)
   }
 
   if (!encounter.participant || encounter.participant.length === 0) {
-    newValidations.push(validation('Encounter does not contain any participants', 'ERROR'))
+    validator.error('Encounter does not contain any participants')
   } else {
     encounter.participant.forEach((participant) => {
       if (!participant.individual) {
-        newValidations.push(validation('Participant does not contain an individual', 'ERROR'))
+        validator.error('Participant does not contain an individual')
       } else if (!participant.individual.reference) {
-        newValidations.push(validation('Participant individual reference is not set', 'ERROR'))
+        validator.error('Participant individual reference is not set')
       } else if (!participant.individual.reference.includes('Practitioner')) {
-        newValidations.push(validation('Participant individual reference is not of type Practitioner', 'ERROR'))
+        validator.error('Participant individual reference is not of type Practitioner')
       }
     })
   }
 
   if (!encounter.period) {
-    newValidations.push(validation('Encounter does not contain a period', 'ERROR'))
+    validator.error('Encounter does not contain a period')
   } else if (!encounter.period.start) {
-    newValidations.push(validation('Encounter period does not contain a start date', 'ERROR'))
+    validator.error('Encounter period does not contain a start date')
   }
 
   if (!encounter.diagnosis || encounter.diagnosis.length === 0) {
-    newValidations.push(validation('Encounter does not contain any diagnosis', 'ERROR'))
+    validator.error('Encounter does not contain any diagnosis')
   } else {
     encounter.diagnosis.forEach((diagnosis) => {
       if (!diagnosis.condition) {
-        newValidations.push(validation('Diagnosis does not contain a condition', 'ERROR'))
+        validator.error('Diagnosis does not contain a condition')
       } else if (diagnosis.condition.type !== 'Condition') {
-        newValidations.push(
-          validation(
-            `Diagnosis condition type is not set to "Condition", but was: ${diagnosis.condition.type}`,
-            'ERROR',
-          ),
-        )
+        validator.error(`Diagnosis condition type is not set to "Condition", but was: ${diagnosis.condition.type}`)
       } else if (!diagnosis.condition.reference) {
-        newValidations.push(validation('Diagnosis condition reference is not set', 'ERROR'))
+        validator.error('Diagnosis condition reference is not set')
       } else if (!diagnosis.condition.reference.includes('Condition')) {
-        newValidations.push(validation('Diagnosis condition reference is not of type Condition', 'ERROR'))
+        validator.error('Diagnosis condition reference is not of type Condition')
       }
     })
   }
 
-  return newValidations
+  return validator.build()
 }
