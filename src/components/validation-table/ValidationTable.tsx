@@ -39,7 +39,7 @@ export default function ValidationTable({ validations }: ValidationTableProps) {
                 </td>
                 <td className="px-6 py-3 flex flex-col justify-start h-full">
                   <div>{validation.message}</div>
-                  {validation && (
+                  {validation.refs && (
                     <div className="text-xs align-middle inline-flex gap-3">
                       {validation.refs?.hl7 && <RefLink href={validation.refs?.hl7} type="hl7" />}
                       {validation.refs?.simplifier && <RefLink href={validation.refs?.simplifier} type="simplifier" />}

@@ -12,6 +12,6 @@ export function validation(message: string, severity: Severity, refs?: RefTypes)
   return {
     message,
     severity,
-    ...refs,
+    refs,
   }
 }

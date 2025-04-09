@@ -29,11 +29,11 @@ function getEmoji(emoji: Props['type']) {
 function getText(emoji: Props['type']) {
   switch (emoji) {
     case 'hl7':
-      return 'HL7 docs'
+      return 'HL7 ↗'
     case 'simplifier':
-      return 'Simplifier docs'
+      return 'Simplifier ↗'
     case 'nav':
-      return 'NAV docs'
+      return 'NAV ↗'
   }
 }
 
