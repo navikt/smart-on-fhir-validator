@@ -35,7 +35,14 @@ function Validation() {
                 <ValidationSection index="2" title="ID token validation">
                   <IdTokenValidation client={smart.client} />
                 </ValidationSection>
-                <ValidationSection index="3" title="Patient validation">
+                <ValidationSection
+                  index="3"
+                  title="Patient validation"
+                  refs={{
+                    hl7: 'https://simplifier.net/HL7Norwayno-basis/NoBasisPatient/',
+                    nav: 'https://github.com/navikt/syk-inn/blob/main/docs/fhir/pasient.md',
+                  }}
+                >
                   <PatientValidation client={smart.client} />
                 </ValidationSection>
                 <ValidationSection index="4" title="Practitioner validation">
