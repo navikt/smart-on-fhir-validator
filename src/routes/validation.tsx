@@ -14,6 +14,7 @@ import SmartConfigValidation from '../components/validators/SmartConfigValidatio
 import B64WritableDocumentReference from '../components/validators/document-reference/B64WritableDocumentReference'
 import BinaryUploadWritableDocumentReference from '../components/validators/document-reference/BinaryUploadWritableDocumentReference'
 import { useSmart } from '../smart/use-smart'
+import { fullRefs } from '../validation/common-refs'
 
 function Validation() {
   const smart = useSmart()
@@ -35,20 +36,13 @@ function Validation() {
                 <ValidationSection index="2" title="ID token validation">
                   <IdTokenValidation client={smart.client} />
                 </ValidationSection>
-                <ValidationSection
-                  index="3"
-                  title="Patient validation"
-                  refs={{
-                    hl7: 'https://simplifier.net/HL7Norwayno-basis/NoBasisPatient/',
-                    nav: 'https://github.com/navikt/syk-inn/blob/main/docs/fhir/pasient.md',
-                  }}
-                >
+                <ValidationSection index="3" title="Patient validation" refs={fullRefs.pasient}>
                   <PatientValidation client={smart.client} />
                 </ValidationSection>
-                <ValidationSection index="4" title="Practitioner validation">
+                <ValidationSection index="4" title="Practitioner validation" refs={fullRefs.practitioner}>
                   <PractitionerValidation client={smart.client} />
                 </ValidationSection>
-                <ValidationSection index="5" title="Encounter validation">
+                <ValidationSection index="5" title="Encounter validation" refs={fullRefs.encounter}>
                   <EncounterValidation client={smart.client} />
                 </ValidationSection>
               </div>
@@ -59,13 +53,14 @@ function Validation() {
             {smart.isLoading && <Spinner text="Initializing FHIR for resource validation" />}
             {smart.client && (
               <div className="flex flex-col gap-3">
-                <ValidationSection index="6" title="Condition validation">
+                <ValidationSection index="6" title="Condition validation" refs={fullRefs.condition}>
                   <ConditionValidation client={smart.client} />
                 </ValidationSection>
                 <ValidationSection
                   index="7"
                   title="DocumentReference validation"
                   description={`Tries to get a list of document references based on the token "urn:oid:2.16.578.1.12.4.1.1.9602|J01-2", then validates the first element in the list.`}
+                  refs={fullRefs.documentReference}
                 >
                   <DocumentReferenceValidation client={smart.client} />
                 </ValidationSection>
@@ -73,6 +68,7 @@ function Validation() {
                   index="8"
                   title="Writable (binary) DocumentReference validation"
                   description="Uploads a Binary then creates a DocumentReference to said Binary, shows the result of the mutations"
+                  refs={fullRefs.documentReference}
                 >
                   <BinaryUploadWritableDocumentReference client={smart.client} />
                 </ValidationSection>

@@ -1,4 +1,4 @@
-import { type RouteConfig, route, index } from '@react-router/dev/routes'
+import { type RouteConfig, index, route } from '@react-router/dev/routes'
 
 export default [
   index('routes/validation.tsx'),

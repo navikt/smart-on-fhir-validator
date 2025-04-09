@@ -3,7 +3,7 @@ import type { Bundle, DocumentReference } from 'fhir/r4'
 import Client from 'fhirclient/lib/Client'
 
 import { handleError } from '../../utils/ErrorHandler'
-import { validation, type Validation } from '../../validation/validation'
+import { type Validation, validation } from '../../validation/validation'
 import Spinner from '../spinner/Spinner'
 import ValidationTable from '../validation-table/ValidationTable'
 
@@ -59,9 +59,7 @@ export default function DocumentReferenceValidation({ client }: DocumentReferenc
     <div>
       {isLoading && <Spinner text="Loading DocumentReference data..." />}
       {error ? (
-        <ValidationTable
-          validations={[validation(handleError('Unable to fetch DocumentReference', error), 'ERROR')]}
-        />
+        <ValidationTable validations={[validation(handleError('Unable to fetch DocumentReference', error), 'ERROR')]} />
       ) : (
         <ValidationTable validations={validations} />
       )}

@@ -6,7 +6,7 @@ import Client from 'fhirclient/lib/Client'
 
 import { pdf } from '../../../mocks/base64pdf'
 import { handleError } from '../../../utils/ErrorHandler'
-import { validation, type Validation } from '../../../validation/validation'
+import { type Validation, validation } from '../../../validation/validation'
 import Spinner from '../../spinner/Spinner'
 import ValidationTable from '../../validation-table/ValidationTable'
 

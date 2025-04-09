@@ -3,7 +3,7 @@ import type { Practitioner } from 'fhir/r4'
 import Client from 'fhirclient/lib/Client'
 
 import { handleError } from '../../utils/ErrorHandler'
-import { validation, type Validation } from '../../validation/validation'
+import { type Validation, validation } from '../../validation/validation'
 import Spinner from '../spinner/Spinner'
 import ValidationTable from '../validation-table/ValidationTable'
 
@@ -103,9 +103,7 @@ function validatePractitioner(practitioner: Practitioner): Validation[] {
         )
       }
       if (!telecom.value) {
-        newValidations.push(
-          validation(`The Practitioner content [${index}] does not have a telecom value`, 'ERROR'),
-        )
+        newValidations.push(validation(`The Practitioner content [${index}] does not have a telecom value`, 'ERROR'))
       }
       if (!telecom.use || !['home', 'work', 'temp', 'old', 'mobile'].includes(telecom.use)) {
         newValidations.push(

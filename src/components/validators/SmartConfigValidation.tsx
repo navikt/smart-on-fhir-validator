@@ -2,7 +2,7 @@ import { useQuery } from '@tanstack/react-query'
 import Client from 'fhirclient/lib/Client'
 
 import type { SmartConfiguration } from '../../smart/SmartConfiguration'
-import { validation, type Validation } from '../../validation/validation'
+import { type Validation, validation } from '../../validation/validation'
 import Spinner from '../spinner/Spinner'
 import ValidationTable from '../validation-table/ValidationTable'
 
@@ -55,12 +55,14 @@ function validateWellKnown(config: SmartConfiguration) {
   }
 
   // RECOMMENDED fields
-  if (!config.user_access_brand_bundle) {
+  // Removed to focus on the most important fields than Nav requires
+  /*if (!config.user_access_brand_bundle) {
     newValidations.push(validation(`user_access_brand_bundle is RECOMMENDED`, 'WARNING'))
   }
   if (!config.user_access_brand_identifier) {
     newValidations.push(validation(`user_access_brand_identifier is RECOMMENDED`, 'WARNING'))
-  }
+  }*/
+
   if (!config.scopes_supported) {
     newValidations.push(validation(`scopes_supported is RECOMMENDED`, 'WARNING'))
   }

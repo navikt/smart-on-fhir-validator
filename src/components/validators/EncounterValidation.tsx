@@ -3,7 +3,7 @@ import type { Encounter } from 'fhir/r4'
 import Client from 'fhirclient/lib/Client'
 
 import { handleError } from '../../utils/ErrorHandler'
-import { validation, type Validation } from '../../validation/validation'
+import { type Validation, validation } from '../../validation/validation'
 import Spinner from '../spinner/Spinner'
 import ValidationTable from '../validation-table/ValidationTable'
 
@@ -51,16 +51,12 @@ function validateEncounter(encounter: Encounter): Validation[] {
     newValidations.push(validation('Encounter does not contain a class object', 'ERROR'))
   } else {
     if (encounter.class.system !== 'http://terminology.hl7.org/CodeSystem/v3-ActCode') {
-      newValidations.push(
-        validation('Class system is not http://terminology.hl7.org/CodeSystem/v3-ActCode', 'ERROR'),
-      )
+      newValidations.push(validation('Class system is not http://terminology.hl7.org/CodeSystem/v3-ActCode', 'ERROR'))
     }
     if (!encounter.class.code) {
       newValidations.push(validation('class object is missing code', 'ERROR'))
     } else if (!['AMB', 'VR'].includes(encounter.class.code)) {
-      newValidations.push(
-        validation(`Class object code must be AMB, VR, but was "${encounter.class.code}"`, 'ERROR'),
-      )
+      newValidations.push(validation(`Class object code must be AMB, VR, but was "${encounter.class.code}"`, 'ERROR'))
     }
   }
 

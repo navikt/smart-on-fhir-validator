@@ -1,6 +1,6 @@
 import type { DocumentReference } from 'fhir/r4'
 
-import { validation, type Validation } from '../../../validation/validation'
+import { type Validation, validation } from '../../../validation/validation'
 
 export function validateDocumentReference(documentReference: DocumentReference | null): Validation[] {
   const newValidations: Validation[] = []
@@ -82,9 +82,7 @@ export function validateDocumentReference(documentReference: DocumentReference |
         return
       }
       if (!content.attachment.title) {
-        newValidations.push(
-          validation('DocumentReference content attachment object does not contain a title', 'ERROR'),
-        )
+        newValidations.push(validation('DocumentReference content attachment object does not contain a title', 'ERROR'))
       }
       if (!content.attachment.data && !content.attachment.url) {
         newValidations.push(
@@ -127,9 +125,7 @@ export function validateDocumentReference(documentReference: DocumentReference |
   if (!documentReference.context) {
     newValidations.push(validation('DocumentReference does not contain a context object', 'ERROR'))
   } else if (!documentReference.context.encounter) {
-    newValidations.push(
-      validation('DocumentReference context object does not contain an encounter object', 'ERROR'),
-    )
+    newValidations.push(validation('DocumentReference context object does not contain an encounter object', 'ERROR'))
   }
 
   return newValidations
