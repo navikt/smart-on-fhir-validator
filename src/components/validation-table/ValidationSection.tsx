@@ -17,7 +17,7 @@ const ValidationSection = ({ title, index, description, refs, children }: PropsW
         {index}. {title}
       </h3>
       {description && <p className="ml-4 text-sm -mt-2 mb-2 italic">{description}</p>}
-      {(refs?.simplifier || refs?.nav || refs?.simplifier) && (
+      {refs && (
         <div className="ml-4 -mt-6 text-xs align-middle inline-flex gap-3">
           {refs.hl7 && <RefLink href={refs.hl7} type="hl7" />}
           {refs.simplifier && <RefLink href={refs.simplifier} type="simplifier" />}

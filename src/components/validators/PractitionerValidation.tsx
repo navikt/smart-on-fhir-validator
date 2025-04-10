@@ -4,7 +4,7 @@ import Client from 'fhirclient/lib/Client'
 import { Validator } from 'src/validation/Validator'
 
 import { handleError } from '../../utils/ErrorHandler'
-import { hl7Refs, navRefs, simplifierRefs } from '../../validation/common-refs'
+import { navRefs, simplifierRefs } from '../../validation/common-refs'
 import { type Validation, validation } from '../../validation/validation'
 import Spinner from '../spinner/Spinner'
 import ValidationTable from '../validation-table/ValidationTable'
@@ -54,13 +54,11 @@ function validatePractitioner(practitioner: Practitioner): Validation[] {
 
   const meta = practitioner.meta
 
-  if (!meta) {
-    validator.error('Practitioner object does not contain a meta reference', { hl7: hl7Refs.practitioner })
-  } else if (!meta.profile) {
-    validator.error('The Practitioner Meta object does not contain a profile reference', {
-      hl7: hl7Refs.practitioner,
-    })
-  } else if (!meta.profile.includes('http://hl7.no/fhir/StructureDefinition/no-basis-Practitioner')) {
+  if (
+    !meta ||
+    !meta.profile ||
+    !meta.profile.includes('http://hl7.no/fhir/StructureDefinition/no-basis-Practitioner')
+  ) {
     validator.error('The Practitioner must be of type no-basis-Practitioner', {
       simplifier: simplifierRefs.noBasisPractitioner,
       nav: navRefs.practitioner,
@@ -73,9 +71,12 @@ function validatePractitioner(practitioner: Practitioner): Validation[] {
   if (!norwegianHPRIdentifierSystem) {
     validator.error(
       `The Practitioner does not have a Norwegian Health Personnel Record number (HPR) from OID "${hprSystemIdentifier}"`,
+      { nav: navRefs.practitioner },
     )
   } else if (!norwegianHERIdentifierSystem) {
-    validator.info(`The Practitioner does not have a Norwegian HER-id from OID "${hprSystemIdentifier}"`)
+    validator.info(`The Practitioner does not have a Norwegian HER-id from OID "${hprSystemIdentifier}"`, {
+      nav: navRefs.practitioner,
+    })
   }
 
   const practitionerName = practitioner.name
@@ -94,14 +95,15 @@ function validatePractitioner(practitioner: Practitioner): Validation[] {
   const practitionerTelecom = practitioner.telecom
   if (!practitionerTelecom || practitionerTelecom.length === 0) {
     validator.error(`The Practitioner does not have a telecom property`, {
-      simplifier: telecomSimplifierLink,
+      simplifier: simplifierRefs.telecom,
+      nav: navRefs.practitioner,
     })
   } else {
     practitionerTelecom.forEach((telecom, index) => {
       if (!telecom.system || !['phone', 'fax', 'email', 'pager', 'url', 'sms', 'other'].includes(telecom.system)) {
         validator.error(
           `The Practitioner content [${index}] does not have a telecom system: ${telecom.system ?? 'undefined'} `,
-          { simplifier: telecomSimplifierLink },
+          { simplifier: simplifierRefs.telecom, nav: navRefs.practitioner },
         )
       }
       if (!telecom.value) {
@@ -110,7 +112,7 @@ function validatePractitioner(practitioner: Practitioner): Validation[] {
       if (!telecom.use || !['home', 'work', 'temp', 'old', 'mobile'].includes(telecom.use)) {
         validator.warn(
           `The Practitioner content [${index}] does not have a telecom use: "${telecom.use ?? 'undefined'}"`,
-          { simplifier: telecomSimplifierLink, nav: navRefs.practitioner },
+          { simplifier: simplifierRefs.telecom, nav: navRefs.practitioner },
         )
       }
     })
@@ -118,5 +120,3 @@ function validatePractitioner(practitioner: Practitioner): Validation[] {
 
   return validator.build()
 }
-
-const telecomSimplifierLink = 'https://simplifier.net/packages/hl7.fhir.r4.core/4.0.1/files/83048'

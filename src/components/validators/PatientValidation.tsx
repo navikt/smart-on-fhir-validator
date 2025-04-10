@@ -4,7 +4,7 @@ import Client from 'fhirclient/lib/Client'
 
 import { handleError } from '../../utils/ErrorHandler'
 import { Validator } from '../../validation/Validator'
-import { hl7Refs, simplifierRefs } from '../../validation/common-refs'
+import { hl7Refs } from '../../validation/common-refs'
 import { type Validation, validation } from '../../validation/validation'
 import Spinner from '../spinner/Spinner'
 import ValidationTable from '../validation-table/ValidationTable'
@@ -42,26 +42,20 @@ export default function PatientValidation({ client }: PatientValidationProps) {
   )
 }
 
+/**
+ * @see https://www.ehelse.no/teknisk-dokumentasjon/oid-identifikatorserier-i-helse-og-omsorgstjenesten#nasjonale-identifikatorserier-for-personer
+ */
+const personalIdentifierSystem = 'urn:oid:2.16.578.1.12.4.1.4.1'
+const dNumberSystem = 'urn:oid:2.16.578.1.12.4.1.4.2'
+
 function validatePatient(fhirPatient: Patient): Validation[] {
   const validator = new Validator()
 
   const meta = fhirPatient.meta
 
-  if (!meta) {
-    validator.error('Patient object does not contain a meta reference', { hl7: hl7Refs.patient })
-  } else if (!meta.profile) {
+  if (!meta || !meta.profile || meta.profile.includes('http://hl7.no/fhir/StructureDefinition/no-basis-Patient')) {
     validator.error('The Patient Meta object does not contain a profile reference', { hl7: hl7Refs.patient })
-  } else if (!meta.profile.includes('http://hl7.no/fhir/StructureDefinition/no-basis-Patient')) {
-    validator.error('The Patient must be of type no-basis-Patient', {
-      simplifier: simplifierRefs.noBasisPasient,
-    })
   }
-
-  /**
-   * @see https://www.ehelse.no/teknisk-dokumentasjon/oid-identifikatorserier-i-helse-og-omsorgstjenesten#nasjonale-identifikatorserier-for-personer
-   */
-  const personalIdentifierSystem = 'urn:oid:2.16.578.1.12.4.1.4.1'
-  const dNumberSystem = 'urn:oid:2.16.578.1.12.4.1.4.2'
 
   const norwegianNationalIdentifierSystem = fhirPatient.identifier?.find((id) => id.system === personalIdentifierSystem)
   const norwegianDNumberSystem = fhirPatient.identifier?.find((id) => id.system === dNumberSystem)

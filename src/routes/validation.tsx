@@ -14,7 +14,7 @@ import SmartConfigValidation from '../components/validators/SmartConfigValidatio
 import B64WritableDocumentReference from '../components/validators/document-reference/B64WritableDocumentReference'
 import BinaryUploadWritableDocumentReference from '../components/validators/document-reference/BinaryUploadWritableDocumentReference'
 import { useSmart } from '../smart/use-smart'
-import { fullRefs } from '../validation/common-refs'
+import { fullRefs, hl7Refs } from '../validation/common-refs'
 
 function Validation() {
   const smart = useSmart()
@@ -30,10 +30,10 @@ function Validation() {
             {smart.isLoading && <Spinner text="Initializing FHIR for resource validation" />}
             {smart.client && (
               <div className="flex flex-col gap-3">
-                <ValidationSection index="1" title="SMART configuration validation">
+                <ValidationSection index="1" title="SMART configuration validation" refs={{ hl7: hl7Refs.smartLaunch }}>
                   <SmartConfigValidation client={smart.client} />
                 </ValidationSection>
-                <ValidationSection index="2" title="ID token validation">
+                <ValidationSection index="2" title="ID token validation" refs={{ hl7: hl7Refs.idToken }}>
                   <IdTokenValidation client={smart.client} />
                 </ValidationSection>
                 <ValidationSection index="3" title="Patient validation" refs={fullRefs.pasient}>

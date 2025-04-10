@@ -10,11 +10,15 @@ export const hl7Refs = {
   condition: 'https://hl7.org/fhir/R4/condition.html',
   encounter: 'https://hl7.org/fhir/R4/encounter.html',
   documentReference: 'https://hl7.org/fhir/R4/documentreference.html',
+  smartLaunch: 'https://build.fhir.org/ig/HL7/smart-app-launch/app-launch.html',
+  idToken:
+    'https://build.fhir.org/ig/HL7/smart-app-launch/scopes-and-launch-context.html#scopes-for-requesting-identity-data',
 }
 
 export const simplifierRefs = {
   noBasisPasient: 'https://simplifier.net/HL7Norwayno-basis/NoBasisPatient',
   noBasisPractitioner: 'https://simplifier.net/hl7norwayno-basis/nobasispractitioner',
+  telecom: 'https://simplifier.net/packages/hl7.fhir.r4.core/4.0.1/files/83048',
 }
 
 export const navRefs = {

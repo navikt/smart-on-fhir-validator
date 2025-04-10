@@ -69,9 +69,11 @@ function validateWellKnown(config: SmartConfiguration) {
   if (!config.response_types_supported) {
     validator.warn(`response_types_supported is RECOMMENDED`)
   }
-  if (!config.management_endpoint) {
+
+  // Removed to focus on the most important fields than Nav requires
+  /*if (!config.management_endpoint) {
     validator.warn(`management_endpoint is RECOMMENDED`)
-  }
+  }*/
   if (!config.introspection_endpoint) {
     validator.warn(`introspection_endpoint is RECOMMENDED`)
   }
@@ -83,12 +85,17 @@ function validateWellKnown(config: SmartConfiguration) {
   if (!config.token_endpoint_auth_methods_supported) {
     validator.info(`token_endpoint_auth_methods_supported not found`)
   }
+  // Removed to focus on the most important fields than Nav requires
+  /*if (!config.management_endpoint) {
+    validator.warn(`management_endpoint is RECOMMENDED`)
+  }
   if (!config.registration_endpoint) {
     validator.info(`registration_endpoint not found`)
   }
   if (!config.associated_endpoints) {
     validator.info(`associated_endpoints not found`)
   }
+   */
 
   return validator.build()
 }
