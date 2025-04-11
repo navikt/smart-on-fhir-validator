@@ -6,7 +6,7 @@ import { handleError } from '../../utils/ErrorHandler'
 import { Validator } from '../../validation/Validator'
 import { type Validation, validation } from '../../validation/validation'
 import Spinner from '../spinner/Spinner'
-import ValidationTable from '../validation-table/ValidationTable'
+import Validations from '../validation-table/Validations'
 
 export interface EncounterValidationProps {
   readonly client: Client
@@ -33,9 +33,12 @@ export default function EncounterValidation({ client }: EncounterValidationProps
     <div>
       {isLoading && <Spinner text="Loading Encounter data..." />}
       {error ? (
-        <ValidationTable validations={[validation(handleError('Unable to fetch Encounter', error), 'ERROR')]} />
+        <Validations
+          validations={[validation(handleError('Unable to fetch Encounter', error), 'ERROR')]}
+          source={data}
+        />
       ) : (
-        <ValidationTable validations={validations} />
+        <Validations validations={validations} source={data} />
       )}
     </div>
   )

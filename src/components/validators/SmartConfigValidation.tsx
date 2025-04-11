@@ -4,7 +4,7 @@ import Client from 'fhirclient/lib/Client'
 import type { SmartConfiguration } from '../../smart/SmartConfiguration'
 import { Validator } from '../../validation/Validator'
 import Spinner from '../spinner/Spinner'
-import ValidationTable from '../validation-table/ValidationTable'
+import Validations from '../validation-table/Validations'
 
 export interface SmartConfigValidationProps {
   readonly client: Client
@@ -121,14 +121,16 @@ export default function SmartConfigValidation({ client }: SmartConfigValidationP
       }
 
       const data: SmartConfiguration = await result.json()
-      return validateWellKnown(data)
+      return data
     },
   })
+
+  const validations = data ? validateWellKnown(data) : []
 
   return (
     <div>
       {isLoading && <Spinner text="Validating well-known/smart-configuration" />}
-      {data && <ValidationTable validations={data} />}
+      {data && <Validations validations={validations} source={data}  />}
       {error && (
         <div>
           <h4>An error occurred while fetching .well-known/smart-configuration</h4>

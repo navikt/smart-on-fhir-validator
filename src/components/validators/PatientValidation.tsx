@@ -7,7 +7,7 @@ import { Validator } from '../../validation/Validator'
 import { hl7Refs } from '../../validation/common-refs'
 import { type Validation, validation } from '../../validation/validation'
 import Spinner from '../spinner/Spinner'
-import ValidationTable from '../validation-table/ValidationTable'
+import Validations from '../validation-table/Validations'
 
 export interface PatientValidationProps {
   readonly client: Client
@@ -34,9 +34,12 @@ export default function PatientValidation({ client }: PatientValidationProps) {
     <div>
       {isLoading && <Spinner text="Loading Patient data..." />}
       {error ? (
-        <ValidationTable validations={[validation(handleError('Unable to fetch Patient', error), 'ERROR')]} />
+        <Validations
+          validations={[validation(handleError('Unable to fetch Patient', error), 'ERROR')]}
+          source={data}
+        />
       ) : (
-        <ValidationTable validations={validations} />
+        <Validations validations={validations} source={data} />
       )}
     </div>
   )

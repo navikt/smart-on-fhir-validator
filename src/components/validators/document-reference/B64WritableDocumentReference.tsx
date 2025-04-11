@@ -8,7 +8,7 @@ import { pdf } from '../../../mocks/base64pdf'
 import { handleError } from '../../../utils/ErrorHandler'
 import { type Validation, validation } from '../../../validation/validation'
 import Spinner from '../../spinner/Spinner'
-import ValidationTable from '../../validation-table/ValidationTable'
+import Validations from '../../validation-table/Validations'
 
 import { useDocumentReferenceQuery } from './useDocumentReferenceQuery'
 import { validateDocumentReference } from './validateDocRef'
@@ -72,13 +72,14 @@ export default function B64WritableDocumentReference({ client }: B64WritableDocu
   if (createdDocumentReferenceUploadError) {
     return (
       <div>
-        <ValidationTable
+        <Validations
           validations={[
             validation(
               handleError('Error while creating new DocumentReference based on b64 encoded data', error),
               'ERROR',
             ),
           ]}
+          source={data}
         />
       </div>
     )
@@ -91,8 +92,9 @@ export default function B64WritableDocumentReference({ client }: B64WritableDocu
   if (error) {
     return (
       <div>
-        <ValidationTable
+        <Validations
           validations={[validation(handleError('Unable to fetch Writable DocumentReference', error), 'ERROR')]}
+          source={data}
         />
       </div>
     )
@@ -100,7 +102,7 @@ export default function B64WritableDocumentReference({ client }: B64WritableDocu
     return (
       <div>
         <div>
-          <ValidationTable validations={validations} />
+          <Validations validations={validations} source={data} />
         </div>
       </div>
     )

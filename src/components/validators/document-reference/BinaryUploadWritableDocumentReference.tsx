@@ -8,7 +8,7 @@ import { pdf } from '../../../mocks/base64pdf'
 import { handleError } from '../../../utils/ErrorHandler'
 import { type Validation, validation } from '../../../validation/validation'
 import Spinner from '../../spinner/Spinner'
-import ValidationTable from '../../validation-table/ValidationTable'
+import Validations from '../../validation-table/Validations'
 
 import { useDocumentReferenceQuery } from './useDocumentReferenceQuery'
 import { validateDocumentReference } from './validateDocRef'
@@ -64,13 +64,14 @@ export default function BinaryUploadWritableDocumentReference({ client }: Binary
 
   if (error) {
     return (
-      <ValidationTable
+      <Validations
         validations={[
           validation(
             handleError('Error while creating new DocumentReference with a binary file reference', error),
             'ERROR',
           ),
         ]}
+        source={data}
       />
     )
   }
@@ -97,7 +98,7 @@ export default function BinaryUploadWritableDocumentReference({ client }: Binary
 
   if (!data.id) {
     return (
-      <ValidationTable
+      <Validations
         validations={[
           validation(
             handleError(
@@ -107,6 +108,7 @@ export default function BinaryUploadWritableDocumentReference({ client }: Binary
             'ERROR',
           ),
         ]}
+        source={data}
       />
     )
   }
@@ -127,8 +129,9 @@ export default function BinaryUploadWritableDocumentReference({ client }: Binary
   } else if (fetchedDocRefError) {
     return (
       <div>
-        <ValidationTable
+        <Validations
           validations={[validation(handleError('Unable to fetch Writable DocumentReference', error), 'ERROR')]}
+          source={data}
         />
       </div>
     )
@@ -137,7 +140,7 @@ export default function BinaryUploadWritableDocumentReference({ client }: Binary
     return (
       <div>
         <div>
-          <ValidationTable validations={validations} />
+          <Validations validations={validations} source={data} />
         </div>
       </div>
     )

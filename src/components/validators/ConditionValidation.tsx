@@ -6,7 +6,7 @@ import { handleError } from '../../utils/ErrorHandler'
 import { Validator } from '../../validation/Validator'
 import { type Validation, validation } from '../../validation/validation'
 import Spinner from '../spinner/Spinner'
-import ValidationTable from '../validation-table/ValidationTable'
+import Validations from '../validation-table/Validations'
 
 export interface ConditionValidationProps {
   readonly client: Client
@@ -37,9 +37,12 @@ export default function ConditionValidation({ client }: ConditionValidationProps
     <div>
       {isLoading && <Spinner text="Loading Condition data..." />}
       {error ? (
-        <ValidationTable validations={[validation(handleError('Unable to fetch Condition', error), 'ERROR')]} />
+        <Validations
+          validations={[validation(handleError('Unable to fetch Condition', error), 'ERROR')]}
+          source={data}
+        />
       ) : (
-        <ValidationTable validations={validations} />
+        <Validations validations={validations} source={data} />
       )}
     </div>
   )

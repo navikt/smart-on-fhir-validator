@@ -7,7 +7,7 @@ import { handleError } from '../../utils/ErrorHandler'
 import { navRefs, simplifierRefs } from '../../validation/common-refs'
 import { type Validation, validation } from '../../validation/validation'
 import Spinner from '../spinner/Spinner'
-import ValidationTable from '../validation-table/ValidationTable'
+import Validations from '../validation-table/Validations'
 
 const hprSystemIdentifier = 'urn:oid:2.16.578.1.12.4.1.4.4'
 const herSystemIdentifier = 'urn:oid:2.16.578.1.12.4.1.2'
@@ -41,9 +41,12 @@ export default function PractitionerValidation({ client }: PractitionerValidatio
     <div>
       {isLoading && <Spinner text="Loading Practitioner data..." />}
       {error ? (
-        <ValidationTable validations={[validation(handleError('Unable to fetch Practitioner', error), 'ERROR')]} />
+        <Validations
+          validations={[validation(handleError('Unable to fetch Practitioner', error), 'ERROR')]}
+          source={data}
+        />
       ) : (
-        <ValidationTable validations={validations} />
+        <Validations validations={validations} source={data} />
       )}
     </div>
   )

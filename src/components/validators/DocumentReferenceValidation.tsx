@@ -5,7 +5,7 @@ import Client from 'fhirclient/lib/Client'
 import { handleError } from '../../utils/ErrorHandler'
 import { type Validation, validation } from '../../validation/validation'
 import Spinner from '../spinner/Spinner'
-import ValidationTable from '../validation-table/ValidationTable'
+import Validations from '../validation-table/Validations'
 
 import { validateDocumentReference } from './document-reference/validateDocRef'
 
@@ -59,9 +59,12 @@ export default function DocumentReferenceValidation({ client }: DocumentReferenc
     <div>
       {isLoading && <Spinner text="Loading DocumentReference data..." />}
       {error ? (
-        <ValidationTable validations={[validation(handleError('Unable to fetch DocumentReference', error), 'ERROR')]} />
+        <Validations
+          validations={[validation(handleError('Unable to fetch DocumentReference', error), 'ERROR')]}
+          source={data}
+        />
       ) : (
-        <ValidationTable validations={validations} />
+        <Validations validations={validations} source={data} />
       )}
     </div>
   )

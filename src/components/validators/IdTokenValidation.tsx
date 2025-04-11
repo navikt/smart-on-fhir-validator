@@ -2,7 +2,7 @@ import Client from 'fhirclient/lib/Client'
 
 import { authOptions } from '../../fhir/FhirAuth'
 import { Validator } from '../../validation/Validator'
-import ValidationTable from '../validation-table/ValidationTable'
+import Validations from '../validation-table/Validations'
 
 export interface IdTokenValidationProps {
   readonly client: Client
@@ -101,7 +101,7 @@ export default function IdTokenValidation({ client }: IdTokenValidationProps) {
 
   return (
     <div>
-      <ValidationTable validations={validations} />
+      <Validations validations={validations} source={client.getIdToken()} />
     </div>
   )
 }
