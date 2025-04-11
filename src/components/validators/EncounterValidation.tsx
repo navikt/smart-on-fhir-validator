@@ -4,6 +4,7 @@ import Client from 'fhirclient/lib/Client'
 
 import { handleError } from '../../utils/ErrorHandler'
 import { Validator } from '../../validation/Validator'
+import { navRefs } from '../../validation/common-refs'
 import { type Validation, validation } from '../../validation/validation'
 import Spinner from '../spinner/Spinner'
 import Validations from '../validation-table/Validations'
@@ -64,29 +65,53 @@ function validateEncounter(encounter: Encounter): Validation[] {
    */
 
   if (!encounter.subject?.reference) {
-    validator.error(`Subject object does not contain a subject (type: Patient/<id>)`)
+    validator.error(`Subject object does not contain a subject (type: Patient/<id>)`, {
+      hl7: navRefs.pasient,
+      nav: navRefs.pasient,
+    })
   } else if (!encounter.subject.reference.startsWith('Patient/')) {
-    validator.error(`Subject reference does not start with "Patient/", but was "${encounter.subject.reference}"`)
+    validator.error(`Subject reference does not start with "Patient/", but was "${encounter.subject.reference}"`, {
+      hl7: navRefs.pasient,
+      nav: navRefs.pasient,
+    })
   }
 
   if (!encounter.participant || encounter.participant.length === 0) {
-    validator.error('Encounter does not contain any participants')
+    validator.error('Encounter does not contain any participants', {
+      hl7: navRefs.pasient,
+      nav: navRefs.pasient,
+    })
   } else {
     encounter.participant.forEach((participant) => {
       if (!participant.individual) {
-        validator.error('Participant does not contain an individual')
+        validator.error('Participant does not contain an individual', {
+          hl7: navRefs.pasient,
+          nav: navRefs.pasient,
+        })
       } else if (!participant.individual.reference) {
-        validator.error('Participant individual reference is not set')
+        validator.error('Participant individual reference is not set', {
+          hl7: navRefs.pasient,
+          nav: navRefs.pasient,
+        })
       } else if (!participant.individual.reference.includes('Practitioner')) {
-        validator.error('Participant individual reference is not of type Practitioner')
+        validator.error('Participant individual reference is not of type Practitioner', {
+          hl7: navRefs.pasient,
+          nav: navRefs.pasient,
+        })
       }
     })
   }
 
   if (!encounter.period) {
-    validator.error('Encounter does not contain a period')
+    validator.error('Encounter does not contain a period', {
+      hl7: navRefs.pasient,
+      nav: navRefs.pasient,
+    })
   } else if (!encounter.period.start) {
-    validator.error('Encounter period does not contain a start date')
+    validator.error('Encounter period does not contain a start date', {
+      hl7: navRefs.pasient,
+      nav: navRefs.pasient,
+    })
   }
 
   /* TODO: Ta avgjørelse på diagonesformat
