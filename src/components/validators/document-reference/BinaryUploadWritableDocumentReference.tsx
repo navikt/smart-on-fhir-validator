@@ -32,11 +32,8 @@ export default function BinaryUploadWritableDocumentReference({ client }: Binary
       }
 
       const docRefCreationResponse = await client.create({
-        resourceType: 'DocumentReference',
-        body: JSON.stringify(getDocRefWithBinary(client, binaryCreationResponse.id)),
-        headers: {
-          'Content-Type': 'application/fhir+json',
-        },
+        ...getDocRefWithBinary(client, binaryCreationResponse.id),
+        meta: { lastUpdated: new Date().toISOString() },
       })
 
       if (!docRefCreationResponse.id) {

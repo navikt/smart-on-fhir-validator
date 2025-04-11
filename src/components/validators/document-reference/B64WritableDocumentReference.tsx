@@ -28,11 +28,8 @@ export default function B64WritableDocumentReference({ client }: B64WritableDocu
   } = useMutation({
     mutationFn: async (documentReference: DocumentReference) => {
       const response = await client.create({
-        resourceType: 'DocumentReference',
-        body: JSON.stringify(documentReference),
-        headers: {
-          'Content-Type': 'application/fhir+json',
-        },
+        ...documentReference,
+        meta: { lastUpdated: new Date().toISOString() },
       })
 
       if (!response.id) {
@@ -51,14 +48,31 @@ export default function B64WritableDocumentReference({ client }: B64WritableDocu
 
   // create document reference if it does not exist
   if (!docRefId) {
-    const documentReference = getDocRefWithB64Data(client)
     return (
       <div className="flex flex-col">
+        {createdDocumentReferenceUploadError && (
+          <div className="mb-2">
+            <Validations
+              validations={[
+                validation(
+                  handleError(
+                    'Error while creating new DocumentReference based on b64 encoded data',
+                    createdDocumentReferenceUploadError,
+                  ),
+                  'ERROR',
+                ),
+              ]}
+              source={data}
+            />
+          </div>
+        )}
+
         <div className="flex gap-4 mb-5">
           <button
             className="border border-blue-900 rounded-sm bg-blue-300 p-4 py-2 text-gray-900 cursor-pointer"
             onClick={() => {
-              mutateDocumentReference(documentReference)
+              const newDocumentReference = getDocRefWithB64Data(client)
+              mutateDocumentReference(newDocumentReference)
             }}
             disabled={createdDocumentReferenceIsPending || isSuccessDocRef}
           >
