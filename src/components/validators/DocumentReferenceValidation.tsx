@@ -16,7 +16,7 @@ export interface DocumentReferenceValidationProps {
 export default function DocumentReferenceValidation({ client }: DocumentReferenceValidationProps) {
   const { error, data, isLoading } = useQuery({
     queryKey: ['documentReferenceValidation', client.encounter.id],
-    queryFn: async (): Promise<DocumentReference | null> => {
+    queryFn: async (): Promise<(DocumentReference | undefined)[] | null> => {
       const bundle = await client.request<Bundle<DocumentReference>>(
         `DocumentReference?patient=${client.patient.id}&type=urn:oid:2.16.578.1.12.4.1.1.9602|J01-2`,
       )
@@ -45,15 +45,15 @@ export default function DocumentReferenceValidation({ client }: DocumentReferenc
         })
       })
 
-      const firstRelevantDocumentReference: DocumentReference | undefined = documentReferences.find(
-        (it) => it != null && it.resourceType === 'DocumentReference',
-      )
-
-      return firstRelevantDocumentReference ?? null
+      return documentReferences
     },
   })
 
-  const validations: Validation[] = validateDocumentReference(data ?? null)
+  const firstRelevantDocumentReference: DocumentReference | null | undefined = data
+    ? data.find((it) => it != null && it.resourceType === 'DocumentReference')
+    : null
+
+  const validations: Validation[] = validateDocumentReference(firstRelevantDocumentReference ?? null)
 
   return (
     <div>
