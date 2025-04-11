@@ -1,6 +1,7 @@
 import type { ReactElement } from 'react'
 
 import { type Severity, type Validation } from '../../validation/validation'
+import { LazyJsonHighlighter } from '../json-highlighter/LazyJsonHighlighter'
 import RefLink from '../ref-link/RefLink'
 
 import Pill from './Pill'
@@ -23,9 +24,9 @@ export default function Validations({ validations, source }: ValidationTableProp
       {validations.length > 0 ? <ValidationsTable validations={validations} /> : <ValidationsOK />}
       {source != null && (
         <details className="border border-neutral-400 rounded text-neutral-700 mt-2">
-          <summary className="p-2 pl-4">See source of validated data</summary>
-          <div className="p-4">
-            <pre className="p-1">{JSON.stringify(source, null, 2)}</pre>
+          <summary className="p-2">See source of validated data</summary>
+          <div className="p-2 pt-0 rounded">
+            <LazyJsonHighlighter>{JSON.stringify(source, null, 2)}</LazyJsonHighlighter>
           </div>
         </details>
       )}
