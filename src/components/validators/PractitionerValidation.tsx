@@ -77,7 +77,7 @@ function validatePractitioner(practitioner: Practitioner): Validation[] {
       { nav: navRefs.practitioner },
     )
   } else if (!norwegianHERIdentifierSystem) {
-    validator.info(`The Practitioner does not have a Norwegian HER-id from OID "${hprSystemIdentifier}"`, {
+    validator.warn(`The Practitioner does not have a Norwegian HER-ID (oid: ${hprSystemIdentifier})`, {
       nav: navRefs.practitioner,
     })
   }

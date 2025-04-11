@@ -130,7 +130,7 @@ export default function SmartConfigValidation({ client }: SmartConfigValidationP
   return (
     <div>
       {isLoading && <Spinner text="Validating well-known/smart-configuration" />}
-      {data && <Validations validations={validations} source={data}  />}
+      {data && <Validations validations={validations} source={data} />}
       {error && (
         <div>
           <h4>An error occurred while fetching .well-known/smart-configuration</h4>

@@ -4,7 +4,7 @@ import Client from 'fhirclient/lib/Client'
 
 import { handleError } from '../../utils/ErrorHandler'
 import { Validator } from '../../validation/Validator'
-import { hl7Refs } from '../../validation/common-refs'
+import { hl7Refs, navRefs, simplifierRefs } from '../../validation/common-refs'
 import { type Validation, validation } from '../../validation/validation'
 import Spinner from '../spinner/Spinner'
 import Validations from '../validation-table/Validations'
@@ -34,10 +34,7 @@ export default function PatientValidation({ client }: PatientValidationProps) {
     <div>
       {isLoading && <Spinner text="Loading Patient data..." />}
       {error ? (
-        <Validations
-          validations={[validation(handleError('Unable to fetch Patient', error), 'ERROR')]}
-          source={data}
-        />
+        <Validations validations={[validation(handleError('Unable to fetch Patient', error), 'ERROR')]} source={data} />
       ) : (
         <Validations validations={validations} source={data} />
       )}
@@ -57,7 +54,11 @@ function validatePatient(fhirPatient: Patient): Validation[] {
   const meta = fhirPatient.meta
 
   if (!meta || !meta.profile || meta.profile.includes('http://hl7.no/fhir/StructureDefinition/no-basis-Patient')) {
-    validator.error('The Patient Meta object does not contain a profile reference', { hl7: hl7Refs.patient })
+    validator.error('The Patient must be of type no-basis-Patient', {
+      hl7: hl7Refs.patient,
+      simplifier: simplifierRefs.noBasisPasient,
+      nav: navRefs.pasient,
+    })
   }
 
   const norwegianNationalIdentifierSystem = fhirPatient.identifier?.find((id) => id.system === personalIdentifierSystem)

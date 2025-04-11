@@ -51,27 +51,22 @@ function validateEncounter(encounter: Encounter): Validation[] {
     validator.error('Resource is not of type Encounter')
   }
 
-  if (!encounter.class) {
-    validator.error('Encounter does not contain a class object')
-  } else {
-    if (encounter.class.system !== 'http://terminology.hl7.org/CodeSystem/v3-ActCode') {
-      validator.error('Class system is not http://terminology.hl7.org/CodeSystem/v3-ActCode')
-    }
-    if (!encounter.class.code) {
-      validator.error('class object is missing code')
-    } else if (!['AMB', 'VR'].includes(encounter.class.code)) {
-      validator.error(`Class object code must be AMB, VR, but was "${encounter.class.code}"`)
-    }
+  /* TODO: Ta avgjørnelse på hvilket kodeverk vi skal bruke
+  if (!encounter.class || encounter.class.system !== 'http://terminology.hl7.org/CodeSystem/v3-ActCode') {
+    validator.error('Class system is not http://terminology.hl7.org/CodeSystem/v3-ActCode')
   }
 
-  if (!encounter.subject) {
-    validator.error('Subject object does not contain a subject')
-  } else if (!encounter.subject.reference) {
-    validator.error('reference subject reference is not set')
-  } else if (!encounter.subject.type) {
-    validator.error('Subject object does not contain a type')
-  } else if (!encounter.subject.type.includes('Patient')) {
-    validator.error(`Subject reference is not of type Patient, but was "${encounter.subject.type}"`)
+  if (!encounter.class || !encounter.class.code) {
+    validator.error('class object is missing code')
+  } else if (!['AMB', 'VR'].includes(encounter.class.code)) {
+    validator.error(`Class object code must be AMB, VR, but was "${encounter.class.code}"`)
+  }
+   */
+
+  if (!encounter.subject?.reference) {
+    validator.error(`Subject object does not contain a subject (type: Patient/<id>)`)
+  } else if (!encounter.subject.reference.startsWith('Patient/')) {
+    validator.error(`Subject reference does not start with "Patient/", but was "${encounter.subject.reference}"`)
   }
 
   if (!encounter.participant || encounter.participant.length === 0) {
@@ -94,6 +89,7 @@ function validateEncounter(encounter: Encounter): Validation[] {
     validator.error('Encounter period does not contain a start date')
   }
 
+  /* TODO: Ta avgjørelse på diagonesformat
   if (!encounter.diagnosis || encounter.diagnosis.length === 0) {
     validator.error('Encounter does not contain any diagnosis')
   } else {
@@ -109,6 +105,7 @@ function validateEncounter(encounter: Encounter): Validation[] {
       }
     })
   }
+  */
 
   return validator.build()
 }
