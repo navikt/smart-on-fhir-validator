@@ -53,7 +53,12 @@ function Validation() {
             {smart.isLoading && <Spinner text="Initializing FHIR for resource validation" />}
             {smart.client && (
               <div className="flex flex-col gap-3">
-                <ValidationSection index="6" title="Condition validation" refs={fullRefs.condition}>
+                <ValidationSection
+                  index="6"
+                  title="Condition validation"
+                  refs={fullRefs.condition}
+                  description="These are the pasients conditions given the current Encounter. These are fetched using the Condition?encounter=<encounterId> query."
+                >
                   <ConditionValidation client={smart.client} />
                 </ValidationSection>
                 <ValidationSection
