@@ -4,7 +4,7 @@ import Client from 'fhirclient/lib/Client'
 
 import { handleError } from '../../utils/ErrorHandler'
 import { Validator } from '../../validation/Validator'
-import { hl7Refs, navRefs, simplifierRefs } from '../../validation/common-refs'
+import { navRefs, simplifierRefs } from '../../validation/common-refs'
 import { type Validation, validation } from '../../validation/validation'
 import Spinner from '../spinner/Spinner'
 import Validations from '../validation-table/Validations'
@@ -55,7 +55,6 @@ function validatePatient(fhirPatient: Patient): Validation[] {
 
   if (!meta || !meta.profile || meta.profile.includes('http://hl7.no/fhir/StructureDefinition/no-basis-Patient')) {
     validator.error('The Patient must be of type no-basis-Patient', {
-      hl7: hl7Refs.patient,
       simplifier: simplifierRefs.noBasisPasient,
       nav: navRefs.pasient,
     })

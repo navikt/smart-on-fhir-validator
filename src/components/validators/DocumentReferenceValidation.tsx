@@ -1,8 +1,8 @@
 import { useQuery } from '@tanstack/react-query'
-import type { Bundle, DocumentReference } from 'fhir/r4'
+import type { Bundle, DocumentReference, OperationOutcome } from 'fhir/r4'
 import Client from 'fhirclient/lib/Client'
 
-import { handleError } from '../../utils/ErrorHandler'
+import { handleError, handleOperationOutcomeError } from '../../utils/ErrorHandler'
 import { type Validation, validation } from '../../validation/validation'
 import Spinner from '../spinner/Spinner'
 import Validations from '../validation-table/Validations'
@@ -54,6 +54,12 @@ export default function DocumentReferenceValidation({ client }: DocumentReferenc
     : null
 
   const validations: Validation[] = validateDocumentReference(firstRelevantDocumentReference ?? null)
+  const operationOutcome = data?.find(
+    (it) => it != null && (it as unknown as OperationOutcome).resourceType === 'OperationOutcome',
+  )
+  if (operationOutcome != null) {
+    validations.unshift(handleOperationOutcomeError(operationOutcome as unknown as OperationOutcome))
+  }
 
   return (
     <div>
