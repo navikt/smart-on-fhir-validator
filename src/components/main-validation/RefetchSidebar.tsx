@@ -28,6 +28,18 @@ const RefetchSidebar = () => {
           <button
             className="border border-blue-900 rounded-sm bg-blue-300 p-4 py-2 text-gray-900 cursor-pointer"
             onClick={async () => {
+              const webMedPractitionerId = client?.user.fhirUser
+              const practitioner = await client?.request(`Practitioner/${webMedPractitionerId}`)
+              Object.entries(practitioner).forEach(([key, value]) => {
+                console.debug(`ℹ️ (manual) Practitioner.${key}:`, JSON.stringify(value))
+              })
+            }}
+          >
+            Fetch Practitioner
+          </button>
+          <button
+            className="border border-blue-900 rounded-sm bg-blue-300 p-4 py-2 text-gray-900 cursor-pointer"
+            onClick={async () => {
               const practitioner = await client?.request(`Patient/${client.patient.id}`)
               Object.entries(practitioner).forEach(([key, value]) => {
                 console.debug(`ℹ️ (manual) Practitioner.${key}:`, JSON.stringify(value))

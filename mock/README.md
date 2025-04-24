@@ -1,15 +1,3 @@
-# mock
+# fhir-mock-server
 
-To install dependencies:
-
-```bash
-bun install
-```
-
-To run:
-
-```bash
-bun run index.ts
-```
-
-This project was created using `bun init` in bun v1.2.9. [Bun](https://bun.sh) is a fast all-in-one JavaScript runtime.
+This mock server relies on a @navikt dependency which is only available in Github Package Registry. Anyone can access the package, but you need to authenticate to install it. The authentication is done my providing a PAT under the environment variable `$NPM_AUTH_TOKEN` that has the scope `package:read`.
