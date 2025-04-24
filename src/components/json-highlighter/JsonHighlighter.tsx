@@ -7,12 +7,13 @@ import prism from 'react-syntax-highlighter/dist/esm/styles/prism/prism'
 SyntaxHighlighter.registerLanguage('json', json)
 
 export type JsonHighlighterProps = {
-  readonly children: string
+  id?: string
+  children: string
 }
 
-function JsonHighlighter({ children }: JsonHighlighterProps): ReactElement {
+function JsonHighlighter({ id, children }: JsonHighlighterProps): ReactElement {
   return (
-    <SyntaxHighlighter language="json" style={prism}>
+    <SyntaxHighlighter id={id} language="json" style={prism}>
       {children}
     </SyntaxHighlighter>
   )

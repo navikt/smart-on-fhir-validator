@@ -4,6 +4,10 @@ import { useMutation, useQuery } from '@tanstack/react-query'
 import { oauth2 as SMART } from 'fhirclient'
 import Client from 'fhirclient/lib/Client'
 
+import JsonHighlighter from '../components/json-highlighter/JsonHighlighter'
+import Header from '../components/layout/Header'
+import Page from '../components/layout/Page'
+
 function FhirCreateTester(): ReactElement {
   const { data: client, error } = useQuery({
     queryKey: ['smartClient'],
@@ -18,11 +22,12 @@ function FhirCreateTester(): ReactElement {
   })
 
   return (
-    <div>
+    <Page sidebar={null}>
+      <Header />
       <h2 className="text-xl mb-4">FHIR creator</h2>
       {client == null ? <div>Initializing client</div> : <ResourceTester client={client} />}
       {error && <div>Error initializing client: {error.message}</div>}
-    </div>
+    </Page>
   )
 }
 
@@ -103,9 +108,7 @@ function ResourceTester({ client }: { client: Client }) {
               Mark all
             </button>
           </div>
-          <pre id="resource-json" className="p-2 border overflow-auto">
-            {JSON.stringify(data, null, 2)}
-          </pre>
+          <JsonHighlighter id="resource-json">{JSON.stringify(data, null, 2)}</JsonHighlighter>
         </div>
       )}
       {data == null && <div className="mt-8">No resource created yet</div>}
