@@ -9,6 +9,7 @@
     "build": "react-router build",
     "dev": "react-router dev",
     "start": "react-router-serve ./build/server/index.js",
+    "mock": "cd mock && bun i && bun run start",
     "lint": "eslint . --ext ts,tsx --report-unused-disable-directives --max-warnings 0",
     "tsc": "react-router typegen && tsc",
     "format": "prettier -w eslint.config.js src .yarnrc.yml postcss.config.js",

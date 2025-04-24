@@ -1,0 +1,2 @@
+[install.scopes]
+"@navikt" = { token = "$NPM_AUTH_TOKEN", url = "https://npm.pkg.github.com" }
