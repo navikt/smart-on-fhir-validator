@@ -1,5 +1,5 @@
 import { useQuery } from '@tanstack/react-query'
-import type { Condition } from 'fhir/r4'
+import type { Bundle, Condition } from 'fhir/r4'
 import Client from 'fhirclient/lib/Client'
 
 import { handleError } from '../../utils/ErrorHandler'
@@ -16,16 +16,29 @@ export default function ConditionValidation({ client }: ConditionValidationProps
   const { error, data, isLoading } = useQuery({
     queryKey: ['conditions'],
     queryFn: async () => {
-      const condition = await client.request<Condition[]>(`Condition?encounter=${client.encounter.id}`)
-      console.debug('✅ Condition data fetched')
-      Object.entries(condition).forEach(([key, value]) => {
-        console.debug(`ℹ️ Condition.${key}:`, value)
-      })
-      return condition
+      const conditionBundle = await client.request<Bundle<Condition>>(`Condition?encounter=${client.encounter.id}`)
+      console.debug('✅ Condition (Bundle) data fetched')
+
+      if (conditionBundle == null || conditionBundle.resourceType !== 'Bundle') {
+        throw new Error(`Resource is not of type Bundle (was: ${conditionBundle?.resourceType}`)
+      }
+
+      if (conditionBundle.entry == null || conditionBundle.entry.length === 0) {
+        console.debug('No conditions found')
+        return conditionBundle
+      }
+
+      Object.entries(conditionBundle.entry.map((it) => it.resource).filter((it) => it != null)).forEach(
+        ([key, value]) => {
+          console.debug(`ℹ️ Condition.${key}:`, value)
+        },
+      )
+      return conditionBundle
     },
   })
 
-  const validations: Validation[] = data ? validateCondition(data) : []
+  const conditions = data != null && data.entry ? data.entry.map((it) => it.resource).filter((it) => it != null) : []
+  const validations: Validation[] = data ? validateCondition(conditions) : []
 
   return (
     <div>
