@@ -4,7 +4,7 @@
     "": {
       "name": "mock",
       "dependencies": {
-        "@navikt/fhir-mock-server": "^0.0.6",
+        "@navikt/fhir-mock-server": "^0.0.12",
       },
       "devDependencies": {
         "@types/bun": "latest",
@@ -16,7 +16,9 @@
     },
   },
   "packages": {
-    "@navikt/fhir-mock-server": ["@navikt/fhir-mock-server@0.0.6", "https://npm.pkg.github.com/download/@navikt/fhir-mock-server/0.0.6/af92cef0c310e1e2c259e43c7236a9c347455fe2", { "dependencies": { "@navikt/pino-logger": "^3.0.3", "hono": "^4.7.7", "jose": "^6.0.10", "nextleton": "^0.6.1" } }, "sha512-7pDglY6miWy0/f39njCSPIhRj0ID7mzYtJk/i7U5Cg/aBcku8IEdO8JsZSpfTKEs81cNbAKjLFtr2e6/Yvc2cQ=="],
+    "@navikt/fhir-mock-server": ["@navikt/fhir-mock-server@0.0.12", "https://npm.pkg.github.com/download/@navikt/fhir-mock-server/0.0.12/5ef8f2b4dd6c4d993b0d239589cc97f50fe1c6c1", { "dependencies": { "@navikt/fhir-zod": "^0.0.1", "@navikt/pino-logger": "^3.0.3", "hono": "^4.7.7", "jose": "^6.0.10", "nextleton": "^0.6.1", "pino": "^9.6.0", "zod": "^3.24.3" } }, "sha512-vDGfvhMJR3PxTC/Ik6aSEr7pxUdSywVBKGNbLeU4hJ4hsqKW98QuExPadqJXfj1kG4sxJkGQJ7oIzZbDFzqMRw=="],
+
+    "@navikt/fhir-zod": ["@navikt/fhir-zod@0.0.1", "https://npm.pkg.github.com/download/@navikt/fhir-zod/0.0.1/5cee83ae5cd9af393af52c6c10be3960897c29ec", { "peerDependencies": { "zod": "3" } }, "sha512-BIHMvfYCm5yCg+cYenAqQlbtxOtmhghkRIaGxZysspBAK4Vg8n/xbw5DNUqmHqtuqf4Bcd5GTLIXhkIORI4IGA=="],
 
     "@navikt/pino-logger": ["@navikt/pino-logger@3.0.3", "https://npm.pkg.github.com/download/@navikt/pino-logger/3.0.3/bfce21f7e5fc83e8dfb56877a1c6fe06c629d7fa", { "optionalDependencies": { "pino-roll": "3" }, "peerDependencies": { "pino": "8 || 9" } }, "sha512-IZ0oGFbVE8YrstWvfmL3Oz/YXyDVfliDDMFV9GhTMIEzGiAgDhnyz6X/z//1/IvDWys+nuaWwRZW3rvcTD8FLw=="],
 
@@ -93,5 +95,7 @@
     "undici-types": ["undici-types@6.21.0", "", {}, "sha512-iwDZqg0QAGrg9Rav5H4n0M64c3mkR59cJ6wQp+7C4nI0gsmExaedaYLNO44eT4AtBBwjbTiGPMlt2Md0T9H9JQ=="],
 
     "wrappy": ["wrappy@1.0.2", "", {}, "sha512-l4Sp/DRseor9wL6EvV2+TuQn63dMkPjZ/sp9XkghTEbV9KlPS1xUsZ3u7/IQO4wxtcFB4bgpQPRcR3QCvezPcQ=="],
+
+    "zod": ["zod@3.24.3", "", {}, "sha512-HhY1oqzWCQWuUqvBFnsyrtZRhyPeR7SUGv+C4+MsisMuVfSPx8HpwWqH8tRahSlt6M3PiFAcoeFhZAqIXTxoSg=="],
   }
 }

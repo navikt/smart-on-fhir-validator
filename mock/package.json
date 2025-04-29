@@ -15,6 +15,6 @@
     "typescript": "^5"
   },
   "dependencies": {
-    "@navikt/fhir-mock-server": "^0.0.6"
+    "@navikt/fhir-mock-server": "^0.0.12"
   }
 }

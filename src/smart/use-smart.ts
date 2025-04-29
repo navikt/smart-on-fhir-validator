@@ -6,6 +6,7 @@ export function useSmart() {
     data: client,
     error,
     isLoading,
+    failureCount,
   } = useQuery({
     queryKey: ['smartClient'],
     queryFn: () => {
@@ -22,5 +23,6 @@ export function useSmart() {
     client,
     error,
     isLoading,
+    failureCount,
   }
 }

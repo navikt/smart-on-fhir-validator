@@ -23,6 +23,13 @@ function Validation() {
   return (
     <Page sidebar={<RefetchSidebar />}>
       <Header />
+      {import.meta.env.DEV && smart.failureCount > 0 && (
+        <div className="p-4 ml-8">
+          <a href="/launch?iss=http://localhost:5000&launch=mock-launch-id" className="underline">
+            Dev Mode: Launch local mock (port: 5000)?
+          </a>
+        </div>
+      )}
       {smart.error && <ErrorPage error={smart.error.message} />}
       {!smart.error && (
         <>
