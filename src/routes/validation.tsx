@@ -1,3 +1,5 @@
+import OrganizationValidation from 'src/components/validators/OrganizationValidation'
+
 import ErrorPage from '../components/layout/ErrorPage'
 import Header from '../components/layout/Header'
 import Page from '../components/layout/Page'
@@ -55,6 +57,9 @@ function Validation() {
                 </ValidationSection>
                 <ValidationSection index="6" title="Encounter validation" refs={fullRefs.encounter}>
                   <EncounterValidation client={smart.client} />
+                </ValidationSection>
+                <ValidationSection index="7" title="Organization validation" refs={fullRefs.organization}>
+                  <OrganizationValidation client={smart.client} />
                 </ValidationSection>
               </div>
             )}

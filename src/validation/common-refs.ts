@@ -13,11 +13,13 @@ export const hl7Refs = {
   smartLaunch: 'https://build.fhir.org/ig/HL7/smart-app-launch/app-launch.html',
   idToken:
     'https://build.fhir.org/ig/HL7/smart-app-launch/scopes-and-launch-context.html#scopes-for-requesting-identity-data',
+  organization: 'https://hl7.org/fhir/R4/organization.html',
 }
 
 export const simplifierRefs = {
   noBasisPasient: 'https://simplifier.net/HL7Norwayno-basis/NoBasisPatient',
   noBasisPractitioner: 'https://simplifier.net/hl7norwayno-basis/nobasispractitioner',
+  noBasisOrganization: 'https://simplifier.net/hl7norwayno-basis/NoBasisOrganization',
   telecom: 'https://simplifier.net/packages/hl7.fhir.r4.core/4.0.1/files/83048',
 }
 
@@ -27,7 +29,10 @@ export const navRefs = {
   condition: 'https://github.com/navikt/syk-inn/blob/main/docs/fhir/condition.md',
   encounter: 'https://github.com/navikt/syk-inn/blob/main/docs/fhir/encounter.md',
   documentReference: 'https://github.com/navikt/syk-inn/blob/main/docs/fhir/document-reference.md',
+  organization: 'https://github.com/navikt/syk-inn/blob/main/docs/fhir/organization.md',
 }
+
+export const organizationRefs = {}
 
 export const fullRefs = {
   pasient: {
@@ -51,5 +56,8 @@ export const fullRefs = {
   documentReference: {
     hl7: hl7Refs.documentReference,
     nav: navRefs.documentReference,
+  },
+  organization: {
+    hl7: hl7Refs.organization,
   },
 } satisfies Record<string, RefTypes>
