@@ -64,9 +64,9 @@ function validateOrganization(fhirOrganizations: Organization[]): Validation[] {
     if (
       !meta ||
       !meta.profile ||
-      !meta.profile.includes('http://hl7.no/fhir/StructureDefinition/no-basis-Practitioner')
+      !meta.profile.includes('http://hl7.no/fhir/StructureDefinition/no-basis-Organization')
     ) {
-      validator.error('The Practitioner must be of type no-basis-Practitioner', {
+      validator.error('The Organization must be of type no-basis-Organization', {
         simplifier: simplifierRefs.noBasisOrganization,
         nav: navRefs.organization,
       })
