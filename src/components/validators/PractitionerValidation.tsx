@@ -76,8 +76,10 @@ function validatePractitioner(practitioner: Practitioner): Validation[] {
       `The Practitioner does not have a Norwegian Health Personnel Record number (HPR) from OID "${hprSystemIdentifier}"`,
       { nav: navRefs.practitioner },
     )
-  } else if (!norwegianHERIdentifierSystem) {
-    validator.warn(`The Practitioner does not have a Norwegian HER-ID (oid: ${hprSystemIdentifier})`, {
+  }
+
+  if (!norwegianHERIdentifierSystem) {
+    validator.warn(`The Practitioner does not have a Norwegian HER-ID (oid: ${herSystemIdentifier})`, {
       nav: navRefs.practitioner,
     })
   }
