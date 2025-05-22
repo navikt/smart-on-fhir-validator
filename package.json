@@ -13,6 +13,7 @@
     "lint": "eslint . --ext ts,tsx --report-unused-disable-directives --max-warnings 0",
     "tsc": "react-router typegen && tsc",
     "format": "prettier -w eslint.config.js src .yarnrc.yml postcss.config.js",
+    "test": "vitest",
     "postinstall": "husky"
   },
   "dependencies": {
@@ -52,7 +53,8 @@
     "typescript": "^5.8.3",
     "typescript-eslint": "^8.29.1",
     "vite": "^6.2.6",
-    "vite-tsconfig-paths": "^5.1.4"
+    "vite-tsconfig-paths": "^5.1.4",
+    "vitest": "^3.1.4"
   },
   "packageManager": "yarn@4.6.0"
 }

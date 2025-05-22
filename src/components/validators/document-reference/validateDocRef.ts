@@ -1,7 +1,11 @@
 import type { DocumentReference } from 'fhir/r4'
 import { Validator } from 'src/validation/Validator'
 
+import { navRefs } from '../../../validation/common-refs'
 import { type Validation } from '../../../validation/validation'
+
+const DOCUMENT_TYPE_SYSTEM = 'urn:oid:2.16.578.1.12.4.1.1.9602'
+const DOCUMENT_TYPE_CODE = 'J01-2'
 
 export function validateDocumentReference(documentReference: DocumentReference | null): Validation[] {
   const validator = new Validator()
@@ -21,25 +25,48 @@ export function validateDocumentReference(documentReference: DocumentReference |
     validator.error('DocumentReference status must be current')
   }
 
-  if (!documentReference.type) {
-    validator.error('DocumentReference does not contain a type object')
-  } else if (!documentReference.type.coding) {
-    validator.error('DocumentReference type object does not contain a coding object')
+  if (!documentReference.category) {
+    validator.error('DocumentReference does not contain a category list')
+  } else if (documentReference.category.length < 1) {
+    validator.error(
+      `DocumentReference category list is empty and requires at least 1 category of type CodeableConcept with the system ${DOCUMENT_TYPE_SYSTEM}`,
+    )
   } else {
-    documentReference.type.coding.forEach((coding) => {
-      if (!coding.display) {
-        validator.error('DocumentReference type coding object does not contain a display object')
-      }
-      if (!coding.system || !coding.code) {
+    const relevantCategory = documentReference.category.find((category) =>
+      category.coding?.find((coding) => coding.system === DOCUMENT_TYPE_SYSTEM),
+    )
+
+    if (!relevantCategory) {
+      validator.error(
+        `DocumentReference category list does not contain any category with any Codeableøconcept with system "${DOCUMENT_TYPE_SYSTEM}", but found ${documentReference.category.length ?? 0} other non-relevant categories`,
+        { nav: navRefs.documentReference },
+      )
+    } else {
+      const relevantCoding = relevantCategory.coding?.find((it) => it.system === DOCUMENT_TYPE_SYSTEM)
+      if (!relevantCoding) {
         validator.error(
-          `DocumentReference type coding object does not contain a system or code object. System was: ${coding.system} and code was: ${coding.code}`,
+          `DocumentReference type object does not contain a coding object with system "${DOCUMENT_TYPE_SYSTEM}"`,
+          { nav: navRefs.documentReference },
         )
-      } else if (coding.system !== 'urn:oid:2.16.578.1.12.4.1.1.9602' || coding.code !== 'J01-2') {
-        validator.error(
-          `DocumentReference type coding system must be "urn:oid:2.16.578.1.12.4.1.1.9602" and code must be ""J01-2", but was "${coding.system}" and "${coding.code}"`,
-        )
+      } else {
+        if (!relevantCoding.display) {
+          validator.error('DocumentReference type coding object does not contain a display object', {
+            nav: navRefs.documentReference,
+          })
+        }
+        if (!relevantCoding.code) {
+          validator.error(
+            `DocumentReference type coding object does not contain a system or code object. System was: ${relevantCoding.system} and code was: ${relevantCoding.code}`,
+            { nav: navRefs.documentReference },
+          )
+        } else if (relevantCoding.code !== DOCUMENT_TYPE_CODE) {
+          validator.error(
+            `DocumentReference type code must be "${DOCUMENT_TYPE_CODE}", but was "${relevantCoding.code}"`,
+            { nav: navRefs.documentReference },
+          )
+        }
       }
-    })
+    }
   }
 
   if (!documentReference.subject) {
