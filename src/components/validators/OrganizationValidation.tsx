@@ -56,7 +56,7 @@ export default function OrganizationValidation({ client }: OrganizationValidatio
 
 const ENH_IDENTIFIER_SYSTEM = 'urn:oid:2.16.578.1.12.4.1.4.101'
 
-function validateOrganization(fhirOrganizations: Organization[]): Validation[] {
+export function validateOrganization(fhirOrganizations: Organization[]): Validation[] {
   const validator = new Validator()
 
   fhirOrganizations.forEach((organization, index) => {
