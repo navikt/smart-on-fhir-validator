@@ -48,12 +48,12 @@ export default function PatientValidation({ client }: PatientValidationProps) {
 const personalIdentifierSystem = 'urn:oid:2.16.578.1.12.4.1.4.1'
 const dNumberSystem = 'urn:oid:2.16.578.1.12.4.1.4.2'
 
-function validatePatient(fhirPatient: Patient): Validation[] {
+export function validatePatient(fhirPatient: Patient): Validation[] {
   const validator = new Validator()
 
   const meta = fhirPatient.meta
 
-  if (!meta || !meta.profile || meta.profile.includes('http://hl7.no/fhir/StructureDefinition/no-basis-Patient')) {
+  if (!meta || !meta.profile || !meta.profile.includes('http://hl7.no/fhir/StructureDefinition/no-basis-Patient')) {
     validator.error('The Patient must be of type no-basis-Patient', {
       simplifier: simplifierRefs.noBasisPasient,
       nav: navRefs.pasient,
