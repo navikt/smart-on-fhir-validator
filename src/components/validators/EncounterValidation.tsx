@@ -45,7 +45,7 @@ export default function EncounterValidation({ client }: EncounterValidationProps
   )
 }
 
-function validateEncounter(encounter: Encounter): Validation[] {
+export function validateEncounter(encounter: Encounter): Validation[] {
   const validator = new Validator()
 
   if (encounter.resourceType !== 'Encounter') {
