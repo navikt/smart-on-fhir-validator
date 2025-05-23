@@ -26,18 +26,6 @@ describe('validatePractitioner', () => {
           given: ['Magnar'],
         },
       ],
-      telecom: [
-        {
-          system: 'phone',
-          value: '12345678',
-          use: 'mobile',
-        },
-        {
-          system: 'email',
-          value: 'lege@epj.no',
-          use: 'work',
-        },
-      ],
     }
 
     const validations = validatePractitioner(example).filter((it) => ['WARN', 'ERROR'].includes(it.severity))

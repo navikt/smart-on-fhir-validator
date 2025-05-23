@@ -52,31 +52,5 @@ export function validatePractitioner(practitioner: Practitioner): Validation[] {
     }
   }
 
-  const practitionerTelecom = practitioner.telecom
-  if (!practitionerTelecom || practitionerTelecom.length === 0) {
-    validator.error(`The Practitioner does not have a telecom property`, {
-      simplifier: simplifierRefs.telecom,
-      nav: navRefs.practitioner,
-    })
-  } else {
-    practitionerTelecom.forEach((telecom, index) => {
-      if (!telecom.system || !['phone', 'fax', 'email', 'pager', 'url', 'sms', 'other'].includes(telecom.system)) {
-        validator.error(
-          `The Practitioner content [${index}] does not have a telecom system: ${telecom.system ?? 'undefined'} `,
-          { simplifier: simplifierRefs.telecom, nav: navRefs.practitioner },
-        )
-      }
-      if (!telecom.value) {
-        validator.error(`The Practitioner content [${index}] does not have a telecom value`)
-      }
-      if (!telecom.use || !['home', 'work', 'temp', 'old', 'mobile'].includes(telecom.use)) {
-        validator.warn(
-          `The Practitioner content [${index}] does not have a telecom use: "${telecom.use ?? 'undefined'}"`,
-          { simplifier: simplifierRefs.telecom, nav: navRefs.practitioner },
-        )
-      }
-    })
-  }
-
   return validator.build()
 }
