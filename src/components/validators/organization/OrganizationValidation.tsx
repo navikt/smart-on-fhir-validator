@@ -54,4 +54,3 @@ export default function OrganizationValidation({ client }: OrganizationValidatio
     </div>
   )
 }
-

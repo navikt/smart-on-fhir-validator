@@ -14,9 +14,7 @@ export function validateCondition(conditions: Condition[]): Validation[] {
       validator.error(`[${index}] Condition object does not contain a subject reference`)
     } else if (!condition.subject.reference) {
       validator.error(`[${index}] The Condition subject object does not contain a reference`)
-    } else if (!condition.subject.type) {
-      validator.error(`[${index}] The Condition subject object does not contain a type`)
-    } else if (!condition.subject.type.includes('Patient')) {
+    } else if (!condition.subject.reference.includes('Patient')) {
       validator.error(`The Condition subject must be of type Patient, but was "${condition.subject.type}"`)
     }
 

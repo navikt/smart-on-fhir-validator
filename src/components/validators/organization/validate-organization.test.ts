@@ -1,7 +1,6 @@
 import type { Organization } from 'fhir/r4'
 import { describe, expect, it } from 'vitest'
 
-
 import { validateOrganization } from './validate-organization'
 
 describe('validatePatient', () => {

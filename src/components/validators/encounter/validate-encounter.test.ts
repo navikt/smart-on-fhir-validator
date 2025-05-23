@@ -1,7 +1,6 @@
 import type { Encounter } from 'fhir/r4'
 import { describe, expect, it } from 'vitest'
 
-
 import { validateEncounter } from './validate-encounter'
 
 describe('validateEncounter', () => {

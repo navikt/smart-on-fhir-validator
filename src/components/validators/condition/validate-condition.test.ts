@@ -9,8 +9,7 @@ describe('validatePatient', () => {
       resourceType: 'Condition',
       id: 'unik Condition ident',
       subject: {
-        type: 'Patient',
-        reference: 'Pasienten Condition gjelder for',
+        reference: 'Patient/<Pasienten Condition gjelder for>',
       },
       code: {
         coding: [
@@ -33,8 +32,7 @@ describe('validatePatient', () => {
       resourceType: 'Condition',
       id: 'unik Condition ident',
       subject: {
-        type: 'Patient',
-        reference: 'Pasienten Condition gjelder for',
+        reference: 'Patient/<Pasienten Condition gjelder for>',
       },
       code: {
         coding: [
