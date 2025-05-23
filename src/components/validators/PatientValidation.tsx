@@ -56,7 +56,7 @@ export function validatePatient(fhirPatient: Patient): Validation[] {
   if (!meta || !meta.profile || !meta.profile.includes('http://hl7.no/fhir/StructureDefinition/no-basis-Patient')) {
     validator.error('The Patient must be of type no-basis-Patient', {
       simplifier: simplifierRefs.noBasisPasient,
-      nav: navRefs.pasient,
+      nav: navRefs.patient,
     })
   }
 

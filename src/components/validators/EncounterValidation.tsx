@@ -66,37 +66,37 @@ function validateEncounter(encounter: Encounter): Validation[] {
 
   if (!encounter.subject?.reference) {
     validator.error(`Subject object does not contain a subject (type: Patient/<id>)`, {
-      hl7: navRefs.pasient,
-      nav: navRefs.pasient,
+      hl7: navRefs.patient,
+      nav: navRefs.patient,
     })
   } else if (!encounter.subject.reference.startsWith('Patient/')) {
     validator.error(`Subject reference does not start with "Patient/", but was "${encounter.subject.reference}"`, {
-      hl7: navRefs.pasient,
-      nav: navRefs.pasient,
+      hl7: navRefs.patient,
+      nav: navRefs.patient,
     })
   }
 
   if (!encounter.participant || encounter.participant.length === 0) {
     validator.error('Encounter does not contain any participants', {
-      hl7: navRefs.pasient,
-      nav: navRefs.pasient,
+      hl7: navRefs.patient,
+      nav: navRefs.patient,
     })
   } else {
     encounter.participant.forEach((participant) => {
       if (!participant.individual) {
         validator.error('Participant does not contain an individual', {
-          hl7: navRefs.pasient,
-          nav: navRefs.pasient,
+          hl7: navRefs.patient,
+          nav: navRefs.patient,
         })
       } else if (!participant.individual.reference) {
         validator.error('Participant individual reference is not set', {
-          hl7: navRefs.pasient,
-          nav: navRefs.pasient,
+          hl7: navRefs.patient,
+          nav: navRefs.patient,
         })
       } else if (!participant.individual.reference.includes('Practitioner')) {
         validator.error('Participant individual reference is not of type Practitioner', {
-          hl7: navRefs.pasient,
-          nav: navRefs.pasient,
+          hl7: navRefs.patient,
+          nav: navRefs.patient,
         })
       }
     })
@@ -104,13 +104,13 @@ function validateEncounter(encounter: Encounter): Validation[] {
 
   if (!encounter.period) {
     validator.error('Encounter does not contain a period', {
-      hl7: navRefs.pasient,
-      nav: navRefs.pasient,
+      hl7: navRefs.patient,
+      nav: navRefs.patient,
     })
   } else if (!encounter.period.start) {
     validator.error('Encounter period does not contain a start date', {
-      hl7: navRefs.pasient,
-      nav: navRefs.pasient,
+      hl7: navRefs.patient,
+      nav: navRefs.patient,
     })
   }
 

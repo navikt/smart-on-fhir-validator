@@ -24,7 +24,7 @@ export const simplifierRefs = {
 }
 
 export const navRefs = {
-  pasient: 'https://github.com/navikt/syk-inn/blob/main/docs/fhir/pasient.md',
+  patient: 'https://github.com/navikt/syk-inn/blob/main/docs/fhir/patient.md',
   practitioner: 'https://github.com/navikt/syk-inn/blob/main/docs/fhir/practitioner.md',
   condition: 'https://github.com/navikt/syk-inn/blob/main/docs/fhir/condition.md',
   encounter: 'https://github.com/navikt/syk-inn/blob/main/docs/fhir/encounter.md',
@@ -38,7 +38,7 @@ export const fullRefs = {
   pasient: {
     hl7: hl7Refs.patient,
     simplifier: simplifierRefs.noBasisPasient,
-    nav: navRefs.pasient,
+    nav: navRefs.patient,
   },
   practitioner: {
     hl7: hl7Refs.practitioner,
