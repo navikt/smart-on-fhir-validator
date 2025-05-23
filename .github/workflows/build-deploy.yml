@@ -30,6 +30,7 @@ jobs:
       - run: yarn install --immutable
       - run: yarn lint
       - run: yarn tsc
+      - run: yarn test
       - run: yarn build
 
       - name: Setter tag-navn for deploy
