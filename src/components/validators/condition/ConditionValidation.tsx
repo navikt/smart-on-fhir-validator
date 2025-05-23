@@ -2,11 +2,11 @@ import { useQuery } from '@tanstack/react-query'
 import type { Bundle, Condition } from 'fhir/r4'
 import Client from 'fhirclient/lib/Client'
 
-import { handleError } from '../../utils/ErrorHandler'
-import { Validator } from '../../validation/Validator'
-import { type Validation, validation } from '../../validation/validation'
-import Spinner from '../spinner/Spinner'
-import Validations from '../validation-table/Validations'
+import { handleError } from '../../../utils/ErrorHandler'
+import { Validator } from '../../../validation/Validator'
+import { type Validation, validation } from '../../../validation/validation'
+import Spinner from '../../spinner/Spinner'
+import Validations from '../../validation-table/Validations'
 
 export interface ConditionValidationProps {
   readonly client: Client

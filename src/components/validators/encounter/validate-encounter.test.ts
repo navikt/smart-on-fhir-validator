@@ -1,7 +1,8 @@
 import type { Encounter } from 'fhir/r4'
 import { describe, expect, it } from 'vitest'
 
-import { validateEncounter } from './EncounterValidation'
+
+import { validateEncounter } from './validate-encounter'
 
 describe('validateEncounter', () => {
   it('should validate our own example structure', () => {

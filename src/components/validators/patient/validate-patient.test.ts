@@ -1,7 +1,8 @@
 import type { Patient } from 'fhir/r4'
 import { describe, expect, it } from 'vitest'
 
-import { validatePatient } from './PatientValidation'
+
+import { validatePatient } from './validate-patient'
 
 describe('validatePatient', () => {
   it('should validate our own example structure', () => {
