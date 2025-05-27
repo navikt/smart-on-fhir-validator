@@ -20,12 +20,6 @@ describe('validatePractitioner', () => {
           value: 'her-id',
         },
       ],
-      name: [
-        {
-          family: 'Koman',
-          given: ['Magnar'],
-        },
-      ],
     }
 
     const validations = validatePractitioner(example).filter((it) => ['WARN', 'ERROR'].includes(it.severity))

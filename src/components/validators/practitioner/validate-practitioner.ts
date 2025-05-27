@@ -39,18 +39,5 @@ export function validatePractitioner(practitioner: Practitioner): Validation[] {
     })
   }
 
-  const practitionerName = practitioner.name
-  if (!practitionerName || practitionerName.length === 0) {
-    validator.error(`The Practitioner does not have a name property`)
-  } else {
-    const humanName = practitionerName[0]
-    if (!humanName.family) {
-      validator.error('The Practitioner does not have a family name')
-    }
-    if (!humanName.given || humanName.given.length === 0) {
-      validator.error('The Practitioner does not have given name(s)')
-    }
-  }
-
   return validator.build()
 }
