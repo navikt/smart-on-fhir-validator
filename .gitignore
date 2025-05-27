@@ -35,3 +35,7 @@ dist-ssr
 
 # react-router-7
 .react-router
+
+# local dev
+.git-co-authors.yaml
+.husky/prepare-commit-msg
