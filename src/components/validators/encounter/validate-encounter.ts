@@ -35,6 +35,28 @@ export function validateEncounter(encounter: Encounter): Validation[] {
     })
   }
 
+  if (!encounter.diagnosis || encounter.diagnosis.length === 0) {
+    validator.error('Encounter does not contain any diagnoses', {
+      hl7: navRefs.condition,
+      nav: navRefs.condition,
+    })
+  } else {
+    encounter.diagnosis.forEach((diagnosis) => {
+      if (!diagnosis.condition.reference) {
+        validator.error('Diagnosis does not contain a condition reference', {
+          hl7: navRefs.condition,
+          nav: navRefs.condition,
+        })
+      }
+      if (!diagnosis.condition.reference?.startsWith('Condition/')) {
+        validator.error('Diagnosis condition reference does not start with "Condition/"', {
+          hl7: navRefs.condition,
+          nav: navRefs.condition,
+        })
+      }
+    })
+  }
+
   if (!encounter.participant || encounter.participant.length === 0) {
     validator.error('Encounter does not contain any participants', {
       hl7: navRefs.patient,
@@ -52,7 +74,7 @@ export function validateEncounter(encounter: Encounter): Validation[] {
           hl7: navRefs.patient,
           nav: navRefs.patient,
         })
-      } else if (!participant.individual.reference.includes('Practitioner')) {
+      } else if (!participant.individual.reference.startsWith('Practitioner/')) {
         validator.error('Participant individual reference is not of type Practitioner', {
           hl7: navRefs.patient,
           nav: navRefs.patient,
@@ -61,35 +83,17 @@ export function validateEncounter(encounter: Encounter): Validation[] {
     })
   }
 
-  if (!encounter.period) {
-    validator.error('Encounter does not contain a period', {
-      hl7: navRefs.patient,
-      nav: navRefs.patient,
+  if (!encounter.serviceProvider?.reference) {
+    validator.error('Encounter does not contain a service provider', {
+      hl7: navRefs.organization,
+      nav: navRefs.organization,
     })
-  } else if (!encounter.period.start) {
-    validator.error('Encounter period does not contain a start date', {
-      hl7: navRefs.patient,
-      nav: navRefs.patient,
-    })
-  }
-
-  /* TODO: Ta avgjørelse på diagonesformat
-  if (!encounter.diagnosis || encounter.diagnosis.length === 0) {
-    validator.error('Encounter does not contain any diagnosis')
-  } else {
-    encounter.diagnosis.forEach((diagnosis) => {
-      if (!diagnosis.condition) {
-        validator.error('Diagnosis does not contain a condition')
-      } else if (diagnosis.condition.type !== 'Condition') {
-        validator.error(`Diagnosis condition type is not set to "Condition", but was: ${diagnosis.condition.type}`)
-      } else if (!diagnosis.condition.reference) {
-        validator.error('Diagnosis condition reference is not set')
-      } else if (!diagnosis.condition.reference.includes('Condition')) {
-        validator.error('Diagnosis condition reference is not of type Condition')
-      }
+  } else if (!encounter.serviceProvider.reference.startsWith('Organization/')) {
+    validator.error('Encounter service provider reference does not start with "Organization/"', {
+      hl7: navRefs.organization,
+      nav: navRefs.organization,
     })
   }
-  */
 
   return validator.build()
 }

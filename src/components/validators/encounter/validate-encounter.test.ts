@@ -8,11 +8,6 @@ describe('validateEncounter', () => {
     const example: Encounter = {
       resourceType: 'Encounter',
       id: 'unik encounter ident',
-      status: 'in-progress',
-      class: {
-        system: 'http://terminology.hl7.org/CodeSystem/v3-ActCode',
-        code: 'AMB | VR',
-      },
       subject: {
         reference: 'Patient/<Pasienten encounter gjelder for>',
       },
@@ -23,17 +18,21 @@ describe('validateEncounter', () => {
           },
         },
       ],
-      period: {
-        start: 'dato og tid konsultasjonen startet',
-      },
       diagnosis: [
         {
           condition: {
-            type: 'Condition',
-            reference: 'Referanse til Condition i FHIR API',
+            reference: 'Condition/<Referanse til Condition i FHIR API>',
           },
         },
       ],
+      serviceProvider: {
+        reference: 'Organization/<Helseforetaket som utfører konsultasjonen>',
+      },
+      status: 'in-progress',
+      class: {
+        system: 'http://terminology.hl7.org/CodeSystem/v3-ActCode',
+        code: 'AMB | VR',
+      },
     }
     const validations = validateEncounter(example).filter((it) => ['WARN', 'ERROR'].includes(it.severity))
 
