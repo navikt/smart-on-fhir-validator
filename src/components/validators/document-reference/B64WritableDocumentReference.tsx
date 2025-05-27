@@ -151,7 +151,7 @@ function getDocRefWithB64Data(client: Client): DocumentReference {
           title: 'My cool sykmelding document',
           language: 'NO-nb',
           contentType: 'application/pdf',
-          data: btoa(pdf),
+          data: pdf,
         },
       },
     ],
