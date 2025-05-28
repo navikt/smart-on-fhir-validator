@@ -6,28 +6,8 @@ import type { Validation } from '../../../validation/validation'
 import { validateDocumentReference } from './validateDocRef'
 
 const workingDocumentReference: DocumentReference = {
-  id: 'foo-bar-baz',
   resourceType: 'DocumentReference',
-  status: 'current',
-  category: [
-    {
-      coding: [
-        {
-          system: 'urn:oid:2.16.578.1.12.4.1.1.9602',
-          code: 'J01-2',
-          display: 'Sykmeldinger og trygdesaker',
-        },
-      ],
-    },
-  ],
-  subject: {
-    reference: 'Pasienten dokumentet gjelder for',
-  },
-  author: [
-    {
-      reference: 'Lege som autoriserte dokumentet',
-    },
-  ],
+  id: 'foo-bar-baz',
   description: 'Generell forklaring av dokumentet',
   content: [
     {
@@ -39,9 +19,25 @@ const workingDocumentReference: DocumentReference = {
       },
     },
   ],
+  category: [
+    {
+      coding: [
+        {
+          system: 'urn:oid:2.16.578.1.12.4.1.1.9602',
+          code: 'J01-2',
+          display: 'Sykmeldinger og trygdesaker',
+        },
+      ],
+    },
+  ],
+  subject: { reference: 'Patient/<Pasient ID dokumentet gjelder for>' },
+  author: [{ reference: 'Practitioner/<Behandler ID som autoriserte dokumentet>' }],
   context: {
-    encounter: [{ reference: 'Referanse til encounter fordi Nav loven krever konsultasjon for sykmelding' }],
+    encounter: [
+      { reference: 'Encounter/<Referanse til encounter fordi Nav loven krever konsultasjon for sykmelding>' },
+    ],
   },
+  status: 'current',
 }
 
 describe('validateDocRef', () => {

@@ -106,6 +106,14 @@ export function validateDocumentReference(
   } else {
     if (!documentReference.subject.reference) {
       validator.error('DocumentReference subject object does not contain a reference')
+    } else if (!documentReference.subject.reference.startsWith('Patient/')) {
+      validator.error(
+        `DocumentReference subject reference must be of type Patient, but was "${documentReference.subject.reference}"`,
+        {
+          hl7: hl7Refs.documentReference,
+          nav: navRefs.documentReference,
+        },
+      )
     }
   }
 
@@ -117,9 +125,18 @@ export function validateDocumentReference(
         validator.error(
           'DocumentReference author object does not contain a reference to the Practitioner who authorized the document',
         )
+      } else if (!author.reference.startsWith('Practitioner/')) {
+        validator.error(
+          `DocumentReference author reference must be of type Practitioner, but was "${author.reference}"`,
+          {
+            hl7: hl7Refs.documentReference,
+            nav: navRefs.documentReference,
+          },
+        )
       }
     })
   }
+
   if (!documentReference.content) {
     validator.error('DocumentReference does not contain a content object')
   } else {
@@ -155,8 +172,18 @@ export function validateDocumentReference(
 
   if (!documentReference.context) {
     validator.error('DocumentReference does not contain a context object')
-  } else if (!documentReference.context.encounter) {
+  } else if (!documentReference.context.encounter || documentReference.context.encounter.length < 1) {
     validator.error('DocumentReference context object does not contain an encounter object')
+  } else if (!documentReference.context.encounter[0].reference) {
+    validator.error('DocumentReference context encounter object does not contain a reference')
+  } else if (!documentReference.context.encounter[0].reference.startsWith('Encounter/')) {
+    validator.error(
+      `DocumentReference context encounter reference must be of type Encounter, but was "${documentReference.context.encounter[0].reference}"`,
+      {
+        hl7: hl7Refs.documentReference,
+        nav: navRefs.documentReference,
+      },
+    )
   }
 
   return validator.build()
