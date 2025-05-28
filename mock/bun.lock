@@ -4,7 +4,7 @@
     "": {
       "name": "mock",
       "dependencies": {
-        "@navikt/fhir-mock-server": "^0.0.12",
+        "@navikt/fhir-mock-server": "^0.0.14",
       },
       "devDependencies": {
         "@types/bun": "latest",
@@ -16,7 +16,7 @@
     },
   },
   "packages": {
-    "@navikt/fhir-mock-server": ["@navikt/fhir-mock-server@0.0.12", "https://npm.pkg.github.com/download/@navikt/fhir-mock-server/0.0.12/5ef8f2b4dd6c4d993b0d239589cc97f50fe1c6c1", { "dependencies": { "@navikt/fhir-zod": "^0.0.1", "@navikt/pino-logger": "^3.0.3", "hono": "^4.7.7", "jose": "^6.0.10", "nextleton": "^0.6.1", "pino": "^9.6.0", "zod": "^3.24.3" } }, "sha512-vDGfvhMJR3PxTC/Ik6aSEr7pxUdSywVBKGNbLeU4hJ4hsqKW98QuExPadqJXfj1kG4sxJkGQJ7oIzZbDFzqMRw=="],
+    "@navikt/fhir-mock-server": ["@navikt/fhir-mock-server@0.0.14", "https://npm.pkg.github.com/download/@navikt/fhir-mock-server/0.0.14/a5d5bac3f411a9b2af906af1541d259ce7a94395", { "dependencies": { "@navikt/fhir-zod": "^0.0.1", "@navikt/pino-logger": "^3.0.3", "hono": "^4.7.8", "jose": "^6.0.10", "nextleton": "^0.6.1", "pino": "^9.6.0", "zod": "^3.24.3" } }, "sha512-oAhQqSlFjRfraRSmNP9WiKtF+GlVeYtdRt0OSJB7LvAv4U/bPbfFLETmF7ZFd/Dr6wt7jsCeRVKY+Wb4bGZpkg=="],
 
     "@navikt/fhir-zod": ["@navikt/fhir-zod@0.0.1", "https://npm.pkg.github.com/download/@navikt/fhir-zod/0.0.1/5cee83ae5cd9af393af52c6c10be3960897c29ec", { "peerDependencies": { "zod": "3" } }, "sha512-BIHMvfYCm5yCg+cYenAqQlbtxOtmhghkRIaGxZysspBAK4Vg8n/xbw5DNUqmHqtuqf4Bcd5GTLIXhkIORI4IGA=="],
 
@@ -46,7 +46,7 @@
 
     "help-me": ["help-me@5.0.0", "", {}, "sha512-7xgomUX6ADmcYzFik0HzAxh/73YlKR9bmFzf51CZwR+b6YtzU2m0u49hQCqV6SvlqIqsaxovfwdvbnsw3b/zpg=="],
 
-    "hono": ["hono@4.7.7", "", {}, "sha512-2PCpQRbN87Crty8/L/7akZN3UyZIAopSoRxCwRbJgUuV1+MHNFHzYFxZTg4v/03cXUm+jce/qa2VSBZpKBm3Qw=="],
+    "hono": ["hono@4.7.10", "", {}, "sha512-QkACju9MiN59CKSY5JsGZCYmPZkA6sIW6OFCUp7qDjZu6S6KHtJHhAc9Uy9mV9F8PJ1/HQ3ybZF2yjCa/73fvQ=="],
 
     "jose": ["jose@6.0.10", "", {}, "sha512-skIAxZqcMkOrSwjJvplIPYrlXGpxTPnro2/QWTDCxAdWQrSTV5/KqspMWmi5WAx5+ULswASJiZ0a+1B/Lxt9cw=="],
 

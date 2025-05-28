@@ -22,10 +22,11 @@ export default function BinaryUploadWritableDocumentReference({ client }: Binary
   const [docRefId, setDocRefId] = useState<string | undefined>(undefined)
   const { mutate, isPending, error, data, isSuccess } = useMutation({
     mutationFn: async ({ file }: { file: File }) => {
-      const binaryCreationResponse = await client.create({
-        resourceType: 'Binary',
-        contentType: file.type,
-        data: file,
+      const binaryCreationResponse = await client.request({
+        url: 'Binary',
+        method: 'POST',
+        headers: { 'Content-Type': file.type },
+        body: file,
       })
       if (!binaryCreationResponse.id) {
         console.log('Failed to create Binary, ', binaryCreationResponse)
