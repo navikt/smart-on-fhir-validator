@@ -58,7 +58,9 @@ describe('validateDocRef', () => {
 
     const [first] = validations
     expect(first.severity).toEqual('ERROR')
-    expect(first.message).toBe('DocumentReference.id was not the same as the provided ID, was foo-bar-baz, expected wrong-id')
+    expect(first.message).toBe(
+      'DocumentReference.id was not the same as the provided ID, was foo-bar-baz, expected wrong-id',
+    )
   })
 })
 

@@ -33,10 +33,14 @@ export default function BinaryUploadWritableDocumentReference({ client }: Binary
         throw new Error(`Failed to create Binary: ${binaryCreationResponse.statusText}`)
       }
 
-      const docRefCreationResponse = await client.create({
-        id: expectedDocRefId,
-        ...getDocRefWithBinary(client, binaryCreationResponse.id),
-        meta: { lastUpdated: new Date().toISOString() },
+      const docRefCreationResponse = await client.request({
+        url: `DocumentReference/${expectedDocRefId}`,
+        method: 'PUT',
+        body: JSON.stringify({
+          id: expectedDocRefId,
+          ...getDocRefWithBinary(client, binaryCreationResponse.id),
+          meta: { lastUpdated: new Date().toISOString() },
+        }),
       })
 
       if (!docRefCreationResponse.id) {

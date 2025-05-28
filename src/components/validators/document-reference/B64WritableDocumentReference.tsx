@@ -28,10 +28,15 @@ export default function B64WritableDocumentReference({ client }: B64WritableDocu
     isSuccess: isSuccessDocRef,
   } = useMutation({
     mutationFn: async (documentReference: DocumentReference) => {
-      const response = await client.create({
-        id: expectedDocRefId,
-        ...documentReference,
-        meta: { lastUpdated: new Date().toISOString() },
+      const response = await client.request({
+        url: `DocumentReference/${expectedDocRefId}`,
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          id: expectedDocRefId,
+          ...documentReference,
+          meta: { lastUpdated: new Date().toISOString() },
+        }),
       })
 
       if (!response.id) {
