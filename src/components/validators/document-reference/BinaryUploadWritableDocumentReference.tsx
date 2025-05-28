@@ -1,7 +1,7 @@
 import { useState } from 'react'
 
 import { useMutation } from '@tanstack/react-query'
-import type { DocumentReference } from 'fhir/r4'
+import type { Binary, DocumentReference } from 'fhir/r4'
 import Client from 'fhirclient/lib/Client'
 
 import { pdf } from '../../../mocks/base64pdf'
@@ -21,13 +21,12 @@ export default function BinaryUploadWritableDocumentReference({ client }: Binary
   const [expectedDocRefId] = useState<string>(crypto.randomUUID())
   const [docRefId, setDocRefId] = useState<string | undefined>(undefined)
   const { mutate, isPending, error, data, isSuccess } = useMutation({
-    mutationFn: async ({ file }: { file: File }) => {
-      const binaryCreationResponse = await client.request({
-        url: 'Binary',
-        method: 'POST',
-        headers: { 'Content-Type': file.type },
-        body: file,
-      })
+    mutationFn: async ({ base64Data }: { base64Data: string }) => {
+      const binaryCreationResponse = await client.create({
+        resourceType: 'Binary',
+        contentType: 'application/pdf',
+        data: base64Data,
+      } satisfies Binary)
       if (!binaryCreationResponse.id) {
         console.log('Failed to create Binary, ', binaryCreationResponse)
         throw new Error(`Failed to create Binary: ${binaryCreationResponse.statusText}`)
@@ -36,6 +35,7 @@ export default function BinaryUploadWritableDocumentReference({ client }: Binary
       const docRefCreationResponse = await client.request({
         url: `DocumentReference/${expectedDocRefId}`,
         method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           id: expectedDocRefId,
           ...getDocRefWithBinary(client, binaryCreationResponse.id),
@@ -88,7 +88,7 @@ export default function BinaryUploadWritableDocumentReference({ client }: Binary
             <button
               className="border border-blue-900 rounded-sm bg-blue-300 p-4 py-2 text-gray-900 cursor-pointer"
               onClick={() => {
-                mutate({ file: base64ToFile(pdf, 'sykmelding.pdf') })
+                mutate({ base64Data: pdf })
               }}
               disabled={isPending || isSuccess}
             >
@@ -191,21 +191,4 @@ function getDocRefWithBinary(client: Client, id: string): DocumentReference {
       ],
     },
   }
-}
-
-function base64ToFile(base64String: string, fileName: string): File {
-  // Remove the Base64 metadata (if present)
-  const base64WithoutPrefix = base64String.split(',').pop() || ''
-
-  const byteCharacters = atob(base64WithoutPrefix)
-  const byteNumbers = new Array(byteCharacters.length)
-
-  for (let i = 0; i < byteCharacters.length; i++) {
-    byteNumbers[i] = byteCharacters.charCodeAt(i)
-  }
-
-  const byteArray = new Uint8Array(byteNumbers)
-
-  const blob = new Blob([byteArray], { type: 'application/pdf' })
-  return new File([blob], fileName, { type: 'application/pdf' })
 }
