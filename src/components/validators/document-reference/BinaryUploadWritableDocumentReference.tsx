@@ -18,6 +18,7 @@ export interface BinaryUploadWritableDocumentReferenceProps {
 }
 
 export default function BinaryUploadWritableDocumentReference({ client }: BinaryUploadWritableDocumentReferenceProps) {
+  const [expectedDocRefId] = useState<string>(crypto.randomUUID())
   const [docRefId, setDocRefId] = useState<string | undefined>(undefined)
   const { mutate, isPending, error, data, isSuccess } = useMutation({
     mutationFn: async ({ file }: { file: File }) => {
@@ -32,6 +33,7 @@ export default function BinaryUploadWritableDocumentReference({ client }: Binary
       }
 
       const docRefCreationResponse = await client.create({
+        id: expectedDocRefId,
         ...getDocRefWithBinary(client, binaryCreationResponse.id),
         meta: { lastUpdated: new Date().toISOString() },
       })
@@ -133,7 +135,7 @@ export default function BinaryUploadWritableDocumentReference({ client }: Binary
       </div>
     )
   } else {
-    const validations: Validation[] = data ? validateDocumentReference(fetchedDocRefData) : []
+    const validations: Validation[] = data ? validateDocumentReference(fetchedDocRefData, expectedDocRefId) : []
     return (
       <div>
         <div>

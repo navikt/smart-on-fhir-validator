@@ -53,7 +53,7 @@ export default function DocumentReferenceValidation({ client }: DocumentReferenc
     ? data.find((it) => it != null && it.resourceType === 'DocumentReference')
     : null
 
-  const validations: Validation[] = validateDocumentReference(firstRelevantDocumentReference ?? null)
+  const validations: Validation[] = validateDocumentReference(firstRelevantDocumentReference ?? null, null)
   const operationOutcome = data?.find(
     (it) => it != null && (it as unknown as OperationOutcome).resourceType === 'OperationOutcome',
   )

@@ -1,35 +1,67 @@
 import type { DocumentReference } from 'fhir/r4'
 import { Validator } from 'src/validation/Validator'
 
-import { navRefs } from '../../../validation/common-refs'
+import { hl7Refs, navRefs } from '../../../validation/common-refs'
 import { type Validation } from '../../../validation/validation'
 
 const DOCUMENT_TYPE_SYSTEM = 'urn:oid:2.16.578.1.12.4.1.1.9602'
 const DOCUMENT_TYPE_CODE = 'J01-2'
 
-export function validateDocumentReference(documentReference: DocumentReference | null): Validation[] {
+export function validateDocumentReference(
+  documentReference: DocumentReference | null,
+  expectedDocRefId: string | null,
+): Validation[] {
   const validator = new Validator()
 
   if (documentReference == null) {
-    validator.error('No document reference found')
+    validator.error('No document reference found', {
+      hl7: hl7Refs.documentReference,
+      nav: navRefs.documentReference,
+    })
     return validator.build()
   }
 
   if (documentReference.resourceType !== 'DocumentReference') {
-    validator.error('Resource is not of type DocumentReference')
+    validator.error('Resource is not of type DocumentReference', {
+      hl7: hl7Refs.documentReference,
+      nav: navRefs.documentReference,
+    })
+  }
+
+  if (expectedDocRefId != null && documentReference.id !== expectedDocRefId) {
+    validator.error(
+      `DocumentReference.id was not the same as the provided ID, was ${documentReference.id ?? 'missing'}, expected ${expectedDocRefId}`,
+      {
+        hl7: hl7Refs.documentReference,
+        nav: navRefs.documentReference,
+      },
+    )
   }
 
   if (!documentReference.status) {
-    validator.error('DocumentReference does not contain a status object')
+    validator.error('DocumentReference does not contain a status object', {
+      hl7: hl7Refs.documentReference,
+      nav: navRefs.documentReference,
+    })
   } else if (documentReference.status !== 'current') {
-    validator.error('DocumentReference status must be current')
+    validator.error('DocumentReference status must be current', {
+      hl7: hl7Refs.documentReference,
+      nav: navRefs.documentReference,
+    })
   }
 
   if (!documentReference.category) {
-    validator.error('DocumentReference does not contain a category list')
+    validator.error('DocumentReference does not contain a category list', {
+      hl7: hl7Refs.documentReference,
+      nav: navRefs.documentReference,
+    })
   } else if (documentReference.category.length < 1) {
     validator.error(
       `DocumentReference category list is empty and requires at least 1 category of type CodeableConcept with the system ${DOCUMENT_TYPE_SYSTEM}`,
+      {
+        hl7: hl7Refs.documentReference,
+        nav: navRefs.documentReference,
+      },
     )
   } else {
     const relevantCategory = documentReference.category.find((category) =>

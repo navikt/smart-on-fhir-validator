@@ -18,6 +18,7 @@ export interface B64WritableDocumentReferenceProps {
 }
 
 export default function B64WritableDocumentReference({ client }: B64WritableDocumentReferenceProps) {
+  const [expectedDocRefId] = useState<string>(crypto.randomUUID())
   const [docRefId, setDocRefId] = useState<string | undefined>(undefined)
 
   const {
@@ -28,6 +29,7 @@ export default function B64WritableDocumentReference({ client }: B64WritableDocu
   } = useMutation({
     mutationFn: async (documentReference: DocumentReference) => {
       const response = await client.create({
+        id: expectedDocRefId,
         ...documentReference,
         meta: { lastUpdated: new Date().toISOString() },
       })
@@ -44,7 +46,7 @@ export default function B64WritableDocumentReference({ client }: B64WritableDocu
   })
 
   const { error, data, isLoading } = useDocumentReferenceQuery(client, docRefId)
-  const validations: Validation[] = data ? validateDocumentReference(data) : []
+  const validations: Validation[] = data ? validateDocumentReference(data, expectedDocRefId) : []
 
   // create document reference if it does not exist
   if (!docRefId) {
