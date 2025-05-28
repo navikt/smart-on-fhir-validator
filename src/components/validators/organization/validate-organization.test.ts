@@ -17,22 +17,18 @@ describe('validatePatient', () => {
           value: 'org-nummer / ENH',
         },
         {
-          system: 'urn:oid:2.16.578.1.12.4.1.4.102',
-          value: 'RESH ID / RSH',
+          system: 'urn:oid:2.16.578.1.12.4.1.2',
+          value: 'HER-id',
         },
       ],
-      name: 'Navn på organisasjon',
       telecom: [
-        {
-          system: 'email',
-          value: 'lege@epj.no',
-        },
         {
           system: 'phone',
           value: '12345678',
         },
       ],
     }
+
     const validations = validateOrganization([example]).filter((it) => ['WARN', 'ERROR'].includes(it.severity))
 
     expect(validations).toEqual([])

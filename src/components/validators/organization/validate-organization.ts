@@ -5,6 +5,7 @@ import { navRefs, simplifierRefs } from '../../../validation/common-refs'
 import type { Validation } from '../../../validation/validation'
 
 const ENH_IDENTIFIER_SYSTEM = 'urn:oid:2.16.578.1.12.4.1.4.101'
+const HER_IDENTIFIER_SYSTEM = 'urn:oid:2.16.578.1.12.4.1.2'
 
 export function validateOrganization(fhirOrganizations: Organization[]): Validation[] {
   const validator = new Validator()
@@ -21,11 +22,13 @@ export function validateOrganization(fhirOrganizations: Organization[]): Validat
         nav: navRefs.organization,
       })
     }
+
     if (organization.resourceType !== 'Organization') {
       validator.error(`[${index}] Resource is not of type Organization`)
     }
-    const identifier = organization.identifier?.find((id) => id.system === ENH_IDENTIFIER_SYSTEM)
-    if (!identifier) {
+
+    const enhIdentifier = organization.identifier?.find((id) => id.system === ENH_IDENTIFIER_SYSTEM)
+    if (!enhIdentifier) {
       validator.error(
         `[${index}] The organization does not have an identifier of type ENH (oid: ${ENH_IDENTIFIER_SYSTEM})`,
         {
@@ -33,23 +36,31 @@ export function validateOrganization(fhirOrganizations: Organization[]): Validat
         },
       )
     }
-    if (!organization.name) {
-      validator.error(`[${index}] Organization.name is required`)
+
+    const herIdentifier = organization.identifier?.find((id) => id.system === HER_IDENTIFIER_SYSTEM)
+    if (!herIdentifier) {
+      validator.error(
+        `[${index}] The organization does not have an identifier of type HER (oid: ${HER_IDENTIFIER_SYSTEM})`,
+        {
+          nav: navRefs.organization,
+        },
+      )
     }
-    organization.telecom?.forEach((telecom, telecomIndex) => {
-      if (!telecom.system) {
-        validator.error(`[${index}].telecom[${telecomIndex}].system is required`, {
+
+    const phoneNumber = organization.telecom?.find((telecom) => telecom.system === 'phone')
+    if (!phoneNumber) {
+      validator.error(`[${index}] The organization does not have a phone number`, {
+        simplifier: simplifierRefs.telecom,
+        nav: navRefs.organization,
+      })
+    } else {
+      if (!phoneNumber.value) {
+        validator.error(`[${index}].telecom.value is required`, {
           simplifier: simplifierRefs.telecom,
           nav: navRefs.organization,
         })
       }
-      if (!telecom.value) {
-        validator.error(`[${index}].telecom[${telecomIndex}].value is required`, {
-          simplifier: simplifierRefs.telecom,
-          nav: navRefs.organization,
-        })
-      }
-    })
+    }
   })
 
   return validator.build()
