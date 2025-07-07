@@ -1,6 +1,6 @@
 import { useQuery } from '@tanstack/react-query'
 import type { Practitioner } from 'fhir/r4'
-import Client from 'fhirclient/lib/Client'
+import type { Client } from '../../../fhir/FakeClient'
 
 import { handleError } from '../../../utils/ErrorHandler'
 import { type Validation, validation } from '../../../validation/validation'
@@ -15,15 +15,15 @@ export interface PractitionerValidationProps {
 
 export default function PractitionerValidation({ client }: PractitionerValidationProps) {
   const { error, data, isLoading } = useQuery({
-    queryKey: ['encounterValidation', client.user.fhirUser],
+    queryKey: ['encounterValidation', client.fhirUser],
     queryFn: async () => {
-      if (client.user.fhirUser == null) {
+      if (client.fhirUser == null) {
         throw new Error('ID-token missing the fhirUser claim. ')
       }
-      if (client.getUserType() !== 'Practitioner') {
-        throw new Error(`ID-token fhirUser must be Practitioner, but was "${client.getUserType()}" `)
+      if (client.fhirUserType !== 'Practitioner') {
+        throw new Error(`ID-token fhirUser must be Practitioner, but was "${client.fhirUserType}" `)
       }
-      const practitioner = await client.request<Practitioner>(client.user.fhirUser)
+      const practitioner = await client.request<Practitioner>(client.fhirUser)
       console.debug('✅ Practitioner data fetched')
       Object.entries(practitioner).forEach(([key, value]) => {
         console.debug(`ℹ️ Practitioner.${key}:`, value)

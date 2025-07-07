@@ -1,6 +1,6 @@
 import { useQuery } from '@tanstack/react-query'
 import type { DocumentReference } from 'fhir/r4'
-import Client from 'fhirclient/lib/Client'
+import type { Client } from '../../../fhir/FakeClient'
 
 export function useDocumentReferenceQuery(client: Client, docRefId: string | undefined) {
   return useQuery({

@@ -1,6 +1,6 @@
 import { useQuery } from '@tanstack/react-query'
 import type { Encounter } from 'fhir/r4'
-import Client from 'fhirclient/lib/Client'
+import type { Client } from '../../../fhir/FakeClient'
 
 import { handleError } from '../../../utils/ErrorHandler'
 import { type Validation, validation } from '../../../validation/validation'

@@ -1,6 +1,6 @@
 import { useQuery } from '@tanstack/react-query'
 import type { Bundle, Organization } from 'fhir/r4'
-import type Client from 'fhirclient/lib/Client'
+import type { Client } from '../../../fhir/FakeClient'
 
 import { handleError } from '../../../utils/ErrorHandler'
 import { type Validation, validation } from '../../../validation/validation'
@@ -15,7 +15,7 @@ export interface OrganizationValidationProps {
 
 export default function OrganizationValidation({ client }: OrganizationValidationProps) {
   const { error, data, isLoading } = useQuery({
-    queryKey: ['organizationValidation', client.getFhirUser()],
+    queryKey: ['organizationValidation', client.fhirUser],
     queryFn: async () => {
       const organizationBundle = await client.request<Bundle<Organization>>(`Organization`) // TODO: Fetch practitionerRole first and get key
 

@@ -4,19 +4,14 @@ import Page from '../components/layout/Page'
 import RefetchSidebar from '../components/main-validation/RefetchSidebar'
 import Spinner from '../components/spinner/Spinner'
 import ValidationSection from '../components/validation-table/ValidationSection'
-import IdTokenValidation from '../components/validators/IdTokenValidation'
-import SmartConfigValidation from '../components/validators/SmartConfigValidation'
-import TokenResponseValidation from '../components/validators/TokenResponseValidation'
 import ConditionValidation from '../components/validators/condition/ConditionValidation'
-import B64WritableDocumentReference from '../components/validators/document-reference/B64WritableDocumentReference'
-import BinaryUploadWritableDocumentReference from '../components/validators/document-reference/BinaryUploadWritableDocumentReference'
 import DocumentReferenceValidation from '../components/validators/document-reference/DocumentReferenceValidation'
 import EncounterValidation from '../components/validators/encounter/EncounterValidation'
 import OrganizationValidation from '../components/validators/organization/OrganizationValidation'
 import PatientValidation from '../components/validators/patient/PatientValidation'
 import PractitionerValidation from '../components/validators/practitioner/PractitionerValidation'
 import { useSmart } from '../smart/use-smart'
-import { fullRefs, hl7Refs } from '../validation/common-refs'
+import { fullRefs } from '../validation/common-refs'
 
 function Validation() {
   const smart = useSmart()
@@ -39,15 +34,6 @@ function Validation() {
             {smart.isLoading && <Spinner text="Initializing FHIR for resource validation" />}
             {smart.client && (
               <div className="flex flex-col gap-3">
-                <ValidationSection index="1" title="SMART configuration validation" refs={{ hl7: hl7Refs.smartLaunch }}>
-                  <SmartConfigValidation client={smart.client} />
-                </ValidationSection>
-                <ValidationSection index="2" title="ID token validation" refs={{ hl7: hl7Refs.idToken }}>
-                  <IdTokenValidation client={smart.client} />
-                </ValidationSection>
-                <ValidationSection index="3" title="Token Response validation">
-                  <TokenResponseValidation client={smart.client} />
-                </ValidationSection>
                 <ValidationSection index="4" title="Patient validation" refs={fullRefs.pasient}>
                   <PatientValidation client={smart.client} />
                 </ValidationSection>
@@ -83,21 +69,6 @@ function Validation() {
                   refs={fullRefs.documentReference}
                 >
                   <DocumentReferenceValidation client={smart.client} />
-                </ValidationSection>
-                <ValidationSection
-                  index="10"
-                  title="Writable (binary) DocumentReference validation"
-                  description="Uploads a Binary then creates a DocumentReference to said Binary, shows the result of the mutations"
-                  refs={fullRefs.documentReference}
-                >
-                  <BinaryUploadWritableDocumentReference client={smart.client} />
-                </ValidationSection>
-                <ValidationSection
-                  index="11"
-                  title="Writable (b64) DocumentReference validation"
-                  description="Uploads a DocumentReference directly with a b64 encoded payload, then shows the result of the mutation."
-                >
-                  <B64WritableDocumentReference client={smart.client} />
                 </ValidationSection>
               </div>
             )}

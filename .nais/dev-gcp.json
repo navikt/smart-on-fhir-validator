@@ -2,12 +2,11 @@
   "app": "nav-smart-on-fhir-example",
   "namespace": "helseopplysninger",
   "team": "helseopplysninger",
-  "ingresses": [
-    "https://nav-on-fhir.ekstern.dev.nav.no"
-  ],
+  "ingresses": ["https://nav-on-fhir.ekstern.dev.nav.no"],
   "externalHosts": [
     "api.dips.no",
     "fhirapi.public.webmedepj.no",
+    "fhir-api-auth.public.webmedepj.no",
     "launch.smarthealthit.org"
   ]
 }

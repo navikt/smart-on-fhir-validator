@@ -1,7 +1,7 @@
 import { useQuery } from '@tanstack/react-query'
 import type { Bundle, DocumentReference, OperationOutcome } from 'fhir/r4'
-import Client from 'fhirclient/lib/Client'
 
+import type { Client } from '../../../fhir/FakeClient'
 import { handleError, handleOperationOutcomeError } from '../../../utils/ErrorHandler'
 import { type Validation, validation } from '../../../validation/validation'
 import Spinner from '../../spinner/Spinner'

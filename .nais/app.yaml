@@ -27,9 +27,13 @@ spec:
   accessPolicy:
     outbound:
       external:
-      {{#each externalHost as |host|}}
+      {{#each externalHosts as |host|}}
          - host: {{ host }}
       {{/each}}
+      rules:
+        # Team Logs: https://docs.nais.io/observability/logging/how-to/team-logs/
+        - application: logging
+          namespace: nais-system
   resources:
     requests:
       cpu: 50m

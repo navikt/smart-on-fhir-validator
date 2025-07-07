@@ -1,11 +1,13 @@
 import { Link } from 'react-router'
 
+import type { Encounter, Practitioner } from 'fhir/r4'
+
 import { useSmart } from '../../smart/use-smart'
 
 const RefetchSidebar = () => {
   const { client, isLoading } = useSmart()
 
-  if (isLoading) return null
+  if (isLoading || client == null) return null
 
   return (
     <div className="flex flex-col gap-8">
@@ -16,31 +18,7 @@ const RefetchSidebar = () => {
           <button
             className="border border-blue-900 rounded-sm bg-blue-300 p-4 py-2 text-gray-900 cursor-pointer"
             onClick={async () => {
-              const webMedPractitionerId = client?.getState('tokenResponse.practitioner')
-              const practitioner = await client?.request(`Practitioner/${webMedPractitionerId}`)
-              Object.entries(practitioner).forEach(([key, value]) => {
-                console.debug(`ℹ️ (manual) Practitioner.${key}:`, JSON.stringify(value))
-              })
-            }}
-          >
-            Fetch WebMed Practitioner
-          </button>
-          <button
-            className="border border-blue-900 rounded-sm bg-blue-300 p-4 py-2 text-gray-900 cursor-pointer"
-            onClick={async () => {
-              const webMedPractitionerId = client?.user.fhirUser
-              const practitioner = await client?.request(`Practitioner/${webMedPractitionerId}`)
-              Object.entries(practitioner).forEach(([key, value]) => {
-                console.debug(`ℹ️ (manual) Practitioner.${key}:`, JSON.stringify(value))
-              })
-            }}
-          >
-            Fetch Practitioner
-          </button>
-          <button
-            className="border border-blue-900 rounded-sm bg-blue-300 p-4 py-2 text-gray-900 cursor-pointer"
-            onClick={async () => {
-              const practitioner = await client?.request(`Patient/${client.patient.id}`)
+              const practitioner = await client.request<Practitioner>(`Patient/${client.patient.id}`)
               Object.entries(practitioner).forEach(([key, value]) => {
                 console.debug(`ℹ️ (manual) Practitioner.${key}:`, JSON.stringify(value))
               })
@@ -51,7 +29,7 @@ const RefetchSidebar = () => {
           <button
             className="border border-blue-900 rounded-sm bg-blue-300 p-4 py-2 text-gray-900 cursor-pointer"
             onClick={async () => {
-              const encounter = await client?.request(`Encounter/${client.encounter.id}`)
+              const encounter = await client.request<Encounter>(`Encounter/${client.encounter.id}`)
               Object.entries(encounter).forEach(([key, value]) => {
                 console.debug(`ℹ️ (manual) Encounter.${key}:`, JSON.stringify(value))
               })
