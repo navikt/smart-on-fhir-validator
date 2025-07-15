@@ -39,7 +39,7 @@ export function validateOrganization(fhirOrganizations: Organization[]): Validat
 
     const herIdentifier = organization.identifier?.find((id) => id.system === HER_IDENTIFIER_SYSTEM)
     if (!herIdentifier) {
-      validator.error(
+      validator.warn(
         `[${index}] The organization does not have an identifier of type HER (oid: ${HER_IDENTIFIER_SYSTEM})`,
         {
           nav: navRefs.organization,

@@ -36,7 +36,7 @@ export function validateEncounter(encounter: Encounter): Validation[] {
   }
 
   if (!encounter.diagnosis || encounter.diagnosis.length === 0) {
-    validator.error('Encounter does not contain any diagnoses', {
+    validator.warn('Encounter does not contain any diagnoses', {
       hl7: hl7Refs.condition,
       nav: navRefs.condition,
     })
