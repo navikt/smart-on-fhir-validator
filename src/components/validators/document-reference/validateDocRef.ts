@@ -51,12 +51,12 @@ export function validateDocumentReference(
   }
 
   if (!documentReference.type) {
-    validator.error('DocumentReference does not contain a CodeableConcept type', {
+    validator.error('DocumentReference does not contain a type object', {
       hl7: hl7Refs.documentReference,
       nav: navRefs.documentReference,
     })
   } else if (!documentReference.type.coding) {
-    validator.error('DocumentReference contains the type field, but is missing the "coding" array', {
+    validator.error('DocumentReference type object does not contain a coding array', {
       hl7: hl7Refs.documentReference,
       nav: navRefs.documentReference,
     })
@@ -75,7 +75,7 @@ export function validateDocumentReference(
 
     if (!relevantType) {
       validator.error(
-        `DocumentReference type does not contain any type with any CodeableConcept with system "${DOCUMENT_TYPE_SYSTEM}", but found ${documentReference.type.coding.length ?? 0} other non-relevant type`,
+        `DocumentReference type does not contain any type with any CodeableConcept with system "${DOCUMENT_TYPE_SYSTEM}", but found ${documentReference.type.coding.length ?? 0} other non-relevant codings`,
         { nav: navRefs.documentReference },
       )
     } else {
@@ -187,6 +187,12 @@ export function validateDocumentReference(
         hl7: hl7Refs.documentReference,
         nav: navRefs.documentReference,
       },
+    )
+  }
+
+  if(!documentReference.description) {
+    validator.warn('DocumentReference does not contain a description field. Nav generates descriptions like "100% Sykmelding fra DD.MM.YYYY til DD.MM.YYYY"',
+      { nav: navRefs.documentReference }
     )
   }
 
