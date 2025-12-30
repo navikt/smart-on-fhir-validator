@@ -1,4 +1,4 @@
-import type { DocumentReference } from 'fhir/r4'
+import type {Coding, DocumentReference} from "fhir/r4";
 import { Validator } from 'src/validation/Validator'
 
 import { hl7Refs, navRefs } from '../../../validation/common-refs'
@@ -50,50 +50,54 @@ export function validateDocumentReference(
     })
   }
 
-  if (!documentReference.category) {
-    validator.error('DocumentReference does not contain a category list', {
+  if (!documentReference.type) {
+    validator.error('DocumentReference does not contain a CodeableConcept type', {
       hl7: hl7Refs.documentReference,
       nav: navRefs.documentReference,
     })
-  } else if (documentReference.category.length < 1) {
+  } else if (!documentReference.type.coding) {
+    validator.error('DocumentReference contains the type field, but is missing the "coding" array', {
+      hl7: hl7Refs.documentReference,
+      nav: navRefs.documentReference,
+    })
+  } else if (documentReference.type.coding.length < 1) {
     validator.error(
-      `DocumentReference category list is empty and requires at least 1 category of type CodeableConcept with the system ${DOCUMENT_TYPE_SYSTEM}`,
+      `DocumentReference type.coding list is empty and requires at least 1 type of type CodeableConcept with the system ${DOCUMENT_TYPE_SYSTEM}`,
       {
         hl7: hl7Refs.documentReference,
         nav: navRefs.documentReference,
       },
     )
   } else {
-    const relevantCategory = documentReference.category.find((category) =>
-      category.coding?.find((coding) => coding.system === DOCUMENT_TYPE_SYSTEM),
+    const relevantType = documentReference.type.coding.find((coding: Coding)=>
+      coding.system === DOCUMENT_TYPE_SYSTEM
     )
 
-    if (!relevantCategory) {
+    if (!relevantType) {
       validator.error(
-        `DocumentReference category list does not contain any category with any Codeableøconcept with system "${DOCUMENT_TYPE_SYSTEM}", but found ${documentReference.category.length ?? 0} other non-relevant categories`,
+        `DocumentReference type does not contain any type with any CodeableConcept with system "${DOCUMENT_TYPE_SYSTEM}", but found ${documentReference.type.coding.length ?? 0} other non-relevant type`,
         { nav: navRefs.documentReference },
       )
     } else {
-      const relevantCoding = relevantCategory.coding?.find((it) => it.system === DOCUMENT_TYPE_SYSTEM)
-      if (!relevantCoding) {
+      if (relevantType.system !== DOCUMENT_TYPE_SYSTEM) {
         validator.error(
           `DocumentReference type object does not contain a coding object with system "${DOCUMENT_TYPE_SYSTEM}"`,
           { nav: navRefs.documentReference },
         )
       } else {
-        if (!relevantCoding.display) {
+        if (!relevantType.display) {
           validator.error('DocumentReference type coding object does not contain a display object', {
             nav: navRefs.documentReference,
           })
         }
-        if (!relevantCoding.code) {
+        if (!relevantType.code) {
           validator.error(
-            `DocumentReference type coding object does not contain a system or code object. System was: ${relevantCoding.system} and code was: ${relevantCoding.code}`,
+            `DocumentReference type coding object does not contain a system or code object. System was: ${relevantType.system} and code was: ${relevantType.code}`,
             { nav: navRefs.documentReference },
           )
-        } else if (relevantCoding.code !== DOCUMENT_TYPE_CODE) {
+        } else if (relevantType.code !== DOCUMENT_TYPE_CODE) {
           validator.error(
-            `DocumentReference type code must be "${DOCUMENT_TYPE_CODE}", but was "${relevantCoding.code}"`,
+            `DocumentReference type code must be "${DOCUMENT_TYPE_CODE}", but was "${relevantType.code}"`,
             { nav: navRefs.documentReference },
           )
         }
