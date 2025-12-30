@@ -19,17 +19,15 @@ const workingDocumentReference: DocumentReference = {
       },
     },
   ],
-  category: [
-    {
-      coding: [
-        {
-          system: 'urn:oid:2.16.578.1.12.4.1.1.9602',
-          code: 'J01-2',
-          display: 'Sykmeldinger og trygdesaker',
-        },
-      ],
-    },
-  ],
+  type: {
+    coding: [
+      {
+        system: 'urn:oid:2.16.578.1.12.4.1.1.9602',
+        code: 'J01-2',
+        display: 'Sykmeldinger og trygdesaker',
+      },
+    ],
+  },
   subject: { reference: 'Patient/<Pasient ID dokumentet gjelder for>' },
   author: [{ reference: 'Practitioner/<Behandler ID som autoriserte dokumentet>' }],
   context: {
