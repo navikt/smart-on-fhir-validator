@@ -158,7 +158,7 @@ export function validateDocumentReference(
         )
       } else if (content.attachment.url) {
         validator.info(
-          'DocumentReference content attachment object contains "url" with a reference to a binary file on the FHIR-server - all good"',
+          'DocumentReference content attachment object contains "url" with a reference to a binary file on the FHIR-server - all good',
         )
       }
       if (!content.attachment.contentType && !content.attachment.url) {
