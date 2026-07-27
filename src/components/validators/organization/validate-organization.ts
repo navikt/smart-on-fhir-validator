@@ -5,7 +5,6 @@ import { navRefs, simplifierRefs } from '../../../validation/common-refs'
 import type { Validation } from '../../../validation/validation'
 
 const ENH_IDENTIFIER_SYSTEM = 'urn:oid:2.16.578.1.12.4.1.4.101'
-// const HER_IDENTIFIER_SYSTEM = 'urn:oid:2.16.578.1.12.4.1.2'
 
 export function validateOrganization(fhirOrganizations: Organization[]): Validation[] {
   const validator = new Validator()
@@ -36,16 +35,6 @@ export function validateOrganization(fhirOrganizations: Organization[]): Validat
         },
       )
     }
-
-    /*const herIdentifier = organization.identifier?.find((id) => id.system === HER_IDENTIFIER_SYSTEM)
-    if (!herIdentifier) {
-      validator.warn(
-        `[${index}] The organization does not have an identifier of type HER (oid: ${HER_IDENTIFIER_SYSTEM})`,
-        {
-          nav: navRefs.organization,
-        },
-      )
-    }*/
 
     const phoneNumber = organization.telecom?.find((telecom) => telecom.system === 'phone')
     if (!phoneNumber) {
