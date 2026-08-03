@@ -13,11 +13,17 @@ export interface ConditionValidationProps {
   readonly client: Client
 }
 
+/**
+ * Condition is a searchable resource in FHIR and should be searched
+ * using the patient ID.
+ *
+ * @see https://hl7.org/fhir/R4/condition.html
+ */
 export default function ConditionValidation({ client }: ConditionValidationProps) {
   const { error, data, isLoading } = useQuery({
     queryKey: ['conditions'],
     queryFn: async () => {
-      const conditionBundle = await client.request<Bundle<Condition>>(`Condition?encounter=${client.encounter.id}`)
+      const conditionBundle = await client.request<Bundle<Condition>>(`Condition?patient=${client.patient.id}`)
       console.debug('✅ Condition (Bundle) data fetched')
 
       if (conditionBundle == null || conditionBundle.resourceType !== 'Bundle') {
