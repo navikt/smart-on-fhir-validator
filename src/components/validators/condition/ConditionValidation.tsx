@@ -23,7 +23,7 @@ export default function ConditionValidation({ client }: ConditionValidationProps
   const { error, data, isLoading } = useQuery({
     queryKey: ['conditions'],
     queryFn: async () => {
-      const conditionBundle = await client.request<Bundle<Condition>>(`Condition?patient=${client.patient.id}`)
+      const conditionBundle = await client.request<Bundle<Condition>>(`Condition?subject=${client.patient.id}`)
       console.debug('✅ Condition (Bundle) data fetched')
 
       if (conditionBundle == null || conditionBundle.resourceType !== 'Bundle') {
