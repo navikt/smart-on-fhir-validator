@@ -15,7 +15,7 @@ export interface PatientValidationProps {
 
 export default function PatientValidation({ client }: PatientValidationProps) {
   const { error, data, isLoading } = useQuery({
-    queryKey: ['encounterValidation', client.patient.id],
+    queryKey: ['patientValidation', client.patient.id],
     queryFn: async () => {
       const patient = await client.request<Patient>(`Patient/${client.patient.id}`)
 

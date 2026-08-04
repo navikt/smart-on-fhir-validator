@@ -1,20 +1,23 @@
-import { useQuery } from '@tanstack/react-query'
-import type { Encounter } from 'fhir/r4'
-import Client from 'fhirclient/lib/Client'
+import {useQuery, type UseQueryResult} from "@tanstack/react-query";
+import type {Encounter} from "fhir/r4";
+import Client from "fhirclient/lib/Client";
 
-import { handleError } from '../../../utils/ErrorHandler'
-import { type Validation, validation } from '../../../validation/validation'
-import Spinner from '../../spinner/Spinner'
-import Validations from '../../validation-table/Validations'
+import {handleError} from "../../../utils/ErrorHandler";
+import {type Validation, validation} from "../../../validation/validation";
+import Spinner from "../../spinner/Spinner";
+import Validations from "../../validation-table/Validations";
 
-import { validateEncounter } from './validate-encounter'
+import {validateEncounter} from "./validate-encounter";
 
 export interface EncounterValidationProps {
   readonly client: Client
+  readonly encounterQuery: UseQueryResult<Encounter, Error>
 }
 
-export default function EncounterValidation({ client }: EncounterValidationProps) {
-  const { error, data, isLoading } = useQuery({
+export default function EncounterValidation({ client, encounterQuery }: EncounterValidationProps) {
+  const { error, data, isLoading } = encounterQuery
+
+  useQuery({
     queryKey: ['encounterValidation', client.encounter.id],
     queryFn: async () => {
       const encounter = await client.request<Encounter>(`Encounter/${client.encounter.id}`)

@@ -17,9 +17,26 @@ import PatientValidation from '../components/validators/patient/PatientValidatio
 import PractitionerValidation from '../components/validators/practitioner/PractitionerValidation'
 import { useSmart } from '../smart/use-smart'
 import { fullRefs, hl7Refs } from '../validation/common-refs'
+import {useQuery} from "@tanstack/react-query";
+import type {Encounter} from "fhir/r4";
 
 function Validation() {
   const smart = useSmart()
+
+  const encounterQuery = useQuery({
+    queryKey: ['encounterValidation', smart.client?.encounter.id],
+    queryFn: async () => {
+      const encounter = await smart.client!.request<Encounter>(`Encounter/${smart.client!.encounter.id}`)
+
+      console.debug('✅ Encounter data fetched')
+      Object.entries(encounter).forEach(([key, value]) => {
+        console.debug(`ℹ️ Encounter.${key}:`, value)
+      })
+
+      return encounter
+    },
+    enabled: !!smart.client,
+  })
 
   return (
     <Page sidebar={<RefetchSidebar />}>
@@ -55,10 +72,10 @@ function Validation() {
                   <PractitionerValidation client={smart.client} />
                 </ValidationSection>
                 <ValidationSection index="6" title="Encounter validation" refs={fullRefs.encounter}>
-                  <EncounterValidation client={smart.client} />
+                  <EncounterValidation client={smart.client} encounterQuery={encounterQuery} />
                 </ValidationSection>
                 <ValidationSection index="7" title="Organization validation" refs={fullRefs.organization}>
-                  <OrganizationValidation client={smart.client} />
+                  <OrganizationValidation client={smart.client} encounter={encounterQuery.data}/>
                 </ValidationSection>
               </div>
             )}
