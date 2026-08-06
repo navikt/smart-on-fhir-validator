@@ -1,0 +1,103 @@
+import { randomBytes } from 'node:crypto'
+
+/**
+ * Pure cookie logic, kept free of `next/headers` so it can be unit tested with plain strings.
+ * `readSessionCookie`/`writeSessionCookie` below are the only functions that touch Next.js.
+ */
+
+export const SESSION_COOKIE_NAME = 'smart-validator-session'
+
+const SESSION_ID_BYTES = 32
+
+export function createSessionId(): string {
+    return randomBytes(SESSION_ID_BYTES).toString('base64url')
+}
+
+export type SessionCookieAttributes = {
+    name: string
+    value: string
+    httpOnly: true
+    secure: true
+    /**
+     * Must be `Lax`, not `Strict`: the EHR's authorization server redirects the browser back to
+     * `/callback` cross-site after login, and a `Strict` cookie is not sent on that top-level
+     * cross-site navigation — the session would be unreadable at the one moment it matters most.
+     */
+    sameSite: 'lax'
+    path: '/'
+    maxAge?: number
+}
+
+export function buildSessionCookie(sessionId: string, maxAgeSeconds?: number): SessionCookieAttributes {
+    return {
+        name: SESSION_COOKIE_NAME,
+        value: sessionId,
+        httpOnly: true,
+        secure: true,
+        sameSite: 'lax',
+        path: '/',
+        ...(maxAgeSeconds === undefined ? {} : { maxAge: maxAgeSeconds }),
+    }
+}
+
+/** Parses a raw `Cookie` request header. Returns `null` when the session cookie is absent. */
+export function parseSessionCookie(cookieHeader: string | null | undefined): string | null {
+    if (!cookieHeader) return null
+
+    for (const part of cookieHeader.split(';')) {
+        const separatorIndex = part.indexOf('=')
+        if (separatorIndex === -1) continue
+
+        const name = part.slice(0, separatorIndex).trim()
+        if (name !== SESSION_COOKIE_NAME) continue
+
+        const value = part.slice(separatorIndex + 1).trim()
+        try {
+            return decodeURIComponent(value)
+        } catch {
+            return value
+        }
+    }
+
+    return null
+}
+
+/** Serialises a `Set-Cookie` header value. Framework-agnostic counterpart to `buildSessionCookie`. */
+export function serializeSessionCookie(sessionId: string, maxAgeSeconds?: number): string {
+    const attributes = buildSessionCookie(sessionId, maxAgeSeconds)
+    const parts = [
+        `${attributes.name}=${encodeURIComponent(attributes.value)}`,
+        `Path=${attributes.path}`,
+        'HttpOnly',
+        'Secure',
+        `SameSite=Lax`,
+    ]
+    if (attributes.maxAge !== undefined) parts.push(`Max-Age=${attributes.maxAge}`)
+
+    return parts.join('; ')
+}
+
+export async function readSessionIdFromCookies(): Promise<string | null> {
+    const { cookies } = await import('next/headers')
+    const store = await cookies()
+    return store.get(SESSION_COOKIE_NAME)?.value ?? null
+}
+
+export async function writeSessionCookie(sessionId: string, maxAgeSeconds?: number): Promise<void> {
+    const { cookies } = await import('next/headers')
+    const store = await cookies()
+    const attributes = buildSessionCookie(sessionId, maxAgeSeconds)
+    store.set(attributes.name, attributes.value, {
+        httpOnly: attributes.httpOnly,
+        secure: attributes.secure,
+        sameSite: attributes.sameSite,
+        path: attributes.path,
+        maxAge: attributes.maxAge,
+    })
+}
+
+export async function clearSessionCookie(): Promise<void> {
+    const { cookies } = await import('next/headers')
+    const store = await cookies()
+    store.delete(SESSION_COOKIE_NAME)
+}
