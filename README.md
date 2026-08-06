@@ -1,6 +1,7 @@
 # Nav SMART on FHIR Validator
 
-$${\color{red}THIS \space TOOL \space IS \space FOR \space TESTING \space ONLY. \space POINT \space IT \space AT \space TEST \space ENVIRONMENTS, \space NEVER \space AT \space PRODUCTION \space PATIENT \space DATA.}$$
+> [!WARNING]
+> This tool is for testing only. Point it at test environments, never at production patient data.
 
 ## 1. What this is
 
@@ -113,16 +114,33 @@ tested", not "Passed". A report is never a plain pass while anything in it is "N
 
 Every finding cites the exact spec paragraph it checks (HL7, the Norwegian `no-basis` profiles on
 Simplifier, and/or Nav's own docs) and can be expanded to show the raw HTTP request and response
-that produced it — real evidence, not just a claim. Here is an actual finding from a run against
-this app's own mock EHR:
+that produced it — real evidence, not just a claim. The mock EHR ([§8](#8-running-it-locally)) is
+conformant by default, but it can also simulate a specific non-conformance (see
+`src/mocks/defects.ts`) so you can see what a failure looks like before you ever touch a real
+server:
+
+```sh
+MOCK_EHR_DEFECTS=organization-missing-orgnr yarn dev
+```
+
+Launching against that mock and re-running the report produces:
 
 ```
-ERROR  PractitionerRole/practitioner-role-sidsel-jarvery does not declare `meta.profile` of
-       `http://hl7.no/fhir/StructureDefinition/no-basis-PractitionerRole`; the no-basis-PractitionerRole
-       profile requires it.
-   ↳ GET http://localhost:3000/api/mocks/fhir/PractitionerRole?practitioner=Practitioner/practitioner-sidsel-jarvery
-     200 OK — Bundle (searchset, total: 1)
+ERROR  Organization/organization-magnar-legekontor has no identifier from the organisasjonsnummer/ENH
+       system `urn:oid:2.16.578.1.12.4.1.4.101`; Nav uses this to identify the sykmelder's organisation.
+   ↳ GET http://localhost:3000/api/mocks/fhir/Organization/organization-magnar-legekontor
+     200 OK — Organization
+     {
+       "resourceType": "Organization",
+       "id": "organization-magnar-legekontor",
+       "meta": { "profile": ["http://hl7.no/fhir/StructureDefinition/no-basis-Organization"] },
+       "name": "Magnar Legekontor AS",
+       "telecom": [ ... ]
+     }
 ```
+
+The request/response pair above is the actual `HttpExchange` this app recorded — the same JSON you
+would see by expanding this finding in the browser or in the downloaded report.
 
 The full report is also downloadable as JSON (a "Download full report as JSON" link on the report
 page, or `GET /report/download`) — useful to attach verbatim to a support ticket.
@@ -208,10 +226,14 @@ EHR would, against `iss=http://localhost:3000/api/mocks/fhir`:
 GET /launch?iss=http%3A%2F%2Flocalhost%3A3000%2Fapi%2Fmocks%2Ffhir&launch=demo
 ```
 
-That mock is designed to be conformant by default — a good baseline before pointing this tool at
-your own server. At the time of writing it still has a few known, tracked bugs of its own (see
-`KNOWN_BASELINE_MOCK_BUGS` in `src/validation/defects.integration.ts`), so a handful of `ERROR`
-findings against the mock are expected and does not mean this app's validators are wrong.
+That mock is fully conformant by default: a clean run against it produces zero `ERROR` findings
+(only a few `WARNING`/`INFO` findings on optional/recommended checks) — this is asserted by the
+`baseline: the fully conformant mock` test in `src/validation/defects.integration.ts`. It is a good
+first thing to check: if your own server produces errors this app's own mock doesn't, the problem
+is in your server, not in these validators. The mock can also simulate specific non-conformances on
+demand (see
+`src/mocks/defects.ts` and [§5](#5-reading-the-report) for an example) so you can see what a
+failure looks like before you touch a real server.
 
 ### Tests
 
