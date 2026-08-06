@@ -42,3 +42,6 @@ e2e/.auth
 .env*.local
 .git-co-authors.yaml
 .husky/prepare-commit-msg
+
+# TypeScript incremental build cache
+*.tsbuildinfo

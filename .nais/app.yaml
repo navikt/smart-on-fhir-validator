@@ -10,8 +10,10 @@ spec:
   port: 3000
   # SMART sessions hold PKCE verifiers, tokens and dynamically registered client
   # credentials. They must outlive a pod restart and be shared across replicas.
+  # The instance name must match the Valkey resource in .nais/valkey.yaml,
+  # which nais names `valkey-<team>-<instance>`.
   valkey:
-    - instance: sessions
+    - instance: {{ app }}
       access: readwrite
   observability:
     autoInstrumentation:
@@ -28,6 +30,14 @@ spec:
     path: /api/internal/is_alive
   readiness:
     path: /api/internal/is_ready
+  preStopHook:
+    http:
+      path: /api/internal/pre_stop
+  # Next.js writes its incremental cache to disk; the nais root filesystem is read-only.
+  filesFrom:
+    - emptyDir:
+        medium: Memory
+      mountPath: /app/.next/cache
   replicas:
     max: 2
     min: 1

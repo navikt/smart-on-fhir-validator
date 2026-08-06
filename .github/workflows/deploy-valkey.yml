@@ -1,0 +1,27 @@
+name: Deploy Valkey
+
+# Valkey is provisioned by Aiven and changes rarely, so it is deployed on its own
+# rather than on every push to the application.
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+    paths:
+      - .github/workflows/deploy-valkey.yml
+      - .nais/valkey.yaml
+
+permissions:
+  contents: read
+  id-token: write
+
+jobs:
+  deploy-valkey-dev:
+    name: Deploy Valkey to dev-gcp
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - uses: nais/deploy/actions/deploy@v2
+        env:
+          CLUSTER: dev-gcp
+          RESOURCE: .nais/valkey.yaml
+          VARS: .nais/dev-gcp.json

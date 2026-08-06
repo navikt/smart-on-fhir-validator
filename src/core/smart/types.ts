@@ -44,7 +44,7 @@ export type SmartConfiguration = {
     token_endpoint?: string
     token_endpoint_auth_methods_supported?: string[]
     registration_endpoint?: string
-    associated_endpoints?: { url: string; capabilities: string[] }[]
+    associated_endpoints?: { url?: string; capabilities?: string[] }[]
     user_access_brand_bundle?: string
     user_access_brand_identifier?: string
     scopes_supported?: string[]

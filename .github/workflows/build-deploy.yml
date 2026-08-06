@@ -25,7 +25,7 @@ jobs:
     outputs:
       image: ${{ steps.docker-build-push.outputs.image }}
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@v7
       - uses: actions/setup-node@v6
         with:
           node-version-file: .nvmrc
@@ -45,29 +45,15 @@ jobs:
           identity_provider: ${{ secrets.NAIS_WORKLOAD_IDENTITY_PROVIDER }}
           project_id: ${{ vars.NAIS_MANAGEMENT_PROJECT_ID }}
 
-  deploy-valkey:
-    needs: [build]
-    runs-on: ubuntu-latest
-    permissions:
-      contents: read
-      id-token: write
-    steps:
-      - uses: actions/checkout@v5
-      - uses: nais/deploy/actions/deploy@v2
-        env:
-          CLUSTER: dev-gcp
-          RESOURCE: .nais/valkey.yaml
-          VARS: .nais/dev-gcp.json
-
   deploy-dev:
-    needs: [build, deploy-valkey]
+    needs: [build]
     runs-on: ubuntu-latest
     permissions:
       contents: write
       id-token: write
     environment: dev-gcp:helseopplysninger
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@v7
       - uses: nais/deploy/actions/deploy@v2
         env:
           CLUSTER: dev-gcp
