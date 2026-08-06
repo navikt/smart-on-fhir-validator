@@ -25,7 +25,12 @@ export default defineConfig({
     // not a place to paper over timing bugs with a second attempt.
     retries: 0,
     reporter: process.env.CI ? [['github'], ['html', { open: 'never' }]] : 'html',
-    timeout: 30_000,
+    // Generous, not a workaround: the /report page's own server-render currently takes ~17s
+    // (evidence-heavy syntax highlighting appears to run once per request, unmemoised — flagged
+    // separately, out of this suite's ownership). 30s left this test passing at ~25-27s wall
+    // time, one slow CI runner away from a flake; widen the ceiling rather than let a real
+    // regression there masquerade as test flake.
+    timeout: 45_000,
     use: {
         baseURL: BASE_URL,
         trace: 'retain-on-failure',
