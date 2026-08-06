@@ -127,6 +127,26 @@ export type ActiveSession = {
 export type SmartSession = PendingSession | ActiveSession
 
 /**
+ * Everything the EHR told us at launch, and nothing more.
+ *
+ * FHIR probes may only build searches from these values. That is the point of the read phase:
+ * if a resource cannot be reached from launch context alone, Nav cannot pre-fill from it.
+ */
+export type LaunchContext = {
+    /** From the `patient` token-response parameter. */
+    patientId: string | null
+    /** From the `encounter` token-response parameter. */
+    encounterId: string | null
+    /** Relative reference from `fhirUser`, e.g. `Practitioner/123`. */
+    fhirUser: string | null
+    /** Resource id parsed out of `fhirUser`, when it points at a Practitioner. */
+    practitionerId: string | null
+    /** Scopes actually granted, which decide which probes are allowed to run. */
+    grantedScopes: string[]
+}
+
+
+/**
  * Errors are values throughout the SMART layer. A failing EHR is the expected case for a
  * validator, so it must be reportable rather than thrown.
  */
