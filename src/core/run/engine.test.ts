@@ -173,6 +173,7 @@ describe('runValidation: against a conformant mock EHR', () => {
             'discovery',
             'capabilities',
             'capability-statement',
+            'aud-enforcement',
             'token-response',
             'id-token',
             'scopes',

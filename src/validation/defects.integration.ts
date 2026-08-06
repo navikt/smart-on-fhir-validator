@@ -24,8 +24,10 @@
  *
  * Where neither happens — the defect exists, the launch completes, and no finding says
  * anything about it — that is a genuine coverage gap in the product. This suite does not paper
- * over it: it is named explicitly in the "known gaps" section at the bottom, with the reasoning
- * for why, so the gap is visible rather than hidden by a passing test suite.
+ * over such gaps: any that exists is named explicitly, with the reasoning for why, so it is
+ * visible rather than hidden by a passing test suite (see e.g. the `aud-not-validated` history
+ * in git blame for what that looked like before the `#core/run/phases/aud-enforcement` probe
+ * closed it).
  */
 /* oxlint-disable vitest/expect-expect --
  * Nearly every test below asserts through `expectFinding`, a helper that throws its own detailed
@@ -130,9 +132,10 @@ describe('baseline: the fully conformant mock (no defects injected)', () => {
 
         for (const message of errorMessages) {
             const isKnown = KNOWN_BASELINE_MOCK_BUGS.some((known) => message.includes(known))
-            expect(isKnown, `Unexpected new baseline ERROR (not in KNOWN_BASELINE_MOCK_BUGS): ${message}`).toBe(
-                true,
-            )
+            expect(
+                isKnown,
+                `Unexpected new baseline ERROR (not in KNOWN_BASELINE_MOCK_BUGS): ${message}`,
+            ).toBe(true)
         }
 
         // Every known bug is still present — if this ever drops below 3, one of them was fixed
@@ -263,12 +266,7 @@ describe('token response defects (src/mocks/auth/token.ts)', () => {
             '`patient` is missing from the token response, even though a `launch` or `launch/patient` scope was requested',
             'token-response',
         )
-        expectFinding(
-            report,
-            'WARNING',
-            'No `patient` is available in launch context',
-            'launch-context',
-        )
+        expectFinding(report, 'WARNING', 'No `patient` is available in launch context', 'launch-context')
     })
 
     it('token-response-missing-encounter-context: token-response WARNs (Nav-specific, not a SMART requirement)', async () => {
@@ -413,12 +411,7 @@ describe('FHIR read-resource defects (src/mocks/data/*.ts)', () => {
 
     it('condition-missing-code-system: Condition probe ERRORs on no recognised diagnosis code system', async () => {
         const report = await runReportWithDefects(['condition-missing-code-system'])
-        expectFinding(
-            report,
-            'ERROR',
-            'has no entry whose `system` is ICD-10',
-            'condition',
-        )
+        expectFinding(report, 'ERROR', 'has no entry whose `system` is ICD-10', 'condition')
     })
 })
 
@@ -464,45 +457,31 @@ describe('FHIR write-resource defects (src/mocks/fhir/*.ts)', () => {
     })
 })
 
-describe('known gap: a defect this validator cannot currently detect', () => {
-    it.fails(
-        'aud-not-validated: no finding anywhere distinguishes a server that skips aud validation ' +
-            '(KNOWN GAP — see comment)',
-        async () => {
-            // GAP: `aud-not-validated` disables the mock's own enforcement that the authorize
-            // request's `aud` equals its FHIR base URL (see `src/mocks/auth/authorize.ts`).
-            // But this app's own client (`#core/smart/launch.ts`) *always* sends the correct
-            // `aud` (`fhirBaseUrl`) — there is no code path, option, or defect fixture that makes
-            // it send a wrong one. So enabling this defect changes nothing this app's client can
-            // observe: the authorize call still succeeds, because it was always going to send a
-            // conformant `aud`. No validator in `#validation/**` inspects the recorded authorize
-            // request's `aud` value either (confirmed: no reference to `aud` anywhere in
-            // `#validation/**` outside id_token's *own* `aud` claim, which is a different `aud`
-            // entirely — the id_token's audience is the client_id, not the FHIR base URL).
-            //
-            // This is a genuine, unfixed-by-this-suite coverage gap: this validator cannot tell
-            // a vendor "your server does not enforce `aud`", because doing so would require
-            // sending a deliberately wrong `aud` from a dedicated diagnostic probe distinct from
-            // the real launch — a feature that does not exist. Per the task instructions, this
-            // is reported as `it.fails` (an inverted test: it must keep *failing* for as long as
-            // the gap exists, and would loudly break this suite — a signal to update this
-            // comment — the day someone adds that capability and this assertion starts passing).
-            const report = await runReportWithDefects(['aud-not-validated'])
-            const baseline = await runReportWithDefects([])
+describe('authorize endpoint defects (src/mocks/auth/authorize.ts)', () => {
+    it('aud-not-validated: the aud-enforcement probe ERRORs on a server that does not enforce aud', async () => {
+        // `aud-not-validated` disables the mock's own enforcement that the authorize request's
+        // `aud` equals its FHIR base URL (see `src/mocks/auth/authorize.ts`). This app's own
+        // client (`#core/smart/launch.ts`) always sends the correct `aud`, so nothing about the
+        // real launch itself changes when this defect is enabled — the finding below comes
+        // entirely from the dedicated `aud-enforcement` diagnostic probe
+        // (`#core/run/phases/aud-enforcement`), which deliberately sends a *wrong* `aud` on a
+        // separate request and reports whether the server rejects it.
+        const report = await runReportWithDefects(['aud-not-validated'])
+        expectFinding(
+            report,
+            'ERROR',
+            'did NOT reject an authorization request whose `aud` parameter deliberately did not match',
+            'aud-enforcement',
+        )
+    })
 
-            // Compared by severity *count*, not exact message text: every report embeds fresh
-            // `randomUUID()` exchange/resource ids in several OK/WARNING messages, so comparing
-            // raw text would differ between any two runs regardless of this defect.
-            const severityCounts = (r: ValidationReport) => ({
-                ERROR: findingsOf(r, 'ERROR').length,
-                WARNING: findingsOf(r, 'WARNING').length,
-            })
-
-            // This is the assertion we WANT to be true (a distinguishing finding exists) but
-            // currently cannot make pass: the two reports carry identically many ERRORs and
-            // WARNINGs, because nothing this app's client does differs when the server stops
-            // enforcing `aud`.
-            expect(severityCounts(report)).not.toEqual(severityCounts(baseline))
-        },
-    )
+    it('a conformant server (no defects) is reported as correctly enforcing aud', async () => {
+        const report = await runReportWithDefects([])
+        expectFinding(
+            report,
+            'OK',
+            'rejected an authorization request whose `aud` parameter deliberately did not match',
+            'aud-enforcement',
+        )
+    })
 })

@@ -3,9 +3,9 @@
  * serialisable `ValidationReport` by running every validator this repository has against real
  * evidence collected from the EHR.
  *
- * Phases run in a fixed order — discovery, capability statement, token response, id_token,
- * scopes, launch context, read probes, write probes — mirroring the order a vendor would
- * naturally want to read a report in: earliest-lifecycle evidence first. A failing phase never
+ * Phases run in a fixed order — discovery, capability statement, `aud` enforcement, token
+ * response, id_token, scopes, launch context, read probes, write probes — mirroring the order a
+ * vendor would naturally want to read a report in: earliest-lifecycle evidence first. A failing phase never
  * stops the run; every error path is captured as a finding or an `errorSection`/`skippedSection`,
  * so the worst an EHR's misbehaviour can do is fill the report with ERROR findings, never crash it.
  */
@@ -16,6 +16,7 @@ import type { SmartHttpClient } from '#core/http/smart-http-client'
 import type { ActiveSession } from '#core/smart/types'
 import { validation } from '#validation/validation'
 
+import { runAudEnforcementPhase } from './phases/aud-enforcement'
 import { runCapabilityStatementPhase } from './phases/capability-statement'
 import { runDiscoveryPhase } from './phases/discovery'
 import { runIdTokenPhase } from './phases/id-token'
@@ -42,6 +43,8 @@ async function runPhases(session: ActiveSession, deps: RunValidationDependencies
     sections.push(...discovery.sections)
 
     sections.push(await runCapabilityStatementPhase(session, deps.httpClient))
+
+    sections.push(await runAudEnforcementPhase(session, discovery.smartConfiguration, deps.httpClient))
 
     sections.push(runTokenResponsePhase(session))
 
