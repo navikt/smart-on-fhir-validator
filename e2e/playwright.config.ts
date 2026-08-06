@@ -10,9 +10,7 @@ const BASE_URL = `http://localhost:${PORT}`
  * flag; the CI job runs a production build (`next build && next start`), where it must be set
  * explicitly. Both paths set it so this config does not silently depend on which one runs.
  */
-const webServerCommand = process.env.CI
-    ? `next start --port ${PORT}`
-    : `next dev --port ${PORT}`
+const webServerCommand = process.env.CI ? `next start --port ${PORT}` : `next dev --port ${PORT}`
 
 export default defineConfig({
     testDir: './tests',
@@ -23,7 +21,9 @@ export default defineConfig({
     // itself. Re-visit once there is a real track record of green runs.
     workers: 1,
     forbidOnly: !!process.env.CI,
-    retries: process.env.CI ? 1 : 0,
+    // Flake should be fixed, not retried — this suite is a thin smoke gate over a real browser,
+    // not a place to paper over timing bugs with a second attempt.
+    retries: 0,
     reporter: process.env.CI ? [['github'], ['html', { open: 'never' }]] : 'html',
     timeout: 30_000,
     use: {
