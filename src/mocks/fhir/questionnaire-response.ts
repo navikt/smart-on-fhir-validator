@@ -34,6 +34,7 @@ export function questionnaireResponseRouter(state: MockState): Hono {
         searchParams: {
             subject: (resource, value) => referenceMatches(resource.subject?.reference, value),
             questionnaire: (resource, value) => resource.questionnaire === value,
+            encounter: (resource, value) => referenceMatches(resource.encounter?.reference, value),
         },
         onCreate: (body) => validateWrite(body),
         onUpdate: (id, body) => validateWrite({ ...asRecord(body), id }),

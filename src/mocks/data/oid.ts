@@ -16,5 +16,6 @@ export const OID = {
 export const NO_BASIS_PROFILE = {
     patient: 'http://hl7.no/fhir/StructureDefinition/no-basis-Patient',
     practitioner: 'http://hl7.no/fhir/StructureDefinition/no-basis-Practitioner',
+    practitionerRole: 'http://hl7.no/fhir/StructureDefinition/no-basis-PractitionerRole',
     organization: 'http://hl7.no/fhir/StructureDefinition/no-basis-Organization',
 } as const
