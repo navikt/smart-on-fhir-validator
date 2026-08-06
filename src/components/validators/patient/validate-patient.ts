@@ -40,10 +40,10 @@ export function validatePatient(fhirPatient: Patient): Validation[] {
     validator.error(`The Patient does not have a name property`)
   } else {
     const humanName = patientNames[0]
-    if (!humanName.family) {
+    if (!humanName?.family) {
       validator.error('The Patient does not have a family name')
     }
-    if (!humanName.given || humanName.given.length === 0) {
+    if (!humanName?.given || humanName.given.length === 0) {
       validator.error('The Patient does not have given name(s)')
     }
   }
