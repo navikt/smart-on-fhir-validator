@@ -145,7 +145,6 @@ export type LaunchContext = {
     grantedScopes: string[]
 }
 
-
 /**
  * Errors are values throughout the SMART layer. A failing EHR is the expected case for a
  * validator, so it must be reportable rather than thrown.

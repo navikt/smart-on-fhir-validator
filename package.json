@@ -2,10 +2,10 @@
     "name": "smart-on-fhir-validator",
     "version": "1.0.0",
     "private": true,
-    "type": "module",
     "workspaces": [
         "e2e"
     ],
+    "type": "module",
     "scripts": {
         "dev": "next dev",
         "build": "next build",
@@ -14,7 +14,7 @@
         "lint:fix": "oxlint --fix",
         "fmt": "oxfmt",
         "fmt:check": "oxfmt --check",
-        "tsc": "tsc --noEmit",
+        "tsc": "next typegen && tsc --noEmit",
         "test": "vitest --project unit --run",
         "test:watch": "vitest --project unit",
         "test:integration": "vitest --project integration --run",

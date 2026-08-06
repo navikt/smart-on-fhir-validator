@@ -66,7 +66,11 @@ function exchange(overrides: Partial<HttpExchange> = {}): HttpExchange {
     return {
         id: 'exchange-1',
         phase: 'discovery',
-        request: { method: 'GET', url: 'https://ehr.example.com/.well-known/smart-configuration', headers: {} },
+        request: {
+            method: 'GET',
+            url: 'https://ehr.example.com/.well-known/smart-configuration',
+            headers: {},
+        },
         response: { status: 200, statusText: 'OK', headers: {}, body: {} },
         error: null,
         startedAt: new Date('2024-01-01T00:00:00.000Z').toISOString(),
@@ -213,7 +217,9 @@ describe('Valkey-backed session store: concurrent access', () => {
         // writes into a Frankenstein record, only ever a complete, valid one of them.
         expect(stored).not.toBeNull()
         expect(stored?.state).toBe('pending')
-        expect(writes.some((w) => stored?.state === 'pending' && w.oauthState === stored.oauthState)).toBe(true)
+        expect(writes.some((w) => stored?.state === 'pending' && w.oauthState === stored.oauthState)).toBe(
+            true,
+        )
     })
 
     it('a concurrent delete racing a read never returns a partially-removed session', async () => {
@@ -221,7 +227,10 @@ describe('Valkey-backed session store: concurrent access', () => {
         const session = pendingSession()
         await store.set(session.sessionId, session, 600)
 
-        const [readResult] = await Promise.all([store.get(session.sessionId), store.delete(session.sessionId)])
+        const [readResult] = await Promise.all([
+            store.get(session.sessionId),
+            store.delete(session.sessionId),
+        ])
 
         // Whichever operation the fake's microtask ordering resolves first, the read must
         // return either the whole session or nothing — never a thrown error or a partial value.
@@ -239,7 +248,9 @@ describe('Valkey-backed session store: exchange-list cap under load', () => {
         )
 
         await Promise.all(
-            batches.map((batch) => store.set(sessionId, pendingSession({ sessionId, exchanges: batch }), 600)),
+            batches.map((batch) =>
+                store.set(sessionId, pendingSession({ sessionId, exchanges: batch }), 600),
+            ),
         )
 
         const stored = await store.get(sessionId)
