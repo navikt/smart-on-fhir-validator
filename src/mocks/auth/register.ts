@@ -5,15 +5,27 @@ import type { JSONWebKeySet } from 'jose'
 
 import type { MockClientAuthMethod, MockState } from '#mocks/state'
 
-const VALID_AUTH_METHODS: readonly MockClientAuthMethod[] = [
-    'public',
-    'client_secret_basic',
-    'client_secret_post',
-    'private_key_jwt',
-]
+/**
+ * RFC 7591 spells a public client `"none"` on the wire; this mock calls it `'public'`
+ * internally. The two vocabularies are kept apart deliberately: a mock that echoed its own
+ * internal label back to a client would be testing itself rather than the protocol.
+ */
+const WIRE_TO_INTERNAL: Readonly<Record<string, MockClientAuthMethod>> = {
+    none: 'public',
+    client_secret_basic: 'client_secret_basic',
+    client_secret_post: 'client_secret_post',
+    private_key_jwt: 'private_key_jwt',
+}
 
-function isValidAuthMethod(value: unknown): value is MockClientAuthMethod {
-    return typeof value === 'string' && (VALID_AUTH_METHODS as readonly string[]).includes(value)
+const INTERNAL_TO_WIRE: Readonly<Record<MockClientAuthMethod, string>> = {
+    public: 'none',
+    client_secret_basic: 'client_secret_basic',
+    client_secret_post: 'client_secret_post',
+    private_key_jwt: 'private_key_jwt',
+}
+
+function toInternalAuthMethod(value: unknown): MockClientAuthMethod | undefined {
+    return typeof value === 'string' ? WIRE_TO_INTERNAL[value] : undefined
 }
 
 function isJwks(value: unknown): value is JSONWebKeySet {
@@ -31,7 +43,7 @@ export function registerHandler(state: MockState) {
         const request = typeof body === 'object' && body !== null ? (body as Record<string, unknown>) : {}
 
         const requestedAuthMethod = request.token_endpoint_auth_method
-        const authMethod = isValidAuthMethod(requestedAuthMethod) ? requestedAuthMethod : 'public'
+        const authMethod = toInternalAuthMethod(requestedAuthMethod) ?? 'public'
 
         if (authMethod === 'private_key_jwt' && !isJwks(request.jwks)) {
             return c.json(
@@ -65,7 +77,7 @@ export function registerHandler(state: MockState) {
             {
                 client_id: clientId,
                 client_id_issued_at: Math.floor(Date.now() / 1000),
-                token_endpoint_auth_method: authMethod,
+                token_endpoint_auth_method: INTERNAL_TO_WIRE[authMethod],
                 ...(clientSecret ? { client_secret: clientSecret, client_secret_expires_at: 0 } : {}),
                 ...(redirectUris ? { redirect_uris: redirectUris } : {}),
                 ...(isJwks(request.jwks) ? { jwks: request.jwks } : {}),
