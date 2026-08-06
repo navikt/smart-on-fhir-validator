@@ -18,7 +18,9 @@ const BASE_URL = 'https://ehr.example.com/fhir'
 
 type Call = { method: string; url: string; headers: Record<string, string>; body: unknown }
 
-/** Builds an injectable `fetch` stub that dispatches on method+URL and records every call made. */
+type StoredResource = Record<string, unknown> & { id?: string }
+
+/** Builds an injectable `fetch` stub that dispatches to a fixed `handler` and records every call made. */
 function stubFetch(handler: (call: Call) => Response | Promise<Response>): {
     fetchImpl: typeof fetch
     calls: Call[]
@@ -33,6 +35,94 @@ function stubFetch(handler: (call: Call) => Response | Promise<Response>): {
         return handler(call)
     }) as typeof fetch
     return { fetchImpl, calls }
+}
+
+/**
+ * A minimal in-memory FHIR server: `PUT`s an id-addressed resource (201 the first time, 200 once
+ * it already exists — the real update-as-create semantics this test suite is trying to prove),
+ * `POST` assigns a server id, `GET` reads a single resource or lists everything of a type as a
+ * `searchset`. `onRead` lets a single test simulate a server that mutates a resource between
+ * writing it and reading it back (e.g. dropping a field).
+ */
+function createFakeFhirServer(options: { onRead?: (resource: StoredResource) => StoredResource } = {}): {
+    fetchImpl: typeof fetch
+    calls: Call[]
+} {
+    const store = new Map<string, StoredResource>()
+    const calls: Call[] = []
+
+    const fetchImpl = (async (input: RequestInfo | URL, init?: RequestInit) => {
+        const url = typeof input === 'string' ? input : input.toString()
+        const method = init?.method ?? 'GET'
+        const headers = (init?.headers ?? {}) as Record<string, string>
+        const rawBody = init?.body
+        const parsedBody = typeof rawBody === 'string' ? tryParseJson(rawBody) : null
+        calls.push({ method, url, headers, body: parsedBody })
+
+        const withoutBase = url.startsWith(BASE_URL) ? url.slice(BASE_URL.length) : url
+        const [pathPart = ''] = withoutBase.split('?')
+        const segments = pathPart.split('/').filter((segment) => segment.length > 0)
+        const [resourceType, id] = segments
+
+        if (method === 'PUT' && resourceType !== undefined && id !== undefined) {
+            const key = `${resourceType}/${id}`
+            const existed = store.has(key)
+            const resource: StoredResource = { ...(isRecord(parsedBody) ? parsedBody : {}), id }
+            store.set(key, resource)
+            return jsonResponse(resource, {
+                status: existed ? 200 : 201,
+                headers: existed ? {} : { Location: `${BASE_URL}/${key}` },
+            })
+        }
+
+        if (method === 'POST' && resourceType !== undefined && id === undefined) {
+            const assignedId = `server-assigned-${store.size + 1}`
+            const key = `${resourceType}/${assignedId}`
+            let resource: StoredResource
+            if (isRecord(parsedBody)) {
+                resource = { ...parsedBody, id: assignedId }
+            } else if (resourceType === 'Binary') {
+                const contentType =
+                    headers['Content-Type'] ?? headers['content-type'] ?? 'application/octet-stream'
+                const bytes = Buffer.isBuffer(rawBody) ? rawBody : Buffer.from(String(rawBody ?? ''))
+                resource = {
+                    resourceType: 'Binary',
+                    id: assignedId,
+                    contentType,
+                    data: bytes.toString('base64'),
+                }
+            } else {
+                resource = { id: assignedId }
+            }
+            store.set(key, resource)
+            return jsonResponse(resource, { status: 201, headers: { Location: `${BASE_URL}/${key}` } })
+        }
+
+        if (method === 'GET' && resourceType !== undefined && id !== undefined) {
+            const resource = store.get(`${resourceType}/${id}`)
+            if (!resource) return jsonResponse({ resourceType: 'OperationOutcome' }, { status: 404 })
+            return jsonResponse(options.onRead ? options.onRead(resource) : resource)
+        }
+
+        if (method === 'GET' && resourceType !== undefined && id === undefined) {
+            const matches = [...store.entries()]
+                .filter(([key]) => key.startsWith(`${resourceType}/`))
+                .map(([, resource]) => resource)
+            return jsonResponse({
+                resourceType: 'Bundle',
+                type: 'searchset',
+                entry: matches.map((resource) => ({ resource })),
+            })
+        }
+
+        return jsonResponse({ resourceType: 'OperationOutcome' }, { status: 404 })
+    }) as typeof fetch
+
+    return { fetchImpl, calls }
+}
+
+function isRecord(value: unknown): value is Record<string, unknown> {
+    return value != null && typeof value === 'object'
 }
 
 function tryParseJson(text: string): unknown {
@@ -114,75 +204,23 @@ describe('documentReferenceInlineWriteProbe', () => {
         expect(outcome.validations).toEqual([])
     })
 
-    it('POSTs to [base]/DocumentReference with context.encounter set, then reads back and searches by subject and encounter', async () => {
-        const created = {
-            resourceType: 'DocumentReference',
-            id: 'server-assigned-1',
-            status: 'current',
-            type: {
-                coding: [
-                    {
-                        system: 'urn:oid:2.16.578.1.12.4.1.1.9602',
-                        code: 'J01-2',
-                        display: 'Sykmeldinger og trygdesaker',
-                    },
-                ],
-            },
-            subject: { reference: 'Patient/patient-1' },
-            author: [{ reference: 'Practitioner/practitioner-1' }],
-            date: '2026-01-01T00:00:00Z',
-            description: 'Sykmelding',
-            content: [
-                {
-                    attachment: {
-                        title: 'Sykmelding',
-                        language: 'NO-nb',
-                        contentType: 'application/pdf',
-                        data: 'abc',
-                    },
-                },
-            ],
-            context: { encounter: [{ reference: 'Encounter/encounter-1' }] },
-        }
-
-        const { fetchImpl, calls } = stubFetch((call) => {
-            if (call.method === 'POST' && call.url === `${BASE_URL}/DocumentReference`) {
-                return jsonResponse(created, {
-                    status: 201,
-                    headers: { Location: `${BASE_URL}/DocumentReference/server-assigned-1` },
-                })
-            }
-            if (call.method === 'GET' && call.url === `${BASE_URL}/DocumentReference/server-assigned-1`) {
-                return jsonResponse(created)
-            }
-            if (call.method === 'GET' && call.url.startsWith(`${BASE_URL}/DocumentReference?subject=`)) {
-                return jsonResponse({
-                    resourceType: 'Bundle',
-                    type: 'searchset',
-                    entry: [{ resource: created }],
-                })
-            }
-            if (call.method === 'GET' && call.url.startsWith(`${BASE_URL}/DocumentReference?encounter=`)) {
-                return jsonResponse({
-                    resourceType: 'Bundle',
-                    type: 'searchset',
-                    entry: [{ resource: created }],
-                })
-            }
-            return jsonResponse({ resourceType: 'OperationOutcome' }, { status: 404 })
-        })
-
+    it('PUTs to [base]/DocumentReference/{client-assigned-id} twice with context.encounter set, then reads back and searches by subject and encounter', async () => {
+        const { fetchImpl, calls } = createFakeFhirServer()
         const context = buildContext(fetchImpl)
+
         const outcome = await documentReferenceInlineWriteProbe.run(context)
 
         expect(bad(outcome.validations)).toEqual([])
         expect(outcome.skipped).toBeUndefined()
 
-        const createCall = calls.find((c) => c.method === 'POST')
-        expect(createCall?.url).toBe(`${BASE_URL}/DocumentReference`)
-        expect(createCall?.headers['Content-Type']).toBe('application/fhir+json')
-        expect(createCall?.headers['Authorization']).toBe('Bearer token-abc')
-        const sentBody = createCall?.body as {
+        const putCalls = calls.filter((c) => c.method === 'PUT')
+        expect(putCalls).toHaveLength(2)
+        expect(putCalls[0]?.url).toMatch(/\/DocumentReference\/smart-on-fhir-validator-docref-inline-/)
+        expect(putCalls[0]?.url).toBe(putCalls[1]?.url)
+        expect(putCalls[0]?.headers['Content-Type']).toBe('application/fhir+json')
+        expect(putCalls[0]?.headers['Authorization']).toBe('Bearer token-abc')
+
+        const sentBody = putCalls[0]?.body as {
             context?: { encounter?: { reference: string }[] }
             subject?: { reference: string }
         }
@@ -191,9 +229,14 @@ describe('documentReferenceInlineWriteProbe', () => {
 
         const subjectSearch = calls.find((c) => c.url.includes('subject='))
         expect(subjectSearch?.url).toBe(`${BASE_URL}/DocumentReference?subject=Patient%2Fpatient-1`)
-
         const encounterSearch = calls.find((c) => c.url.includes('encounter='))
         expect(encounterSearch?.url).toBe(`${BASE_URL}/DocumentReference?encounter=Encounter%2Fencounter-1`)
+
+        expect(
+            outcome.validations.some(
+                (v) => v.severity === 'OK' && v.message.includes('did not produce a different resource id'),
+            ),
+        ).toBe(true)
     })
 
     it('treats a 403 as correct behaviour when no write scope was granted', async () => {
@@ -205,6 +248,7 @@ describe('documentReferenceInlineWriteProbe', () => {
         const outcome = await documentReferenceInlineWriteProbe.run(context)
 
         expect(calls).toHaveLength(1)
+        expect(calls[0]?.method).toBe('PUT')
         expect(bad(outcome.validations)).toEqual([])
         expect(
             outcome.validations.some((v) => v.severity === 'OK' && v.message.includes('correctly rejected')),
@@ -226,12 +270,16 @@ describe('documentReferenceInlineWriteProbe', () => {
         ).toBe(true)
     })
 
-    it('warns when the server returns 200 instead of 201', async () => {
+    it('errors when a repeated PUT with the same id returns a different resource id (idempotency violation)', async () => {
+        let putCount = 0
         const { fetchImpl } = stubFetch((call) => {
-            if (call.method === 'POST') {
-                return jsonResponse({ resourceType: 'DocumentReference', id: 'x' }, { status: 200 })
+            if (call.method === 'PUT') {
+                putCount += 1
+                const idFromUrl = call.url.split('/').pop() ?? ''
+                const id = putCount === 1 ? idFromUrl : 'a-completely-different-id'
+                return jsonResponse({ resourceType: 'DocumentReference', id }, { status: 201 })
             }
-            return jsonResponse({ resourceType: 'OperationOutcome' }, { status: 404 })
+            return jsonResponse({ resourceType: 'Bundle', type: 'searchset', entry: [] })
         })
         const context = buildContext(fetchImpl)
 
@@ -239,7 +287,29 @@ describe('documentReferenceInlineWriteProbe', () => {
 
         expect(
             outcome.validations.some(
-                (v) => v.severity === 'WARNING' && v.message.includes('200 OK instead of 201'),
+                (v) => v.severity === 'ERROR' && v.message.includes('produced a different resource id'),
+            ),
+        ).toBe(true)
+    })
+
+    it('warns when a repeated PUT unexpectedly returns 201 again instead of 200', async () => {
+        const { fetchImpl } = stubFetch((call) => {
+            if (call.method === 'PUT') {
+                const id = call.url.split('/').pop() ?? ''
+                return jsonResponse({ resourceType: 'DocumentReference', id }, { status: 201 })
+            }
+            return jsonResponse({ resourceType: 'Bundle', type: 'searchset', entry: [] })
+        })
+        const context = buildContext(fetchImpl)
+
+        const outcome = await documentReferenceInlineWriteProbe.run(context)
+
+        expect(
+            outcome.validations.some(
+                (v) =>
+                    v.severity === 'WARNING' &&
+                    v.message.includes('Second PUT') &&
+                    v.message.includes('201 Created again'),
             ),
         ).toBe(true)
     })
@@ -259,7 +329,7 @@ describe('documentReferenceInlineWriteProbe', () => {
         const outcome = await documentReferenceInlineWriteProbe.run(context)
 
         const failure = outcome.validations.find(
-            (v) => v.severity === 'ERROR' && v.message.includes('failed to create'),
+            (v) => v.severity === 'ERROR' && v.message.includes('failed to upsert'),
         )
         expect(failure?.message).toContain('400')
         expect(failure?.message).toContain('Missing context.encounter')
@@ -272,7 +342,7 @@ describe('documentReferenceInlineWriteProbe', () => {
         const outcome = await documentReferenceInlineWriteProbe.run(context)
 
         const failure = outcome.validations.find(
-            (v) => v.severity === 'ERROR' && v.message.includes('failed to create'),
+            (v) => v.severity === 'ERROR' && v.message.includes('failed to upsert'),
         )
         expect(failure?.message).toContain('500')
         expect(failure?.message).toContain('No OperationOutcome was returned')
@@ -287,7 +357,7 @@ describe('documentReferenceInlineWriteProbe', () => {
         const outcome = await documentReferenceInlineWriteProbe.run(context)
 
         const failure = outcome.validations.find(
-            (v) => v.severity === 'ERROR' && v.message.includes('failed to create'),
+            (v) => v.severity === 'ERROR' && v.message.includes('failed to upsert'),
         )
         expect(failure?.message).toContain('transport failure')
     })
@@ -301,47 +371,9 @@ describe('documentReferenceInlineWriteProbe', () => {
         expect(outcome.validations.some((v) => v.severity === 'ERROR')).toBe(true)
     })
 
-    it('errors when a 201 response omits the Location header', async () => {
-        const created = { resourceType: 'DocumentReference', id: 'x' }
-        const { fetchImpl } = stubFetch((call) => {
-            if (call.method === 'POST') return jsonResponse(created, { status: 201 })
-            return jsonResponse({ resourceType: 'Bundle', type: 'searchset', entry: [] })
-        })
-        const context = buildContext(fetchImpl)
-
-        const outcome = await documentReferenceInlineWriteProbe.run(context)
-
-        expect(
-            outcome.validations.some(
-                (v) => v.severity === 'WARNING' && v.message.includes('did not include a Location'),
-            ),
-        ).toBe(true)
-    })
-
     it('errors when the server drops context.encounter on read-back', async () => {
-        const created = {
-            resourceType: 'DocumentReference',
-            id: 'x',
-            status: 'current',
-            type: { coding: [{ system: 'urn:oid:2.16.578.1.12.4.1.1.9602', code: 'J01-2' }] },
-            subject: { reference: 'Patient/patient-1' },
-            author: [{ reference: 'Practitioner/practitioner-1' }],
-            content: [{ attachment: { contentType: 'application/pdf', data: 'abc' } }],
-            context: { encounter: [{ reference: 'Encounter/encounter-1' }] },
-        }
-        const droppedOnReadBack = { ...created, context: {} }
-
-        const { fetchImpl } = stubFetch((call) => {
-            if (call.method === 'POST') {
-                return jsonResponse(created, {
-                    status: 201,
-                    headers: { Location: `${BASE_URL}/DocumentReference/x` },
-                })
-            }
-            if (call.method === 'GET' && call.url.endsWith('/DocumentReference/x')) {
-                return jsonResponse(droppedOnReadBack)
-            }
-            return jsonResponse({ resourceType: 'Bundle', type: 'searchset', entry: [] })
+        const { fetchImpl } = createFakeFhirServer({
+            onRead: (resource) => ({ ...resource, context: {} }),
         })
         const context = buildContext(fetchImpl)
 
@@ -356,67 +388,26 @@ describe('documentReferenceInlineWriteProbe', () => {
 })
 
 describe('documentReferenceBinaryWriteProbe', () => {
-    it('POSTs Binary then DocumentReference with content.attachment.url referencing it', async () => {
-        const binary = { resourceType: 'Binary', id: 'binary-1', contentType: 'application/pdf', data: 'abc' }
-        const doc = {
-            resourceType: 'DocumentReference',
-            id: 'doc-1',
-            status: 'current',
-            type: {
-                coding: [
-                    {
-                        system: 'urn:oid:2.16.578.1.12.4.1.1.9602',
-                        code: 'J01-2',
-                        display: 'Sykmeldinger og trygdesaker',
-                    },
-                ],
-            },
-            subject: { reference: 'Patient/patient-1' },
-            author: [{ reference: 'Practitioner/practitioner-1' }],
-            date: '2026-01-01T00:00:00Z',
-            description: 'Sykmelding',
-            content: [
-                {
-                    attachment: {
-                        title: 'Sykmelding',
-                        language: 'NO-nb',
-                        contentType: 'application/pdf',
-                        url: 'Binary/binary-1',
-                    },
-                },
-            ],
-            context: { encounter: [{ reference: 'Encounter/encounter-1' }] },
-        }
-
-        const { fetchImpl, calls } = stubFetch((call) => {
-            if (call.method === 'POST' && call.url === `${BASE_URL}/Binary`) {
-                return jsonResponse(binary, {
-                    status: 201,
-                    headers: { Location: `${BASE_URL}/Binary/binary-1` },
-                })
-            }
-            if (call.method === 'POST' && call.url === `${BASE_URL}/DocumentReference`) {
-                return jsonResponse(doc, {
-                    status: 201,
-                    headers: { Location: `${BASE_URL}/DocumentReference/doc-1` },
-                })
-            }
-            if (call.method === 'GET' && call.url.endsWith('/DocumentReference/doc-1')) {
-                return jsonResponse(doc)
-            }
-            return jsonResponse({ resourceType: 'OperationOutcome' }, { status: 404 })
-        })
+    it('POSTs Binary then PUTs DocumentReference (twice, same id) with content.attachment.url referencing it', async () => {
+        const { fetchImpl, calls } = createFakeFhirServer()
         const context = buildContext(fetchImpl)
 
         const outcome = await documentReferenceBinaryWriteProbe.run(context)
 
         expect(bad(outcome.validations)).toEqual([])
-        const docCall = calls.find((c) => c.method === 'POST' && c.url === `${BASE_URL}/DocumentReference`)
-        const sentBody = docCall?.body as { content: { attachment: { url?: string } }[] }
-        expect(sentBody.content[0]?.attachment.url).toBe('Binary/binary-1')
+
+        const binaryPost = calls.find((c) => c.method === 'POST' && c.url === `${BASE_URL}/Binary`)
+        expect(binaryPost).toBeDefined()
+
+        const putCalls = calls.filter((c) => c.method === 'PUT' && c.url.includes('/DocumentReference/'))
+        expect(putCalls).toHaveLength(2)
+        expect(putCalls[0]?.url).toBe(putCalls[1]?.url)
+
+        const sentBody = putCalls[0]?.body as { content: { attachment: { url?: string } }[] }
+        expect(sentBody.content[0]?.attachment.url).toBe('Binary/server-assigned-1')
     })
 
-    it('errors when the Binary POST fails, without attempting to create the DocumentReference', async () => {
+    it('errors when the Binary POST fails, without attempting to write the DocumentReference', async () => {
         const { fetchImpl, calls } = stubFetch((call) => {
             if (call.url === `${BASE_URL}/Binary`) {
                 return jsonResponse({ resourceType: 'OperationOutcome' }, { status: 404 })
@@ -428,33 +419,123 @@ describe('documentReferenceBinaryWriteProbe', () => {
         const outcome = await documentReferenceBinaryWriteProbe.run(context)
 
         expect(outcome.validations.some((v) => v.severity === 'ERROR')).toBe(true)
-        expect(calls.filter((c) => c.method === 'POST')).toHaveLength(1)
+        expect(calls).toHaveLength(1)
+        expect(calls[0]?.method).toBe('POST')
+    })
+
+    it('treats a 403 as correct behaviour on the DocumentReference PUT when no write scope was granted', async () => {
+        const { fetchImpl, calls } = stubFetch(() =>
+            jsonResponse({ resourceType: 'OperationOutcome' }, { status: 403 }),
+        )
+        const context = buildContext(fetchImpl, { grantedScopes: [] })
+
+        const outcome = await documentReferenceBinaryWriteProbe.run(context)
+
+        expect(calls).toHaveLength(1)
+        expect(calls[0]?.method).toBe('PUT')
+        expect(outcome.validations.some((v) => v.message.includes('correctly rejected'))).toBe(true)
     })
 })
 
 describe('binaryWriteProbe', () => {
-    it('POSTs Binary as FHIR-JSON with contentType and base64 data, then reads it back', async () => {
-        const binary = { resourceType: 'Binary', id: 'binary-1', contentType: 'application/pdf', data: 'abc' }
-        const { fetchImpl, calls } = stubFetch((call) => {
-            if (call.method === 'POST') {
-                return jsonResponse(binary, {
-                    status: 201,
-                    headers: { Location: `${BASE_URL}/Binary/binary-1` },
-                })
-            }
-            return jsonResponse(binary)
-        })
+    it('POSTs Binary via FHIR-JSON and via raw-body, and reads both back', async () => {
+        const { fetchImpl, calls } = createFakeFhirServer()
         const context = buildContext(fetchImpl)
 
         const outcome = await binaryWriteProbe.run(context)
 
         expect(bad(outcome.validations)).toEqual([])
-        const createCall = calls.find((c) => c.method === 'POST')
-        expect(createCall?.url).toBe(`${BASE_URL}/Binary`)
-        expect(createCall?.headers['Content-Type']).toBe('application/fhir+json')
-        const body = createCall?.body as { resourceType: string; contentType: string; data: string }
-        expect(body.resourceType).toBe('Binary')
-        expect(body.contentType).toBe('application/pdf')
+
+        const postCalls = calls.filter((c) => c.method === 'POST' && c.url === `${BASE_URL}/Binary`)
+        expect(postCalls).toHaveLength(2)
+
+        const jsonCall = postCalls.find((c) => c.headers['Content-Type'] === 'application/fhir+json')
+        expect(jsonCall).toBeDefined()
+        const jsonBody = jsonCall?.body as { resourceType: string; contentType: string }
+        expect(jsonBody.resourceType).toBe('Binary')
+        expect(jsonBody.contentType).toBe('application/pdf')
+
+        const rawCall = postCalls.find((c) => c.headers['Content-Type'] === 'application/pdf')
+        expect(rawCall).toBeDefined()
+        expect(typeof rawCall?.body).not.toBe('string')
+
+        expect(outcome.validations.some((v) => v.message.includes('Both Binary upload mechanisms'))).toBe(
+            true,
+        )
+    })
+
+    it('warns when only one Binary upload mechanism succeeds', async () => {
+        const { fetchImpl } = stubFetch((call) => {
+            if (call.headers['Content-Type'] === 'application/pdf') {
+                return jsonResponse({ resourceType: 'OperationOutcome' }, { status: 415 })
+            }
+            if (call.method === 'POST') {
+                return jsonResponse(
+                    {
+                        resourceType: 'Binary',
+                        id: 'json-binary',
+                        contentType: 'application/pdf',
+                        data: 'abc',
+                    },
+                    { status: 201, headers: { Location: `${BASE_URL}/Binary/json-binary` } },
+                )
+            }
+            return jsonResponse({
+                resourceType: 'Binary',
+                id: 'json-binary',
+                contentType: 'application/pdf',
+                data: 'abc',
+            })
+        })
+        const context = buildContext(fetchImpl)
+
+        const outcome = await binaryWriteProbe.run(context)
+
+        const warning = outcome.validations.find(
+            (v) => v.severity === 'WARNING' && v.message.includes('Only the FHIR-JSON POST'),
+        )
+        expect(warning).toBeDefined()
+    })
+
+    it('errors when both Binary upload mechanisms fail', async () => {
+        const { fetchImpl } = stubFetch(() =>
+            jsonResponse({ resourceType: 'OperationOutcome' }, { status: 500 }),
+        )
+        const context = buildContext(fetchImpl)
+
+        const outcome = await binaryWriteProbe.run(context)
+
+        expect(
+            outcome.validations.some(
+                (v) => v.severity === 'ERROR' && v.message.includes('Both Binary upload mechanisms'),
+            ),
+        ).toBe(true)
+    })
+
+    it('warns when a 201 create response omits the Location header', async () => {
+        const { fetchImpl } = stubFetch((call) => {
+            if (call.method === 'POST') {
+                return jsonResponse(
+                    { resourceType: 'Binary', id: 'x', contentType: 'application/pdf', data: 'a' },
+                    { status: 201 },
+                )
+            }
+            return jsonResponse({
+                resourceType: 'Binary',
+                id: 'x',
+                contentType: 'application/pdf',
+                data: 'a',
+            })
+        })
+        const context = buildContext(fetchImpl)
+
+        const outcome = await binaryWriteProbe.run(context)
+
+        expect(
+            outcome.validations.some(
+                (v) => v.severity === 'WARNING' && v.message.includes('did not include a Location'),
+            ),
+        ).toBe(true)
     })
 
     it('treats a 403 as correct when no Binary write scope was granted', async () => {
@@ -484,34 +565,24 @@ describe('binaryWriteProbe', () => {
 })
 
 describe('questionnaireResponseWriteProbe', () => {
-    it('POSTs to [base]/QuestionnaireResponse and is searchable by subject and encounter', async () => {
-        const created = {
-            resourceType: 'QuestionnaireResponse',
-            id: 'qr-1',
-            questionnaire: 'https://www.nav.no/samarbeidspartner/sykmelding/fhir/R4/Questionnaire/V1',
-            status: 'completed',
-            subject: { reference: 'Patient/patient-1' },
-            encounter: { reference: 'Encounter/encounter-1' },
-            authored: '2026-01-01T00:00:00Z',
-            author: { reference: 'Practitioner/practitioner-1' },
-            item: [{ linkId: 'hoveddiagnose', answer: [{ valueCoding: { code: 'Z09' } }] }],
-        }
-        const { fetchImpl, calls } = stubFetch((call) => {
-            if (call.method === 'POST') {
-                return jsonResponse(created, {
-                    status: 201,
-                    headers: { Location: `${BASE_URL}/QuestionnaireResponse/qr-1` },
-                })
-            }
-            return jsonResponse({ resourceType: 'Bundle', type: 'searchset', entry: [{ resource: created }] })
-        })
+    it('PUTs to [base]/QuestionnaireResponse/{client-assigned-id} twice and is searchable by subject and encounter', async () => {
+        const { fetchImpl, calls } = createFakeFhirServer()
         const context = buildContext(fetchImpl)
 
         const outcome = await questionnaireResponseWriteProbe.run(context)
 
         expect(bad(outcome.validations)).toEqual([])
-        const createCall = calls.find((c) => c.method === 'POST')
-        expect(createCall?.url).toBe(`${BASE_URL}/QuestionnaireResponse`)
+
+        const putCalls = calls.filter((c) => c.method === 'PUT')
+        expect(putCalls).toHaveLength(2)
+        expect(putCalls[0]?.url).toMatch(/\/QuestionnaireResponse\/smart-on-fhir-validator-qr-/)
+        expect(putCalls[0]?.url).toBe(putCalls[1]?.url)
+
+        expect(
+            outcome.validations.some(
+                (v) => v.severity === 'OK' && v.message.includes('did not produce a different resource id'),
+            ),
+        ).toBe(true)
     })
 
     it('errors with OperationOutcome details on a 422 response', async () => {
@@ -529,7 +600,7 @@ describe('questionnaireResponseWriteProbe', () => {
         const outcome = await questionnaireResponseWriteProbe.run(context)
 
         const failure = outcome.validations.find(
-            (v) => v.severity === 'ERROR' && v.message.includes('failed to create'),
+            (v) => v.severity === 'ERROR' && v.message.includes('failed to upsert'),
         )
         expect(failure?.message).toContain('422')
         expect(failure?.message).toContain('Unknown linkId')

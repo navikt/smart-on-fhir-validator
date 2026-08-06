@@ -21,6 +21,8 @@ export const hl7Refs = {
     questionnaireResponse: 'https://hl7.org/fhir/R4/questionnaireresponse.html',
     fhirHttpCreate: 'https://hl7.org/fhir/R4/http.html#create',
     fhirHttpSearch: 'https://hl7.org/fhir/R4/http.html#search',
+    /** `PUT` as update-as-create ("upsert"): 201 when no resource existed yet, 200 when it did. */
+    fhirHttpUpsert: 'https://hl7.org/fhir/R4/http.html#upsert',
     practitionerRole: 'https://hl7.org/fhir/R4/practitionerrole.html',
     /** The HTTP API chapter: status codes, MIME types, and the RESTful interactions. */
     httpApi: 'https://hl7.org/fhir/R4/http.html',
