@@ -2816,7 +2816,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"typescript@npm:typescript@7.0.2":
+"typescript@npm:^7.0.2":
   version: 7.0.2
   resolution: "typescript@npm:7.0.2"
   dependencies:
@@ -2887,7 +2887,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"typescript@patch:typescript@npm%3Atypescript@7.0.2#optional!builtin<compat/typescript>":
+"typescript@patch:typescript@npm%3A^7.0.2#optional!builtin<compat/typescript>":
   version: 7.0.2
   resolution: "typescript@patch:typescript@npm%3A7.0.2#optional!builtin<compat/typescript>::version=7.0.2&hash=3bafbf"
   dependencies:
