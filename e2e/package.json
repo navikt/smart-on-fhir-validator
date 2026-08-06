@@ -1,0 +1,15 @@
+{
+    "name": "e2e",
+    "private": true,
+    "type": "module",
+    "scripts": {
+        "e2e": "playwright test",
+        "e2e:install": "playwright install --with-deps chromium",
+        "tsc": "tsc --noEmit"
+    },
+    "devDependencies": {
+        "@playwright/test": "^1.62.1",
+        "@types/node": "^24.13.3",
+        "typescript": "^7.0.2"
+    }
+}
