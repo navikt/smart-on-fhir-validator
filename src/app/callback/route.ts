@@ -11,12 +11,19 @@ import { isSmartError } from '#core/smart/types'
 import { createSessionStore } from '#core/storage/session-store'
 import { runValidation } from '#core/run'
 
+import { getAppOrigin } from '../app-origin'
 import { getReportStore } from '../report/report-store'
 
 export const runtime = 'nodejs'
 
-function errorRedirect(request: NextRequest, error: string, detail?: string): NextResponse {
-    const url = new URL('/callback/error', request.nextUrl.origin)
+/**
+ * `request.nextUrl.origin` is not usable here: see the matching comment in `../launch/route.ts`.
+ * It must agree with `../launch/route.ts`'s `callbackUrl` and with wherever the session cookie
+ * was scoped, or the redirect this callback issues (or the `redirect_uri` it re-derives for the
+ * token exchange) lands on a different host than the one the cookie is valid for.
+ */
+async function errorRedirect(error: string, detail?: string): Promise<NextResponse> {
+    const url = new URL('/callback/error', await getAppOrigin())
     url.searchParams.set('error', error)
     if (detail) url.searchParams.set('detail', detail)
 
@@ -35,7 +42,6 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
     const sessionId = await readSessionIdFromCookies()
     if (!sessionId) {
         return errorRedirect(
-            request,
             'session_not_found',
             'No pending session was found for this browser. Please restart the launch from your EHR.',
         )
@@ -61,16 +67,16 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
             fetchSmartConfiguration,
             findIssuerConfig,
             selectClientAuthentication,
-            redirectUri: new URL('/callback', request.nextUrl.origin).toString(),
+            redirectUri: new URL('/callback', await getAppOrigin()).toString(),
         },
     )
 
     if (isSmartError(callbackResult)) {
-        return errorRedirect(request, callbackResult.error, callbackResult.detail)
+        return errorRedirect(callbackResult.error, callbackResult.detail)
     }
 
     const report = await runValidation(callbackResult, { httpClient, recorder })
     await getReportStore().set(sessionId, report)
 
-    return NextResponse.redirect(new URL('/report', request.nextUrl.origin))
+    return NextResponse.redirect(new URL('/report', await getAppOrigin()))
 }
