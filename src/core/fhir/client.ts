@@ -79,6 +79,34 @@ export class FhirClient {
         })
     }
 
+    /**
+     * `PUT [base]/[type]/[id]` — update as create, with a client-assigned id.
+     *
+     * This is how Nav writes back: the id is derived from the sykmelding, so re-sending the
+     * same document is idempotent rather than producing a duplicate in the journal.
+     */
+    update(resourceType: string, id: string, resource: unknown): Promise<RecordedResponse> {
+        return this.http.send('fhir-write', `${this.baseUrl}/${resourceType}/${id}`, {
+            method: 'PUT',
+            headers: this.headers({ 'Content-Type': 'application/fhir+json' }),
+            body: JSON.stringify(resource),
+        })
+    }
+
+    /**
+     * `POST [base]/Binary` with the payload as the raw HTTP body.
+     *
+     * R4 allows a Binary to be sent either as a FHIR resource or as the bare bytes with the
+     * payload's own media type. Servers commonly support only one, so both are worth testing.
+     */
+    createBinaryRaw(contentType: string, body: BodyInit): Promise<RecordedResponse> {
+        return this.http.send('fhir-write', `${this.baseUrl}/Binary`, {
+            method: 'POST',
+            headers: this.headers({ 'Content-Type': contentType }),
+            body,
+        })
+    }
+
     /** `POST [base]` with a `batch` or `transaction` Bundle. */
     submitBundle(bundle: unknown): Promise<RecordedResponse> {
         return this.http.send('fhir-write', this.baseUrl, {
