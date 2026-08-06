@@ -11,16 +11,25 @@ import { registerClient } from '#core/smart/registration'
 import { isSmartError } from '#core/smart/types'
 import { createSessionStore } from '#core/storage/session-store'
 
+import { getAppOrigin } from '../app-origin'
 import { APP_CLIENT_NAME, APP_SCOPE, STANDALONE_LAUNCH_PLACEHOLDER } from './config'
 
 export const runtime = 'nodejs'
 
-function callbackUrl(request: NextRequest): string {
-    return new URL('/callback', request.nextUrl.origin).toString()
+/**
+ * `request.nextUrl.origin` is not usable here: the standalone/production server derives it from
+ * the process's own bind address (`HOSTNAME`/`PORT`), not from the request the browser actually
+ * sent, so it silently ignores `x-forwarded-host` behind nais's ingress. `getAppOrigin` reads the
+ * proxy headers directly (mirroring `isRequestSecure` in `#core/session/session-cookie`) and is
+ * the one thing here that must agree with where the session cookie itself was scoped, or the
+ * redirect back from the authorization server lands on a host the cookie was never sent to.
+ */
+async function callbackUrl(): Promise<string> {
+    return new URL('/callback', await getAppOrigin()).toString()
 }
 
-function errorRedirect(request: NextRequest, error: string, detail?: string): NextResponse {
-    const url = new URL('/launch/error', request.nextUrl.origin)
+async function errorRedirect(error: string, detail?: string): Promise<NextResponse> {
+    const url = new URL('/launch/error', await getAppOrigin())
     url.searchParams.set('error', error)
     if (detail) url.searchParams.set('detail', detail)
 
@@ -39,7 +48,7 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
     const launch = request.nextUrl.searchParams.get('launch')
 
     if (!iss) {
-        return errorRedirect(request, 'missing_iss', 'The iss query parameter is required to start a launch.')
+        return errorRedirect('missing_iss', 'The iss query parameter is required to start a launch.')
     }
 
     const recorder = createExchangeRecorder()
@@ -59,14 +68,14 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
             createPkcePair,
             createOauthState,
             createSessionId,
-            redirectUri: callbackUrl(request),
+            redirectUri: await callbackUrl(),
             scope: APP_SCOPE,
             clientName: APP_CLIENT_NAME,
         },
     )
 
     if (isSmartError(result)) {
-        return errorRedirect(request, result.error, result.detail)
+        return errorRedirect(result.error, result.detail)
     }
 
     await writeSessionCookie(result.sessionId)
