@@ -2,8 +2,8 @@ import { randomBytes } from 'node:crypto'
 
 /**
  * Pure cookie logic, kept free of `next/headers` so it can be unit tested with plain strings.
- * `readSessionIdFromCookies`, `isRequestSecure`, `writeSessionCookie` and `clearSessionCookie`
- * below are the only functions that touch Next.js.
+ * `readSessionIdFromCookies`, `isRequestSecure` and `writeSessionCookie` below are the only
+ * functions that touch Next.js.
  */
 
 export const SESSION_COOKIE_NAME = 'smart-validator-session'
@@ -123,10 +123,4 @@ export async function writeSessionCookie(sessionId: string, maxAgeSeconds?: numb
         path: attributes.path,
         maxAge: attributes.maxAge,
     })
-}
-
-export async function clearSessionCookie(): Promise<void> {
-    const { cookies } = await import('next/headers')
-    const store = await cookies()
-    store.delete(SESSION_COOKIE_NAME)
 }
