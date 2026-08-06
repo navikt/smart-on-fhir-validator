@@ -51,6 +51,15 @@ body:
     validations:
       required: true
 
+  - type: input
+    id: jwks-url
+    attributes:
+      label: Your authorization server's JWKS URL (jwks_uri)
+      description: >-
+        Required only if you chose client-confidential-asymmetric (private_key_jwt) above and
+        your `.well-known/smart-configuration` does not already advertise `jwks_uri`.
+      placeholder: https://auth.test.acme.no/.well-known/jwks.json
+
   - type: checkboxes
     id: registered-urls
     attributes:
