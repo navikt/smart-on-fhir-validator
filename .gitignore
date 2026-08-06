@@ -4,14 +4,19 @@ logs
 npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
-pnpm-debug.log*
-lerna-debug.log*
 
 node_modules
-dist
-build
-dist-ssr
 *.local
+
+# Next.js
+.next
+next-env.d.ts
+
+# Test artifacts
+coverage
+test-results
+playwright-report
+e2e/.auth
 
 # Editor directories and files
 .vscode/*
@@ -33,9 +38,7 @@ dist-ssr
 !.yarn/sdks
 !.yarn/versions
 
-# react-router-7
-.react-router
-
 # local dev
+.env*.local
 .git-co-authors.yaml
 .husky/prepare-commit-msg

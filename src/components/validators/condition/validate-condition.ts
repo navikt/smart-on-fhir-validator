@@ -1,5 +1,5 @@
 import type { Condition } from 'fhir/r4'
-import { hl7Refs, navRefs } from 'src/validation/common-refs'
+import { hl7Refs, navRefs } from '#validation/common-refs'
 
 import { Validator } from '../../../validation/Validator'
 import type { Validation } from '../../../validation/validation'

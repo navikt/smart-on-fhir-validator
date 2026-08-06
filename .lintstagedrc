@@ -1,4 +1,0 @@
-{
-    "*.{md,html,css,json,md,mdx,js,yml,yaml}": "yarn prettier --write",
-    "*.{ts,tsx}": "yarn eslint --fix --max-warnings=0"
-}

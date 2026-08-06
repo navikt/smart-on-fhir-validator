@@ -1,5 +1,5 @@
 import type {Coding, DocumentReference} from "fhir/r4";
-import { Validator } from 'src/validation/Validator'
+import { Validator } from '#validation/Validator'
 
 import { hl7Refs, navRefs } from '../../../validation/common-refs'
 import { type Validation } from '../../../validation/validation'
@@ -178,7 +178,7 @@ export function validateDocumentReference(
     validator.error('DocumentReference does not contain a context object')
   } else if (!documentReference.context.encounter || documentReference.context.encounter.length < 1) {
     validator.error('DocumentReference context object does not contain an encounter object')
-  } else if (!documentReference.context.encounter[0].reference) {
+  } else if (!documentReference.context.encounter[0]?.reference) {
     validator.error('DocumentReference context encounter object does not contain a reference')
   } else if (!documentReference.context.encounter[0].reference.startsWith('Encounter/')) {
     validator.error(
