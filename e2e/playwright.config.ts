@@ -7,10 +7,22 @@ const BASE_URL = `http://localhost:${PORT}`
  * The built-in mock EHR (`#mocks/server`, mounted at `/api/mocks/fhir` — see
  * `src/app/api/mocks/fhir/[[...path]]/route.ts`) is only reachable when `isMockEhrEnabled()`
  * returns true. That is always true outside `NODE_ENV=production`, so `next dev` needs no extra
- * flag; the CI job runs a production build (`next build && next start`), where it must be set
- * explicitly. Both paths set it so this config does not silently depend on which one runs.
+ * flag; the CI job runs a production build, where it must be set explicitly. Both paths set it so
+ * this config does not silently depend on which one runs.
+ *
+ * CI does not run `next start`: `next.config.ts` sets `output: 'standalone'`, which `next start`
+ * explicitly refuses to serve ("next start does not work with output: standalone configuration").
+ * Running it anyway does not error loudly — it silently serves a broken app, which is exactly
+ * how the real production deployment (`Dockerfile`) does NOT run this app, so it proved nothing.
+ * `Dockerfile` runs `node server.js` out of `.next/standalone`, with `.next/static` and `public`
+ * copied alongside it; this mirrors that exactly, so CI proves the thing that is actually shipped.
  */
-const webServerCommand = process.env.CI ? `next start --port ${PORT}` : `next dev --port ${PORT}`
+const webServerCommand = process.env.CI
+    ? 'rm -rf .next/standalone/.next/static .next/standalone/public && ' +
+      'cp -r .next/static .next/standalone/.next/static && ' +
+      'cp -r public .next/standalone/public && ' +
+      'node .next/standalone/server.js'
+    : `next dev --port ${PORT}`
 
 export default defineConfig({
     testDir: './tests',
@@ -25,12 +37,13 @@ export default defineConfig({
     // not a place to paper over timing bugs with a second attempt.
     retries: 0,
     reporter: process.env.CI ? [['github'], ['html', { open: 'never' }]] : 'html',
-    // Generous, not a workaround: the /report page's own server-render currently takes ~17s
-    // (evidence-heavy syntax highlighting appears to run once per request, unmemoised — flagged
-    // separately, out of this suite's ownership). 30s left this test passing at ~25-27s wall
-    // time, one slow CI runner away from a flake; widen the ceiling rather than let a real
-    // regression there masquerade as test flake.
-    timeout: 45_000,
+    // The /report render that motivated a generous ceiling here is gone: dropping
+    // react-syntax-highlighter (it was generating ~59k styled elements, serialised twice into the
+    // RSC payload) took it from ~17s to ~2.5s measured in `next dev`, and well under a second in a
+    // real production build. 15s leaves >5x headroom over that without reviving the risk this
+    // config used to carry — a real regression back toward multi-second renders should fail loudly
+    // again, not hide behind a ceiling sized for a bug that no longer exists.
+    timeout: 15_000,
     use: {
         baseURL: BASE_URL,
         trace: 'retain-on-failure',
@@ -47,7 +60,13 @@ export default defineConfig({
         reuseExistingServer: !process.env.CI,
         stdout: 'pipe',
         stderr: 'pipe',
-        env: { ENABLE_MOCK_EHR: 'true', PORT },
+        // `NODE_ENV=production` only for the CI/standalone path: `next dev` requires it unset,
+        // and `Dockerfile` sets it explicitly for the real deployment this path now mirrors.
+        env: {
+            ENABLE_MOCK_EHR: 'true',
+            PORT,
+            ...(process.env.CI ? { NODE_ENV: 'production' } : {}),
+        },
     },
     projects: [{ name: 'chromium', use: { ...devices['Desktop Chrome'] } }],
 })
