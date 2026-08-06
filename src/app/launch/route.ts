@@ -62,9 +62,6 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
             redirectUri: callbackUrl(request),
             scope: APP_SCOPE,
             clientName: APP_CLIENT_NAME,
-            // Local development and the in-repo mock EHR are served over plain http; a real
-            // deployment's ingress always terminates TLS, so this is safe to key off NODE_ENV.
-            allowInsecureLaunch: process.env.NODE_ENV !== 'production',
         },
     )
 
