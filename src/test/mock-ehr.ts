@@ -138,6 +138,17 @@ export type LaunchOptions = {
     scope?: string
     launchParam?: string
     clientId?: string
+    /**
+     * When true, `findIssuerConfig` returns `null` instead of a pre-built `IssuerConfig`, forcing
+     * `handleLaunch` down the real RFC 7591 Dynamic Client Registration path (`registerClient`
+     * actually calls the mock's `/register` endpoint) — exactly what this app's own `/launch`
+     * route does for any issuer that is not statically configured in `#core/config/issuers`,
+     * which includes the in-repo mock EHR itself. Every other test in this suite instead supplies
+     * a ready-made `issuerConfig`, which is faster and fine for exercising the callback/token/FHIR
+     * layers, but silently never exercises dynamic registration at all. Use this option for any
+     * test that specifically needs to prove the registration round trip itself.
+     */
+    dynamicClientRegistration?: boolean
 }
 
 /**
@@ -180,7 +191,7 @@ export async function launchAgainstMockEhr(options: LaunchOptions = {}): Promise
             sessionStore,
             fetchSmartConfiguration,
             resolveEndpoint,
-            findIssuerConfig: () => issuerConfig,
+            findIssuerConfig: () => (options.dynamicClientRegistration ? null : issuerConfig),
             registerClient,
             createPkcePair,
             createOauthState,
@@ -222,7 +233,7 @@ export async function launchAgainstMockEhr(options: LaunchOptions = {}): Promise
             recorder,
             sessionStore,
             fetchSmartConfiguration,
-            findIssuerConfig: () => issuerConfig,
+            findIssuerConfig: () => (options.dynamicClientRegistration ? null : issuerConfig),
             selectClientAuthentication,
             redirectUri: APP_REDIRECT_URI,
         },
