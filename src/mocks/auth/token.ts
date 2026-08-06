@@ -8,7 +8,6 @@ import type { MockState, RegisteredClient } from '#mocks/state'
 
 import { identifyClient } from './verify-client'
 
-/** https://build.fhir.org/ig/HL7/smart-app-launch/scopes-and-launch-context.html */
 const ID_TOKEN_LIFETIME_SECONDS = 60 * 60
 const ACCESS_TOKEN_LIFETIME_SECONDS = 60 * 60
 
