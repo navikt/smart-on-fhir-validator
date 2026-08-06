@@ -32,7 +32,6 @@
         "pino": "^10.3.1",
         "react": "19.2.8",
         "react-dom": "19.2.8",
-        "remeda": "^2.39.0",
         "zod": "^4.4.3"
     },
     "devDependencies": {
