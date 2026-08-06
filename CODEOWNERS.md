@@ -1,1 +1,1 @@
-* @navikt/helseopplysninger
+- @navikt/helseopplysninger
