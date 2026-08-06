@@ -1,36 +1,50 @@
 apiVersion: "nais.io/v1alpha1"
 kind: "Application"
 metadata:
-  annotations:
-    nais.io/run-as-user: "1001"
   labels:
     team: {{ team }}
   name: {{ app }}
   namespace: {{ namespace }}
 spec:
   image: {{ image }}
-  port: 8080
+  port: 3000
+  # SMART sessions hold PKCE verifiers, tokens and dynamically registered client
+  # credentials. They must outlive a pod restart and be shared across replicas.
+  valkey:
+    - instance: sessions
+      access: readwrite
   observability:
     autoInstrumentation:
       enabled: true
       runtime: nodejs
+    logging:
+      destinations:
+        - id: loki
   ingresses:
   {{#each ingresses as |url|}}
     - {{ url }}
   {{/each}}
+  liveness:
+    path: /api/internal/is_alive
+  readiness:
+    path: /api/internal/is_ready
   replicas:
-    max: 1
+    max: 2
     min: 1
-  azure:
-    application:
-      enabled: true
   accessPolicy:
     outbound:
       external:
-      {{#each externalHost as |host|}}
-         - host: {{ host }}
+      {{#each externalHosts as |host|}}
+        - host: {{ host }}
       {{/each}}
+  env:
+    - name: NEXT_PUBLIC_ENVIRONMENT
+      value: {{ environment }}
+  envFrom:
+    - secret: smart-on-fhir-validator-clients
   resources:
+    limits:
+      memory: 1024Mi
     requests:
-      cpu: 20m
-      memory: 70Mi
+      cpu: 50m
+      memory: 256Mi

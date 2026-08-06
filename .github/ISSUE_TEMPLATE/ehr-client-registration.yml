@@ -1,0 +1,84 @@
+name: Register an EHR client
+description: Request that your EHR system is added to the SMART on FHIR validator
+title: '[EHR] Register <vendor name>'
+labels: ['ehr-registration']
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Use this form if your FHIR server does **not** expose a
+        `registration_endpoint` in `.well-known/smart-configuration`.
+
+        If it does, the validator registers itself automatically and you do not
+        need this issue.
+
+        Do **not** paste a client secret or a private key into this issue.
+        Nav will contact you for those over a secure channel.
+
+  - type: input
+    id: vendor
+    attributes:
+      label: Vendor and EHR product
+      placeholder: Acme Journal AS — AcmeEPJ 12.4
+    validations:
+      required: true
+
+  - type: input
+    id: issuer
+    attributes:
+      label: FHIR base URL (the `iss` your EHR will send at launch)
+      placeholder: https://fhir.test.acme.no/r4
+    validations:
+      required: true
+
+  - type: dropdown
+    id: auth
+    attributes:
+      label: Client authentication method
+      description: Which SMART client profile should the validator use against your token endpoint?
+      options:
+        - client-public (PKCE only, no client authentication)
+        - client-confidential-symmetric (client_secret_basic)
+        - client-confidential-symmetric (client_secret_post)
+        - client-confidential-asymmetric (private_key_jwt)
+    validations:
+      required: true
+
+  - type: input
+    id: client-id
+    attributes:
+      label: client_id issued to the validator
+    validations:
+      required: true
+
+  - type: checkboxes
+    id: registered-urls
+    attributes:
+      label: Registered URLs
+      description: Confirm these are registered for the client_id above.
+      options:
+        - label: 'Launch URL: https://nav-on-fhir.ekstern.dev.nav.no/launch'
+          required: true
+        - label: 'Redirect URL: https://nav-on-fhir.ekstern.dev.nav.no/callback'
+          required: true
+        - label: 'For private_key_jwt only: the validator''s JWKS at https://nav-on-fhir.ekstern.dev.nav.no/.well-known/jwks.json is registered'
+          required: false
+
+  - type: textarea
+    id: scopes
+    attributes:
+      label: Scopes granted to the client
+      description: Paste the scopes your authorization server will grant.
+      placeholder: openid profile fhirUser launch offline_access patient/Patient.rs patient/Encounter.rs ...
+    validations:
+      required: true
+
+  - type: checkboxes
+    id: reachability
+    attributes:
+      label: Reachability
+      options:
+        - label: The FHIR server and authorization server are reachable from Nav's infrastructure
+          required: true
+        - label: This is a test environment containing synthetic data only
+          required: true
