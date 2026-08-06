@@ -2455,13 +2455,6 @@ __metadata:
   languageName: node
   linkType: hard
 
-"remeda@npm:^2.39.0":
-  version: 2.39.0
-  resolution: "remeda@npm:2.39.0"
-  checksum: 10c0/5891871c93b47c501937d6e4a1c05d0b199b4402a8eb3a7a08653e81acc4ce45ae3cff4c90785d867f5e9b5f75e27b5120f0240e8ce490fbf2ab8c48013cc8af
-  languageName: node
-  linkType: hard
-
 "rolldown@npm:~1.2.0":
   version: 1.2.3
   resolution: "rolldown@npm:1.2.3"
@@ -2658,7 +2651,6 @@ __metadata:
     pino: "npm:^10.3.1"
     react: "npm:19.2.8"
     react-dom: "npm:19.2.8"
-    remeda: "npm:^2.39.0"
     tailwindcss: "npm:^4.3.3"
     typescript: "npm:^7.0.2"
     vitest: "npm:^4.1.10"
