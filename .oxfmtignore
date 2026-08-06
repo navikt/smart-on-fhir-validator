@@ -1,0 +1,10 @@
+# nais manifests are Handlebars templates; formatting them rewrites `{{ var }}`
+# into `{ { var } }` and breaks the deploy.
+.nais/
+.github/
+*.yml
+*.yaml
+*.md
+public/
+coverage/
+test-results/

@@ -3,7 +3,10 @@
   "namespace": "helseopplysninger",
   "team": "helseopplysninger",
   "environment": "dev",
-  "ingresses": ["https://nav-on-fhir.ekstern.dev.nav.no"],
+  "valkeyProject": "nav-dev",
+  "ingresses": [
+    "https://nav-on-fhir.ekstern.dev.nav.no"
+  ],
   "externalHosts": [
     "api.dips.no",
     "fhirapi.public.webmedepj.no",
