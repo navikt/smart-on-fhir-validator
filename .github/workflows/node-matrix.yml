@@ -1,0 +1,42 @@
+# Proves the app on Node versions we have not adopted yet, so a major bump is a
+# known quantity before Renovate proposes it rather than a surprise afterwards.
+name: Node compatibility
+
+on:
+  schedule:
+    - cron: '0 5 * * 1'
+  workflow_dispatch:
+  pull_request:
+    paths:
+      - .nvmrc
+      - package.json
+      - Dockerfile
+
+permissions:
+  contents: read
+
+jobs:
+  matrix:
+    name: Node ${{ matrix.node }}
+    runs-on: ubuntu-latest
+    continue-on-error: ${{ matrix.experimental }}
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - node: 24
+            experimental: false
+          - node: 26
+            experimental: true
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-node@v6
+        with:
+          node-version: ${{ matrix.node }}
+          cache: yarn
+      - run: corepack enable
+      - run: yarn install --immutable --mode=update-lockfile
+      - run: yarn install --immutable
+      - run: yarn tsc
+      - run: yarn test
+      - run: yarn build
