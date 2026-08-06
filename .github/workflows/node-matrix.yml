@@ -49,7 +49,11 @@ jobs:
       - run: yarn tsc
       - run: yarn workspace e2e run tsc
       - run: yarn test:coverage
+      # See ci.yml: the landing page is statically prerendered, so the mock-EHR link is compiled
+      # out unless the flag is set at build time.
       - run: yarn build
+        env:
+          ENABLE_MOCK_EHR: 'true'
       - uses: actions/cache@v4
         with:
           path: ~/.cache/ms-playwright

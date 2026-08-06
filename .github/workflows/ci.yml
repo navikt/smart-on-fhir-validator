@@ -51,7 +51,12 @@ jobs:
           path: ~/.cache/ms-playwright
           key: playwright-chromium-${{ runner.os }}-${{ hashFiles('yarn.lock') }}
       - run: yarn e2e:install
+      # The landing page is statically prerendered, so the "try it against the mock EHR" link is
+      # compiled out unless the flag is set at *build* time — setting it only on the server would
+      # be too late for the e2e suite to find the link.
       - run: yarn build
+        env:
+          ENABLE_MOCK_EHR: 'true'
       - run: yarn e2e
       - uses: actions/upload-artifact@v4
         if: failure()
