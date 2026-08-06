@@ -1,5 +1,5 @@
 import { Hono } from 'hono'
-import type { MiddlewareHandler } from 'hono'
+import type { Context, MiddlewareHandler } from 'hono'
 
 import type { FhirResource, OperationOutcome } from 'fhir/r4'
 
@@ -10,6 +10,10 @@ export type WriteOutcome<T> =
     | { ok: true; resource: T }
     | { ok: false; status: number; outcome: OperationOutcome }
 
+async function defaultParseBody(c: Context): Promise<unknown> {
+    return c.req.json().catch(() => null)
+}
+
 export type ResourceRouterConfig<T extends FhirResource> = {
     resourceType: string
     baseUrl: string
@@ -18,6 +22,13 @@ export type ResourceRouterConfig<T extends FhirResource> = {
     searchParams?: Record<string, (resource: T, value: string) => boolean>
     onCreate?: (body: unknown) => WriteOutcome<T>
     onUpdate?: (id: string, body: unknown) => WriteOutcome<T>
+    /**
+     * How to read the POST/PUT request body before handing it to `onCreate`/`onUpdate`.
+     * Defaults to parsing it as FHIR JSON; a resource that also accepts a raw (non-FHIR-JSON)
+     * body per its own spec — e.g. Binary, https://hl7.org/fhir/R4/binary.html#rest — supplies
+     * its own to interpret the `Content-Type` header instead.
+     */
+    parseBody?: (c: Context) => Promise<unknown>
     /** Bearer + scope enforcement, shared across every resource via `fhir/auth-middleware.ts`. */
     auth: MiddlewareHandler
 }
@@ -31,7 +42,16 @@ export type ResourceRouterConfig<T extends FhirResource> = {
  * status codes) — resource-specific behaviour is only the search matchers and write validation.
  */
 export function createResourceRouter<T extends FhirResource>(config: ResourceRouterConfig<T>): Hono {
-    const { resourceType, baseUrl, store, searchParams = {}, onCreate, onUpdate, auth } = config
+    const {
+        resourceType,
+        baseUrl,
+        store,
+        searchParams = {},
+        onCreate,
+        onUpdate,
+        parseBody = defaultParseBody,
+        auth,
+    } = config
     const app = new Hono()
 
     app.use('*', auth)
@@ -72,7 +92,7 @@ export function createResourceRouter<T extends FhirResource>(config: ResourceRou
 
     if (onCreate) {
         app.post('/', async (c) => {
-            const body: unknown = await c.req.json().catch(() => null)
+            const body: unknown = await parseBody(c)
             const result = onCreate(body)
             if (!result.ok) return fhirJson(result.outcome, result.status)
 
@@ -86,7 +106,7 @@ export function createResourceRouter<T extends FhirResource>(config: ResourceRou
     if (onUpdate) {
         app.put('/:id', async (c) => {
             const id = c.req.param('id')
-            const body: unknown = await c.req.json().catch(() => null)
+            const body: unknown = await parseBody(c)
             const result = onUpdate(id, body)
             if (!result.ok) return fhirJson(result.outcome, result.status)
 

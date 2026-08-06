@@ -14,10 +14,9 @@
  *
  * Both directions matter, and this file is split accordingly:
  *
- *  1. "no defects injected" must produce zero ERROR findings that this suite doesn't already
- *     know about and name explicitly (see `KNOWN_BASELINE_MOCK_BUGS` below) — a false positive
- *     from a fully conformant server is exactly the kind of noise that trains people to ignore
- *     the report.
+ *  1. "no defects injected" must produce zero ERROR findings at all — a false positive from a
+ *     fully conformant server is exactly the kind of noise that trains people to ignore the
+ *     report.
  *  2. every individual defect must produce its expected ERROR/WARNING, or fail the launch in a
  *     way that is itself the correct, loud response to that non-conformance — a false negative
  *     (silently green) would mean the validator does not actually validate anything.
@@ -85,62 +84,12 @@ function expectFinding(
     expect(matching.length).toBeGreaterThan(0)
 }
 
-/**
- * Pre-existing bugs in `src/mocks/**` (not owned by this test suite — see the task's ownership
- * rules) that make even the *fully conformant* mock EHR (zero defects injected) produce ERROR
- * findings. Each is verified against source below; none is caused by, or related to, any defect
- * this file injects. They are named here — rather than fixed, papered over, or silently
- * tolerated — so:
- *
- *  - a NEW, unrelated regression (e.g. from a dependency bump) that adds a further baseline
- *    ERROR still fails this test loudly;
- *  - if one of these bugs is fixed later, this test's exact-count assertion fails too, forcing
- *    whoever fixed it to notice and shrink this list — it cannot silently go stale.
- *
- * 1. `PractitionerRole` never sets `meta.profile` (`src/mocks/data/practitioner-role.ts`),
- *    unlike every other no-basis-* resource in this mock — an unconditional omission, not
- *    gated behind any `Defect`. `validatePractitionerRoleResource` correctly reports this as an
- *    ERROR; the mock is simply wrong, always, regardless of `defects`.
- * 2. `POST /Binary` with a raw (non-JSON) body — the `createBinaryRaw` upload mechanism
- *    `FhirClient` and `binaryWriteProbe` both exercise on purpose, per RFC — always 422s.
- *    `src/mocks/fhir/resource-router.ts`'s generic `onCreate` handler unconditionally calls
- *    `c.req.json()`; a raw PDF body isn't JSON, so the parse fails, `body` becomes `null`, and
- *    `validateBinary(null)` reports the resource as missing `contentType`/`data`. The mock's
- *    `binaryRouter` (`src/mocks/fhir/binary.ts`) never special-cases a non-FHIR-JSON
- *    `Content-Type`, so this mechanism can never succeed against this mock, defects or not.
- * 3. `GET /QuestionnaireResponse?encounter=...` always 400s: unlike `documentReferenceRouter`
- *    (which registers an `encounter` search-param matcher), `questionnaireResponseRouter`
- *    (`src/mocks/fhir/questionnaire-response.ts`) only registers `subject` and `questionnaire`.
- *    `write-probes.ts`'s `questionnaireResponseWriteProbe` searches by `encounter=` regardless
- *    (mirroring the DocumentReference probe), so this is a permanent, defect-independent 400.
- *
- * None of these are fixable from this suite's ownership (`src/mocks/**` and `src/validation/**`
- * both belong to other agents). They are reported prominently in the task summary as follow-up
- * work — see the final report.
- */
-const KNOWN_BASELINE_MOCK_BUGS = [
-    'PractitionerRole/practitioner-role-sidsel-jarvery does not declare `meta.profile`',
-    'POST https://mock-ehr.example.com/fhir/Binary failed to create the Binary with status 422',
-    'GET https://mock-ehr.example.com/fhir/QuestionnaireResponse?encounter=' +
-        'Encounter%2Fencounter-espen-1 failed with status 400',
-]
-
 describe('baseline: the fully conformant mock (no defects injected)', () => {
-    it('produces no ERROR findings beyond the known, out-of-scope mock bugs named above', async () => {
+    it('produces no ERROR findings', async () => {
         const report = await runReportWithDefects([])
         const errorMessages = findingsOf(report, 'ERROR').map((f) => f.message)
 
-        for (const message of errorMessages) {
-            const isKnown = KNOWN_BASELINE_MOCK_BUGS.some((known) => message.includes(known))
-            expect(
-                isKnown,
-                `Unexpected new baseline ERROR (not in KNOWN_BASELINE_MOCK_BUGS): ${message}`,
-            ).toBe(true)
-        }
-
-        // Every known bug is still present — if this ever drops below 3, one of them was fixed
-        // and this list (and its justifying comment) needs to shrink to match.
-        expect(errorMessages).toHaveLength(KNOWN_BASELINE_MOCK_BUGS.length)
+        expect(errorMessages).toHaveLength(0)
     })
 
     it('is not itself a launch/callback failure', async () => {
