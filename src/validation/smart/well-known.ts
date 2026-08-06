@@ -197,7 +197,7 @@ function evaluateAbsoluteUrls(
 
         validator.error(
             `\`${field}\` ("${value}") is a relative URL; the spec requires absolute URLs. This app ` +
-                `resolves it against the FHIR base URL per RFC1808, but the server should be fixed ` +
+                `resolves it against the FHIR base URL per RFC 3986 §5, but the server should be fixed ` +
                 `(see HTTP exchange ${exchangeId})`,
             refs.usingWellKnown,
         )

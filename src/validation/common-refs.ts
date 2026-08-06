@@ -16,7 +16,9 @@ export const hl7Refs = {
     organization: 'https://hl7.org/fhir/R4/organization.html',
     binary: 'https://hl7.org/fhir/R4/binary.html',
     bundle: 'https://hl7.org/fhir/R4/bundle.html',
-    bundleTransactionRules: 'https://hl7.org/fhir/R4/http.html#trules',
+    /** Batch Processing Rules: entry structure and the inter-entry reference constraints that apply
+     *  specifically to a `batch` (as opposed to a `transaction`) Bundle. */
+    bundleBatchRules: 'https://hl7.org/fhir/R4/http.html#brules',
     bundleTransaction: 'https://hl7.org/fhir/R4/http.html#transaction',
     questionnaireResponse: 'https://hl7.org/fhir/R4/questionnaireresponse.html',
     fhirHttpCreate: 'https://hl7.org/fhir/R4/http.html#create',
@@ -56,8 +58,6 @@ export const navRefs = {
     /** No dedicated doc page exists for PractitionerRole; the requirement is in nav-requirements.md. */
     practitionerRole: 'https://github.com/navikt/syk-inn/blob/main/docs/fhir/nav-requirements.md',
 }
-
-export const organizationRefs = {}
 
 export const fullRefs = {
     pasient: {
