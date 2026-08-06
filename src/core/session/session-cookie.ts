@@ -2,7 +2,8 @@ import { randomBytes } from 'node:crypto'
 
 /**
  * Pure cookie logic, kept free of `next/headers` so it can be unit tested with plain strings.
- * `readSessionCookie`/`writeSessionCookie` below are the only functions that touch Next.js.
+ * `readSessionIdFromCookies`, `isRequestSecure`, `writeSessionCookie` and `clearSessionCookie`
+ * below are the only functions that touch Next.js.
  */
 
 export const SESSION_COOKIE_NAME = 'smart-validator-session'
@@ -17,7 +18,13 @@ export type SessionCookieAttributes = {
     name: string
     value: string
     httpOnly: true
-    secure: true
+    /**
+     * Whether the browser is told to withhold this cookie from plain-HTTP requests. Must be
+     * `true` whenever the app is actually served over HTTPS (always true once deployed on nais)
+     * and `false` for genuine plain-HTTP local development — a `Secure` cookie set over `http://`
+     * is silently dropped by the browser, so getting this wrong breaks every launch.
+     */
+    secure: boolean
     /**
      * Must be `Lax`, not `Strict`: the EHR's authorization server redirects the browser back to
      * `/callback` cross-site after login, and a `Strict` cookie is not sent on that top-level
@@ -28,12 +35,16 @@ export type SessionCookieAttributes = {
     maxAge?: number
 }
 
-export function buildSessionCookie(sessionId: string, maxAgeSeconds?: number): SessionCookieAttributes {
+export function buildSessionCookie(
+    sessionId: string,
+    secure: boolean,
+    maxAgeSeconds?: number,
+): SessionCookieAttributes {
     return {
         name: SESSION_COOKIE_NAME,
         value: sessionId,
         httpOnly: true,
-        secure: true,
+        secure,
         sameSite: 'lax',
         path: '/',
         ...(maxAgeSeconds === undefined ? {} : { maxAge: maxAgeSeconds }),
@@ -63,13 +74,13 @@ export function parseSessionCookie(cookieHeader: string | null | undefined): str
 }
 
 /** Serialises a `Set-Cookie` header value. Framework-agnostic counterpart to `buildSessionCookie`. */
-export function serializeSessionCookie(sessionId: string, maxAgeSeconds?: number): string {
-    const attributes = buildSessionCookie(sessionId, maxAgeSeconds)
+export function serializeSessionCookie(sessionId: string, secure: boolean, maxAgeSeconds?: number): string {
+    const attributes = buildSessionCookie(sessionId, secure, maxAgeSeconds)
     const parts = [
         `${attributes.name}=${encodeURIComponent(attributes.value)}`,
         `Path=${attributes.path}`,
         'HttpOnly',
-        'Secure',
+        ...(attributes.secure ? ['Secure'] : []),
         `SameSite=Lax`,
     ]
     if (attributes.maxAge !== undefined) parts.push(`Max-Age=${attributes.maxAge}`)
@@ -83,10 +94,28 @@ export async function readSessionIdFromCookies(): Promise<string | null> {
     return store.get(SESSION_COOKIE_NAME)?.value ?? null
 }
 
+/**
+ * Whether the current request arrived over HTTPS. Mirrors `getAppOrigin`'s derivation
+ * (`src/app/app-origin.ts`): trust `x-forwarded-proto` first, since nais's ingress terminates TLS
+ * and forwards plain HTTP to the app, then fall back to treating `localhost` as the only genuine
+ * plain-HTTP case. Never keyed off `NODE_ENV` — an env var can be wrong in production, and this
+ * attribute is a real security boundary, not a convenience.
+ */
+async function isRequestSecure(): Promise<boolean> {
+    const { headers } = await import('next/headers')
+    const requestHeaders = await headers()
+    const host = requestHeaders.get('x-forwarded-host') ?? requestHeaders.get('host') ?? 'localhost:3000'
+    const protocol =
+        requestHeaders.get('x-forwarded-proto') ?? (host.startsWith('localhost') ? 'http' : 'https')
+
+    return protocol === 'https'
+}
+
 export async function writeSessionCookie(sessionId: string, maxAgeSeconds?: number): Promise<void> {
     const { cookies } = await import('next/headers')
     const store = await cookies()
-    const attributes = buildSessionCookie(sessionId, maxAgeSeconds)
+    const secure = await isRequestSecure()
+    const attributes = buildSessionCookie(sessionId, secure, maxAgeSeconds)
     store.set(attributes.name, attributes.value, {
         httpOnly: attributes.httpOnly,
         secure: attributes.secure,
