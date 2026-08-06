@@ -12,6 +12,8 @@ node_modules
 .next
 next-env.d.ts
 
+.scratch
+
 # Test artifacts
 coverage
 test-results

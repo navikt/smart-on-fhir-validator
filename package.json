@@ -3,6 +3,9 @@
     "version": "1.0.0",
     "private": true,
     "type": "module",
+    "workspaces": [
+        "e2e"
+    ],
     "scripts": {
         "dev": "next dev",
         "build": "next build",
@@ -15,8 +18,9 @@
         "test": "vitest --project unit --run",
         "test:watch": "vitest --project unit",
         "test:integration": "vitest --project integration --run",
-        "e2e": "playwright test",
-        "e2e:install": "playwright install --with-deps chromium"
+        "test:coverage": "vitest run --coverage",
+        "e2e": "yarn workspace e2e run e2e",
+        "e2e:install": "yarn workspace e2e run e2e:install"
     },
     "dependencies": {
         "clsx": "^2.1.1",
@@ -33,13 +37,13 @@
         "zod": "^4.4.3"
     },
     "devDependencies": {
-        "@playwright/test": "^1.62.1",
         "@tailwindcss/postcss": "^4.3.3",
         "@types/fhir": "^0.0.41",
         "@types/node": "^24.13.3",
         "@types/react": "^19.2.7",
         "@types/react-dom": "^19.2.3",
         "@types/react-syntax-highlighter": "^15.5.13",
+        "@vitest/coverage-v8": "4.1.10",
         "oxfmt": "^0.62.0",
         "oxlint": "^1.77.0",
         "tailwindcss": "^4.3.3",

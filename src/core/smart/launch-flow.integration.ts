@@ -88,23 +88,23 @@ describe.each(ALL_CLIENT_AUTH_METHODS)('full SMART launch as a %s client', (clie
         for (const exchange of recorder.all()) {
             // Authorization headers, when present at all, are never left in the clear — this is
             // where `client_secret_basic` puts its credential, and where a bearer token from a
-            // FHIR read/write would appear.
+            // FHIR read/write would appear. Compared against a ternary rather than inside an
+            // `if`, so the assertion always runs instead of being silently skipped when absent.
             const authHeader = exchange.request.headers.authorization
-            if (authHeader !== undefined) expect(authHeader).toBe('[REDACTED]')
+            expect(authHeader).toBe(authHeader !== undefined ? '[REDACTED]' : undefined)
 
             // Sensitive query parameters (e.g. an authorization `code`) are masked in any stored URL.
             const url = new URL(exchange.request.url)
             for (const key of ['code', 'code_verifier', 'client_secret', 'client_assertion']) {
-                if (url.searchParams.has(key)) expect(url.searchParams.get(key)).toBe('[REDACTED]')
+                expect(url.searchParams.get(key)).toBe(url.searchParams.has(key) ? '[REDACTED]' : null)
             }
 
             // And in any stored form/JSON body — `client_secret_post` puts its secret here, and
-            // `private_key_jwt` puts its signed assertion here.
+            // `private_key_jwt` puts its signed assertion here. `body ?? ''` makes this vacuously
+            // true (never matches `key=...`) when there is no body at all, rather than skipping it.
             const body = exchange.request.body
-            if (body !== undefined) {
-                for (const key of ['client_secret', 'client_assertion', 'code_verifier']) {
-                    expect(body).not.toMatch(new RegExp(`${key}=(?!%5BREDACTED%5D)[^&]+`))
-                }
+            for (const key of ['client_secret', 'client_assertion', 'code_verifier']) {
+                expect(body ?? '').not.toMatch(new RegExp(`${key}=(?!%5BREDACTED%5D)[^&]+`))
             }
         }
 
