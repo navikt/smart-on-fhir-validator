@@ -60,35 +60,9 @@ export const navRefs = {
 }
 
 export const fullRefs = {
-    pasient: {
-        hl7: hl7Refs.patient,
-        simplifier: simplifierRefs.noBasisPasient,
-        nav: navRefs.patient,
-    },
-    practitioner: {
-        hl7: hl7Refs.practitioner,
-        simplifier: simplifierRefs.noBasisPractitioner,
-        nav: navRefs.practitioner,
-    },
-    condition: {
-        hl7: hl7Refs.condition,
-        nav: navRefs.condition,
-    },
-    encounter: {
-        hl7: hl7Refs.encounter,
-        nav: navRefs.encounter,
-    },
     documentReference: {
         hl7: hl7Refs.documentReference,
         nav: navRefs.documentReference,
-    },
-    organization: {
-        hl7: hl7Refs.organization,
-    },
-    practitionerRole: {
-        hl7: hl7Refs.practitionerRole,
-        simplifier: simplifierRefs.noBasisPractitionerRole,
-        nav: navRefs.practitionerRole,
     },
     binary: {
         hl7: hl7Refs.binary,
