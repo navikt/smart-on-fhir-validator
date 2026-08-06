@@ -74,12 +74,6 @@ export type LaunchDependencies = {
     scope: string
     /** This app's display name, sent as `client_name` during dynamic client registration. */
     clientName: string
-    /**
-     * Local mock EHRs run over plain http. Defaults to false: accepting an http `iss` in
-     * production would let an attacker redirect this app's credentials to a server of their
-     * choosing.
-     */
-    allowInsecureLaunch?: boolean
     /** Used only by a client with no static config and no dynamic registration support. */
     defaultPublicClientId?: string
     now?: () => Date
@@ -90,8 +84,17 @@ export type LaunchResult = {
     redirectUrl: string
 }
 
-/** Security-critical: an attacker-supplied `iss` must never be usable to redirect this app's credentials. */
-export function validateFhirBaseUrl(iss: string, allowInsecureLaunch = false): URL | SmartError {
+/**
+ * Security-critical: an attacker-supplied `iss` must never be usable to redirect this app's
+ * credentials. SMART requires `https`, and this app enforces it against every real host.
+ *
+ * The single exception is a loopback address, which is not reachable from the network and so
+ * cannot be used to exfiltrate anything — it is how the built-in mock EHR and the e2e suite are
+ * launched. The rule deliberately does not depend on `NODE_ENV`: a check that behaves one way in
+ * development and another in production is only ever exercised in one of them, and the e2e suite
+ * runs against a production build precisely so it tests what is deployed.
+ */
+export function validateFhirBaseUrl(iss: string): URL | SmartError {
     let url: URL
     try {
         url = new URL(iss)
@@ -99,20 +102,23 @@ export function validateFhirBaseUrl(iss: string, allowInsecureLaunch = false): U
         return { error: 'invalid_iss', detail: 'iss is not a valid absolute URL' }
     }
 
-    const isHttps = url.protocol === 'https:'
-    const isAllowedInsecureHttp = allowInsecureLaunch && url.protocol === 'http:'
-    if (!isHttps && !isAllowedInsecureHttp) {
-        return { error: 'invalid_iss', detail: 'iss must be an absolute https URL' }
-    }
+    if (url.protocol === 'https:') return url
 
-    return url
+    if (url.protocol === 'http:' && isLoopbackHost(url.hostname)) return url
+
+    return { error: 'invalid_iss', detail: 'iss must be an absolute https URL' }
+}
+
+/** `http` is tolerated only here, where the request cannot leave the machine. */
+function isLoopbackHost(hostname: string): boolean {
+    return hostname === 'localhost' || hostname === '127.0.0.1' || hostname === '[::1]' || hostname === '::1'
 }
 
 export async function handleLaunch(
     request: LaunchRequest,
     deps: LaunchDependencies,
 ): Promise<LaunchResult | SmartError> {
-    const fhirBaseUrlResult = validateFhirBaseUrl(request.iss, deps.allowInsecureLaunch)
+    const fhirBaseUrlResult = validateFhirBaseUrl(request.iss)
     if (isSmartError(fhirBaseUrlResult)) return fhirBaseUrlResult
     const fhirBaseUrl = fhirBaseUrlResult.toString()
 

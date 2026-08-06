@@ -95,9 +95,33 @@ describe('validateFhirBaseUrl', () => {
         expect(isSmartError(validateFhirBaseUrl('file:///etc/passwd') as SmartError)).toBe(true)
     })
 
-    it('allows http only when allowInsecureLaunch is explicitly set, for local mock EHRs', () => {
-        const result = validateFhirBaseUrl('http://localhost:8080/fhir', true)
-        expect(result).toBeInstanceOf(URL)
+    it('allows http only for loopback hosts, which are unreachable from the network', () => {
+        expect(validateFhirBaseUrl('http://localhost:8080/fhir')).toBeInstanceOf(URL)
+        expect(validateFhirBaseUrl('http://127.0.0.1:8080/fhir')).toBeInstanceOf(URL)
+    })
+
+    it('rejects an http host that merely looks like loopback', () => {
+        // `localhost.evil.example` and `127.0.0.1.evil.example` resolve to whatever an attacker
+        // wants; only an exact loopback host is safe to exempt from https.
+        expect(isSmartError(validateFhirBaseUrl('http://localhost.evil.example/fhir') as SmartError)).toBe(
+            true,
+        )
+        expect(isSmartError(validateFhirBaseUrl('http://127.0.0.1.evil.example/fhir') as SmartError)).toBe(
+            true,
+        )
+    })
+
+    it('applies the same rule regardless of NODE_ENV, so the e2e suite tests what is deployed', () => {
+        const original = process.env.NODE_ENV
+
+        try {
+            vi.stubEnv('NODE_ENV', 'production')
+            expect(validateFhirBaseUrl('http://localhost:3100/fhir')).toBeInstanceOf(URL)
+            expect(isSmartError(validateFhirBaseUrl('http://ehr.example.com/fhir') as SmartError)).toBe(true)
+        } finally {
+            vi.stubEnv('NODE_ENV', original ?? 'test')
+            vi.unstubAllEnvs()
+        }
     })
 })
 
