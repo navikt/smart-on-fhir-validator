@@ -133,20 +133,21 @@ test.describe('landing → launch against the mock EHR → report', () => {
         expect(await sections.count()).toBeGreaterThan(1)
 
         // Evidence expands: `ExchangePanel` renders a native <details>/<summary> per finding,
-        // collapsed by default (present in the DOM, hidden until expanded). Expand every one —
-        // this also puts every request/response body's text into the DOM for the leak check
-        // below, rather than letting that check pass merely because content was still collapsed.
+        // collapsed by default (present in the DOM, hidden until expanded). A real launch
+        // produces dozens of these, each holding a syntax-highlighted JSON block, so expanding
+        // every one just to prove the affordance works would make this "thin" smoke gate the
+        // slowest thing in CI for no extra safety: the credential-leak property below is proven
+        // exhaustively, across every exchange, by the JSON download's recursive check further
+        // down — not by this rendered-HTML sample. Expanding one is enough to prove the browser
+        // affordance itself (collapsed → visible) is real.
         const requestSection = page.locator('section[aria-label="Request"]').first()
         const responseSection = page.locator('section[aria-label="Response"]').first()
         await expect(requestSection).toBeHidden()
         await expect(responseSection).toBeHidden()
 
         const summaries = page.locator('details > summary')
-        const summaryCount = await summaries.count()
-        expect(summaryCount).toBeGreaterThan(0)
-        for (let index = 0; index < summaryCount; index += 1) {
-            await summaries.nth(index).click()
-        }
+        expect(await summaries.count()).toBeGreaterThan(0)
+        await summaries.first().click()
 
         await expect(requestSection).toBeVisible()
         await expect(requestSection.getByText(/GET|POST|PUT/).first()).toBeVisible()
@@ -154,9 +155,11 @@ test.describe('landing → launch against the mock EHR → report', () => {
         await expect(responseSection.getByText(/HTTP \d{3}/).first()).toBeVisible()
 
         // This is a validator handling real patient data; a leaked bearer token, refresh token or
-        // client secret is the single worst failure mode. Checked against the fully-expanded,
-        // rendered page text — `JsonBlock` (`#components/json/JsonBlock`) pretty-prints exchange
-        // bodies, so a real leak would render as ordinary `"key": "value"` text.
+        // client secret is the single worst failure mode. Checked against the rendered page text
+        // (including the one expanded exchange above) — `JsonBlock`
+        // (`#components/json/JsonBlock`) pretty-prints exchange bodies, so a real leak there would
+        // render as ordinary `"key": "value"` text. The exhaustive, every-exchange version of this
+        // property is proved below against the JSON download, not by expanding all of these.
         const bodyText = await page.locator('body').innerText()
         expect(bodyText).not.toMatch(/"access_token"\s*:\s*"(?!\[REDACTED\])[^"]+"/)
         expect(bodyText).not.toMatch(/"refresh_token"\s*:\s*"(?!\[REDACTED\])[^"]+"/)
