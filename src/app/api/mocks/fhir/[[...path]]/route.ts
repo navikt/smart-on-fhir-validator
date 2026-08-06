@@ -1,5 +1,8 @@
 import type { Defect, MockEhrConfig, MockClientAuthMethod } from '#mocks/server'
 import { createMockEhr } from '#mocks/server'
+import { processSingleton } from '#core/storage/process-singleton'
+
+import { getAppOrigin } from '../../../../app-origin'
 
 export const runtime = 'nodejs'
 
@@ -29,18 +32,21 @@ function configFromEnv(baseUrl: string): MockEhrConfig {
 
 // One instance per server process: state (issued codes/tokens, dynamically registered clients,
 // written resources) must persist across requests for a manual `yarn dev` launch flow to work.
-let mockEhr: ReturnType<typeof createMockEhr> | undefined
+const MOCK_EHR_KEY = 'mock-ehr'
 
 function getMockEhr(baseUrl: string): ReturnType<typeof createMockEhr> {
-    mockEhr ??= createMockEhr(configFromEnv(baseUrl))
-    return mockEhr
+    return processSingleton(MOCK_EHR_KEY, () => createMockEhr(configFromEnv(baseUrl)))
 }
 
 async function handle(request: Request): Promise<Response> {
     if (!isEnabled()) return new Response(null, { status: 404 })
 
-    const url = new URL(request.url)
-    const baseUrl = `${url.protocol}//${url.host}/api/mocks/fhir`
+    // Deliberately not `new URL(request.url).host`. Under `output: 'standalone'` — which is how
+    // the Dockerfile actually runs this app — Next rewrites `request.url` to the server's own bind
+    // address, so a mock EHR configured from it would advertise endpoints on `0.0.0.0` and every
+    // URL it issued downstream would be unreachable. The forwarded headers carry the host the
+    // client really used.
+    const baseUrl = `${await getAppOrigin()}/api/mocks/fhir`
     const app = await getMockEhr(baseUrl)
 
     return app.fetch(request)
