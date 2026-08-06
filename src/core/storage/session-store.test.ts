@@ -9,6 +9,7 @@ import {
     createSessionStore,
     MAX_STORED_EXCHANGES,
     parseStoredSession,
+    resetSessionStoreForTests,
 } from './session-store'
 import { createValkeySessionStore, type ValkeyLike } from './valkey'
 
@@ -295,9 +296,14 @@ describe('createValkeySessionStore', () => {
 describe('createSessionStore', () => {
     const originalEnv = process.env.VALKEY_URI_SESSIONS
 
+    beforeEach(() => {
+        resetSessionStoreForTests()
+    })
+
     afterEach(() => {
         if (originalEnv === undefined) delete process.env.VALKEY_URI_SESSIONS
         else process.env.VALKEY_URI_SESSIONS = originalEnv
+        resetSessionStoreForTests()
     })
 
     it('falls back to an in-memory store when VALKEY_URI_SESSIONS is not set', async () => {
@@ -308,5 +314,29 @@ describe('createSessionStore', () => {
         await store.set(session.sessionId, session, 600)
 
         expect(await store.get(session.sessionId)).toEqual(session)
+    })
+
+    it('returns the same store to every caller, so a session written by one request is readable by the next', async () => {
+        delete process.env.VALKEY_URI_SESSIONS
+
+        // A launch and its callback are separate requests that each ask for a store. When this
+        // returned a fresh Map per call, the callback always saw an empty store and no launch
+        // could ever complete without Valkey configured.
+        const duringLaunch = await createSessionStore()
+        const session = pendingSession()
+        await duringLaunch.set(session.sessionId, session, 600)
+
+        const duringCallback = await createSessionStore()
+
+        expect(duringCallback).toBe(duringLaunch)
+        expect(await duringCallback.get(session.sessionId)).toEqual(session)
+    })
+
+    it('constructs the backend only once even when called concurrently', async () => {
+        delete process.env.VALKEY_URI_SESSIONS
+
+        const [first, second] = await Promise.all([createSessionStore(), createSessionStore()])
+
+        expect(first).toBe(second)
     })
 })

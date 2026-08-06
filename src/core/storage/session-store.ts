@@ -174,15 +174,36 @@ export function createInMemorySessionStore(): SessionStore {
     }
 }
 
+let store: Promise<SessionStore> | undefined
+
 /**
  * Picks the backend from the environment: a nais-provided Valkey instance in deployed
  * environments, an in-memory store for local dev where no Valkey instance is configured. Kept
  * lazy (not evaluated at import time) so importing this module never requires network config to
  * be present, e.g. in tests that only need `createInMemorySessionStore` directly.
+ *
+ * The result is memoised, and this is load-bearing in both directions. A launch and its callback
+ * are two separate requests, so an in-memory store that were rebuilt per call would start empty
+ * on the callback and lose every pending session — locally, that made the flow impossible to
+ * complete at all. Against Valkey it is a resource leak instead: a fresh client per call opens a
+ * new connection on every request.
+ *
+ * The *promise* is cached rather than the resolved store, so two concurrent first-callers cannot
+ * race into constructing two backends.
  */
-export async function createSessionStore(): Promise<SessionStore> {
-    if (!process.env.VALKEY_URI_SESSIONS) return createInMemorySessionStore()
+export function createSessionStore(): Promise<SessionStore> {
+    store ??= (async (): Promise<SessionStore> => {
+        if (!process.env.VALKEY_URI_SESSIONS) return createInMemorySessionStore()
 
-    const { createValkeySessionStore, createValkeyClientFromEnv } = await import('./valkey')
-    return createValkeySessionStore(createValkeyClientFromEnv())
+        const { createValkeySessionStore, createValkeyClientFromEnv } = await import('./valkey')
+        return createValkeySessionStore(createValkeyClientFromEnv())
+    })()
+
+    return store
+}
+
+/** Test-only: drops the memoised store so a test can change `VALKEY_URI_SESSIONS` and get a
+ * store built from the new value, rather than one another test already built. */
+export function resetSessionStoreForTests(): void {
+    store = undefined
 }
