@@ -76,8 +76,8 @@ function createValkeyReportStore(client: ValkeyLike): ReportStore {
 
 let store: ReportStore | undefined
 
-/** Lazy singleton, mirroring `createSessionStore`, so importing this module never requires
- * network config to be present. */
+/** Lazy singleton, mirroring `createSessionStore`: a report is written by the callback request
+ * and read by a later `/report` request, so a store rebuilt per call would lose it. */
 export function getReportStore(): ReportStore {
     store ??= process.env.VALKEY_URI_SESSIONS
         ? createValkeyReportStore(createValkeyClientFromEnv())
