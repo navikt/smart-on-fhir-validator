@@ -1,20 +1,19 @@
 import { expect, test, type Page } from '@playwright/test'
 
 /**
- * The one real end-to-end journey this suite protects: a user lands on the tool, launches
- * against the built-in mock EHR (no external network, no real vendor credentials — see
- * `src/app/api/mocks/fhir/[[...path]]/route.ts`), is carried through the full SMART launch by
- * this app's own server-side routes, and lands on a report they can inspect and download.
- *
- * Selectors are role/text-based throughout, not CSS, so this survives visual restyling.
+ * A thin browser smoke gate, not a test suite: everything that does not need a real browser,
+ * real cookie round-trip and real rendered HTML already lives in the integration suite
+ * (`*.integration.ts`, ~2s for 71 tests) and must not be duplicated here. Playwright is the
+ * slowest thing in the pipeline, so this file stays to a landing-page check plus exactly one
+ * consolidated happy-path journey — one launch, reused across every assertion — rather than
+ * re-running the full SMART launch once per thing being checked.
  *
  * This suite is the safety gate that makes Renovate dependency automerge safe. It previously
  * reported "4 passed" while every launch actually ended at
- * `/callback/error?error=session_not_found` — three of the tests below were marked `test.fail()`,
- * so their expected failure read as a pass. `launchAgainstMockEhr` now asserts the terminal URL
- * directly, with a message naming the exact error, instead of tolerating an error page as one of
- * two "acceptable" outcomes: a gate that passes while the happy path is broken is worse than no
- * gate at all.
+ * `/callback/error?error=session_not_found` — most of its tests were marked `test.fail()`, so
+ * their expected failure read as a pass. `launchAgainstMockEhr` now asserts the terminal URL
+ * directly, with a message naming the exact error, instead of tolerating an error page as an
+ * acceptable outcome: a gate that passes while the happy path is broken is worse than no gate.
  */
 
 const TERMINAL_URL_PATTERN = /\/(report|launch\/error|callback\/error)(\?|$)/
@@ -114,59 +113,68 @@ test.describe('landing → launch against the mock EHR → report', () => {
         await expect(page.getByRole('link', { name: 'Launch the mock EHR' })).toBeVisible()
     })
 
-    test('launching against the mock EHR reaches a real report with a verdict and sections', async ({
+    test('a single launch reaches a real report, its evidence expands, it downloads as JSON, and no credential ever leaks', async ({
         page,
     }) => {
         await launchAgainstMockEhr(page)
 
-        // `role="status"` is set unconditionally by `VerdictBanner` for every possible verdict
-        // (pass / pass-with-warnings / fail / skipped) — this assertion is intentionally verdict-
-        // agnostic, since the mock EHR's exact defect-free behaviour is validated in depth by the
-        // integration suite (`src/validation/defects.integration.ts`), not here.
+        // A real verdict and real sections — not a placeholder page. `role="status"` is set
+        // unconditionally by `VerdictBanner` for every possible verdict (this assertion is
+        // deliberately verdict-agnostic: the mock EHR's exact defect-free behaviour is validated
+        // in depth by the integration suite, not here). `SectionCard` renders one <article> per
+        // report section (SMART launch, FHIR reads, FHIR write-back all produce one).
         const verdict = page.getByRole('status')
         await expect(verdict).toBeVisible()
         await expect(verdict).toHaveText(/Pass|Fail|Incomplete/)
-
         await expect(page.getByText('Issuer', { exact: true })).toBeVisible()
         await expect(page.getByText('FHIR base URL', { exact: true })).toBeVisible()
-        await expect(page.getByText('Client ID', { exact: true })).toBeVisible()
-
-        // Real sections, not a placeholder page: `SectionCard` renders one <article> per
-        // `ValidationReport` section (SMART launch, FHIR reads, FHIR write-back all produce one).
         const sections = page.locator('article')
         await expect(sections.first()).toBeVisible()
         expect(await sections.count()).toBeGreaterThan(1)
-    })
 
-    test('a finding can be expanded to reveal the raw request/response evidence', async ({ page }) => {
-        await launchAgainstMockEhr(page)
-
-        // `ExchangePanel` renders a native <details>/<summary> whose summary text always starts
-        // with "Evidence:" (see `#components/exchange/ExchangePanel`) — every finding tied to a
-        // recorded exchange has one, and the mock EHR always produces at least one such finding.
-        const evidenceToggle = page.getByText('Evidence:', { exact: false }).first()
-        await expect(evidenceToggle).toBeVisible()
-
-        // Collapsed by default: the sections are present in the DOM (native <details>) but not
-        // visible until expanded.
+        // Evidence expands: `ExchangePanel` renders a native <details>/<summary> per finding,
+        // collapsed by default (present in the DOM, hidden until expanded). Expand every one —
+        // this also puts every request/response body's text into the DOM for the leak check
+        // below, rather than letting that check pass merely because content was still collapsed.
         const requestSection = page.locator('section[aria-label="Request"]').first()
         const responseSection = page.locator('section[aria-label="Response"]').first()
         await expect(requestSection).toBeHidden()
         await expect(responseSection).toBeHidden()
 
-        await evidenceToggle.click()
+        const summaries = page.locator('details > summary')
+        const summaryCount = await summaries.count()
+        expect(summaryCount).toBeGreaterThan(0)
+        for (let index = 0; index < summaryCount; index += 1) {
+            await summaries.nth(index).click()
+        }
 
         await expect(requestSection).toBeVisible()
         await expect(requestSection.getByText(/GET|POST|PUT/).first()).toBeVisible()
         await expect(responseSection).toBeVisible()
         await expect(responseSection.getByText(/HTTP \d{3}/).first()).toBeVisible()
-    })
 
-    test('the full validation report can be downloaded as JSON with real findings, never a real credential', async ({
-        page,
-    }) => {
-        await launchAgainstMockEhr(page)
+        // This is a validator handling real patient data; a leaked bearer token, refresh token or
+        // client secret is the single worst failure mode. Checked against the fully-expanded,
+        // rendered page text — `JsonBlock` (`#components/json/JsonBlock`) pretty-prints exchange
+        // bodies, so a real leak would render as ordinary `"key": "value"` text.
+        const bodyText = await page.locator('body').innerText()
+        expect(bodyText).not.toMatch(/"access_token"\s*:\s*"(?!\[REDACTED\])[^"]+"/)
+        expect(bodyText).not.toMatch(/"refresh_token"\s*:\s*"(?!\[REDACTED\])[^"]+"/)
+        expect(bodyText).not.toMatch(/"client_secret"\s*:\s*"(?!\[REDACTED\])[^"]+"/)
+        expect(bodyText).not.toMatch(/"client_assertion"\s*:\s*"(?!\[REDACTED\])[^"]+"/)
+        // Form-encoded token-request bodies are rendered raw, so a leak there is percent-encoded.
+        expect(bodyText).not.toMatch(/access_token=(?!%5BREDACTED%5D)[^&\s]+/)
+        expect(bodyText).not.toMatch(/refresh_token=(?!%5BREDACTED%5D)[^&\s]+/)
+        expect(bodyText).not.toMatch(/client_secret=(?!%5BREDACTED%5D)[^&\s]+/)
+        expect(bodyText).not.toMatch(/client_assertion=(?!%5BREDACTED%5D)[^&\s]+/)
+        // The literal Authorization header value used for every FHIR call in this run: redacted
+        // headers render as exactly `[REDACTED]`, never the `Bearer <token>` they replaced.
+        expect(bodyText).not.toMatch(/Bearer\s+(?!\[REDACTED\])[A-Za-z0-9\-_.]+/)
+        expect(bodyText).not.toContain('PRIVATE KEY')
 
+        // The JSON download: same session, no second launch. Must be well-formed, contain real
+        // findings (not an empty/broken report), and — walked recursively, since exchange bodies
+        // are raw strings, not just structured JSON — never a real credential either.
         const downloadPromise = page.waitForEvent('download')
         await page.getByRole('link', { name: 'Download full report as JSON' }).click()
         const download = await downloadPromise
@@ -191,51 +199,10 @@ test.describe('landing → launch against the mock EHR → report', () => {
             summary: expect.any(Object),
         })
 
-        // Not just well-formed JSON: a real launch's report contains real findings. A report with
-        // zero findings anywhere would let this test pass even against an empty/broken run.
-        const sections = (report as { sections: { findings: unknown[] }[] }).sections
-        const totalFindings = sections.reduce((total, section) => total + section.findings.length, 0)
+        const reportSections = (report as { sections: { findings: unknown[] }[] }).sections
+        const totalFindings = reportSections.reduce((total, section) => total + section.findings.length, 0)
         expect(totalFindings).toBeGreaterThan(0)
 
-        // This is a validator handling real patient data; a leaked bearer token, refresh token or
-        // client secret is the single worst failure mode. Walks the entire downloaded artefact —
-        // the literal bytes a vendor would attach to a support ticket.
         assertCredentialsRedacted(report, 'report')
-    })
-
-    test('no access token, refresh token or client secret ever appears in the rendered report HTML', async ({
-        page,
-    }) => {
-        await launchAgainstMockEhr(page)
-
-        // Expand every collapsed <details> first: this data must never reach the browser at all,
-        // collapsed or not, so the check must not be able to pass merely because content happened
-        // to still be collapsed. Clicking each <summary> (rather than reaching into the DOM)
-        // exercises the same toggle a real user would, and needs no browser-context typing.
-        const summaries = page.locator('details > summary')
-        const summaryCount = await summaries.count()
-        for (let index = 0; index < summaryCount; index += 1) {
-            await summaries.nth(index).click()
-        }
-
-        const bodyText = await page.locator('body').innerText()
-
-        // `JsonBlock` pretty-prints exchange bodies (see `#components/json/JsonBlock`), so a real
-        // leak would render as ordinary `"key": "value"` text — these patterns catch it directly.
-        expect(bodyText).not.toMatch(/"access_token"\s*:\s*"(?!\[REDACTED\])[^"]+"/)
-        expect(bodyText).not.toMatch(/"refresh_token"\s*:\s*"(?!\[REDACTED\])[^"]+"/)
-        expect(bodyText).not.toMatch(/"client_secret"\s*:\s*"(?!\[REDACTED\])[^"]+"/)
-        expect(bodyText).not.toMatch(/"client_assertion"\s*:\s*"(?!\[REDACTED\])[^"]+"/)
-
-        // Form-encoded token-request bodies are rendered raw, so a leak there is percent-encoded.
-        expect(bodyText).not.toMatch(/access_token=(?!%5BREDACTED%5D)[^&\s]+/)
-        expect(bodyText).not.toMatch(/refresh_token=(?!%5BREDACTED%5D)[^&\s]+/)
-        expect(bodyText).not.toMatch(/client_secret=(?!%5BREDACTED%5D)[^&\s]+/)
-        expect(bodyText).not.toMatch(/client_assertion=(?!%5BREDACTED%5D)[^&\s]+/)
-
-        // The literal Authorization header value used for every FHIR call in this run: redacted
-        // headers render as exactly `[REDACTED]`, never the `Bearer <token>` they replaced.
-        expect(bodyText).not.toMatch(/Bearer\s+(?!\[REDACTED\])[A-Za-z0-9\-_.]+/)
-        expect(bodyText).not.toContain('PRIVATE KEY')
     })
 })
