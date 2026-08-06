@@ -24,7 +24,13 @@ import { fetchSmartConfiguration, resolveEndpoint } from '#core/smart/discovery'
 import { handleLaunch } from '#core/smart/launch'
 import { createOauthState, createPkcePair } from '#core/smart/pkce'
 import { registerClient } from '#core/smart/registration'
-import type { ActiveSession, ClientAuthMode, IssuerConfig, LaunchContext, SmartError } from '#core/smart/types'
+import type {
+    ActiveSession,
+    ClientAuthMode,
+    IssuerConfig,
+    LaunchContext,
+    SmartError,
+} from '#core/smart/types'
 import { isSmartError } from '#core/smart/types'
 import { createInMemorySessionStore, type SessionStore } from '#core/storage/session-store'
 import type { Defect, MockClientAuthMethod, MockEhrConfig } from '#mocks/server'

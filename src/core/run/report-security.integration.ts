@@ -38,7 +38,9 @@ describe('a serialised ValidationReport never contains client credentials or bea
 
         // Placeholder substring when no refresh token was issued, so this assertion runs
         // unconditionally rather than being skipped for grants that omit `offline_access`.
-        expect(serialised).not.toContain(launched.session.tokenResponse.refresh_token ?? '__no-refresh-token-issued__')
+        expect(serialised).not.toContain(
+            launched.session.tokenResponse.refresh_token ?? '__no-refresh-token-issued__',
+        )
     })
 })
 
@@ -50,7 +52,10 @@ describe('a serialised ValidationReport never contains client credentials or bea
  */
 describe('specific generated secrets never leak into the report, by client-auth method', () => {
     it('client_secret_basic: the shared secret used for Basic auth is absent from the report', async () => {
-        const launched = await requireSuccessfulLaunch({ clientAuth: 'client_secret_basic', scope: DEFAULT_SCOPE })
+        const launched = await requireSuccessfulLaunch({
+            clientAuth: 'client_secret_basic',
+            scope: DEFAULT_SCOPE,
+        })
         const report = await runValidation(launched.session, {
             httpClient: launched.httpClient,
             recorder: launched.recorder,
@@ -68,7 +73,10 @@ describe('specific generated secrets never leak into the report, by client-auth 
     })
 
     it('client_secret_post: the shared secret posted in the token request body is absent from the report', async () => {
-        const launched = await requireSuccessfulLaunch({ clientAuth: 'client_secret_post', scope: DEFAULT_SCOPE })
+        const launched = await requireSuccessfulLaunch({
+            clientAuth: 'client_secret_post',
+            scope: DEFAULT_SCOPE,
+        })
         const report = await runValidation(launched.session, {
             httpClient: launched.httpClient,
             recorder: launched.recorder,
@@ -82,7 +90,10 @@ describe('specific generated secrets never leak into the report, by client-auth 
     })
 
     it('private_key_jwt: the signed client-assertion JWT and private key never appear in the report', async () => {
-        const launched = await requireSuccessfulLaunch({ clientAuth: 'private_key_jwt', scope: DEFAULT_SCOPE })
+        const launched = await requireSuccessfulLaunch({
+            clientAuth: 'private_key_jwt',
+            scope: DEFAULT_SCOPE,
+        })
         const report = await runValidation(launched.session, {
             httpClient: launched.httpClient,
             recorder: launched.recorder,

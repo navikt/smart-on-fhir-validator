@@ -1,55 +1,55 @@
 {
-  "$schema": "https://docs.renovatebot.com/renovate-schema.json",
-  "extends": ["config:recommended", ":semanticCommits", ":dependencyDashboard"],
-  "timezone": "Europe/Oslo",
-  "schedule": ["before 6am on monday"],
-  "prConcurrentLimit": 5,
-  "rangeStrategy": "bump",
-  "postUpdateOptions": ["yarnDedupeHighest"],
-  "lockFileMaintenance": { "enabled": true, "automerge": true },
-  "packageRules": [
-    {
-      "description": "Automerge everything that passes the full pipeline. The test suite, not a human, is the gate.",
-      "matchUpdateTypes": ["minor", "patch", "pin", "digest"],
-      "automerge": true,
-      "automergeType": "pr",
-      "platformAutomerge": true
-    },
-    {
-      "description": "TypeScript moves fast and breaks type-level things; keep it in its own PR so a failure is unambiguous. Majors still require a human via the catch-all major rule below.",
-      "matchPackageNames": ["typescript"],
-      "matchUpdateTypes": ["minor", "patch", "pin", "digest"],
-      "groupName": "typescript",
-      "automerge": true,
-      "platformAutomerge": true
-    },
-    {
-      "description": "Next and React must move together or the peer ranges fight.",
-      "matchPackageNames": ["next", "react", "react-dom", "@types/react", "@types/react-dom"],
-      "groupName": "next and react"
-    },
-    {
-      "description": "Low-risk dev tooling that is exercised by the same CI gate as everything else; majors still require a human via the catch-all major rule below.",
-      "matchPackageNames": ["oxlint", "oxfmt", "vitest", "@playwright/test", "@types/node"],
-      "matchUpdateTypes": ["minor", "patch", "pin", "digest"],
-      "groupName": "dev tooling",
-      "automerge": true,
-      "platformAutomerge": true
-    },
-    {
-      "description": "Node majors are adopted by hand, only after the scheduled compatibility matrix has proven them.",
-      "matchDatasources": ["node-version", "docker"],
-      "matchPackageNames": ["node", "gcr.io/distroless/nodejs24-debian13"],
-      "matchUpdateTypes": ["major"],
-      "automerge": false,
-      "dependencyDashboardApproval": true
-    },
-    {
-      "description": "Majors of anything else need a human to read the changelog.",
-      "matchUpdateTypes": ["major"],
-      "automerge": false
-    }
-  ],
-  "vulnerabilityAlerts": { "automerge": true, "labels": ["security"] },
-  "osvVulnerabilityAlerts": true
+    "$schema": "https://docs.renovatebot.com/renovate-schema.json",
+    "extends": ["config:recommended", ":semanticCommits", ":dependencyDashboard"],
+    "timezone": "Europe/Oslo",
+    "schedule": ["before 6am on monday"],
+    "prConcurrentLimit": 5,
+    "rangeStrategy": "bump",
+    "postUpdateOptions": ["yarnDedupeHighest"],
+    "lockFileMaintenance": { "enabled": true, "automerge": true },
+    "packageRules": [
+        {
+            "description": "Automerge everything that passes the full pipeline. The test suite, not a human, is the gate.",
+            "matchUpdateTypes": ["minor", "patch", "pin", "digest"],
+            "automerge": true,
+            "automergeType": "pr",
+            "platformAutomerge": true
+        },
+        {
+            "description": "TypeScript moves fast and breaks type-level things; keep it in its own PR so a failure is unambiguous. Majors still require a human via the catch-all major rule below.",
+            "matchPackageNames": ["typescript"],
+            "matchUpdateTypes": ["minor", "patch", "pin", "digest"],
+            "groupName": "typescript",
+            "automerge": true,
+            "platformAutomerge": true
+        },
+        {
+            "description": "Next and React must move together or the peer ranges fight.",
+            "matchPackageNames": ["next", "react", "react-dom", "@types/react", "@types/react-dom"],
+            "groupName": "next and react"
+        },
+        {
+            "description": "Low-risk dev tooling that is exercised by the same CI gate as everything else; majors still require a human via the catch-all major rule below.",
+            "matchPackageNames": ["oxlint", "oxfmt", "vitest", "@playwright/test", "@types/node"],
+            "matchUpdateTypes": ["minor", "patch", "pin", "digest"],
+            "groupName": "dev tooling",
+            "automerge": true,
+            "platformAutomerge": true
+        },
+        {
+            "description": "Node majors are adopted by hand, only after the scheduled compatibility matrix has proven them.",
+            "matchDatasources": ["node-version", "docker"],
+            "matchPackageNames": ["node", "gcr.io/distroless/nodejs24-debian13"],
+            "matchUpdateTypes": ["major"],
+            "automerge": false,
+            "dependencyDashboardApproval": true
+        },
+        {
+            "description": "Majors of anything else need a human to read the changelog.",
+            "matchUpdateTypes": ["major"],
+            "automerge": false
+        }
+    ],
+    "vulnerabilityAlerts": { "automerge": true, "labels": ["security"] },
+    "osvVulnerabilityAlerts": true
 }
