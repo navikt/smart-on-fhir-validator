@@ -1,16 +1,14 @@
 # Proves the app on Node versions we have not adopted yet, so a major bump is a
 # known quantity before Renovate proposes it rather than a surprise afterwards.
+# Scheduled only — this proves a *future* Node major, not something every PR should
+# pay for. Use workflow_dispatch to run it on demand (e.g. right after bumping .nvmrc
+# or the Dockerfile base image, to double-check before merging).
 name: Node compatibility
 
 on:
   schedule:
     - cron: '0 5 * * 1'
   workflow_dispatch:
-  pull_request:
-    paths:
-      - .nvmrc
-      - package.json
-      - Dockerfile
 
 concurrency:
   group: node-matrix-${{ github.ref }}
@@ -45,6 +43,10 @@ jobs:
       - run: yarn workspace e2e run tsc
       - run: yarn test:coverage
       - run: yarn build
+      - uses: actions/cache@v4
+        with:
+          path: ~/.cache/ms-playwright
+          key: playwright-chromium-${{ runner.os }}-${{ hashFiles('yarn.lock') }}
       - run: yarn e2e:install
       - run: yarn e2e
       - uses: actions/upload-artifact@v4
