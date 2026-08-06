@@ -1,56 +1,56 @@
 {
-  "name": "smart-on-fhir-validator",
-  "version": "1.0.0",
-  "private": true,
-  "type": "module",
-  "engines": {
-    "node": ">=24"
-  },
-  "packageManager": "yarn@4.18.0+sha512.fcb8716fe7cd0eece141ffc18b92193a9df9204c1ba83189c288835223fc0bbe64af473bab0d5e9927a7daeb5caf2bb07eb2787cc9338ca040ea125f2a1f2f7e",
-  "scripts": {
-    "dev": "next dev",
-    "build": "next build",
-    "start": "next start",
-    "lint": "oxlint",
-    "lint:fix": "oxlint --fix",
-    "fmt": "oxfmt",
-    "fmt:check": "oxfmt --check",
-    "tsc": "tsc --noEmit",
-    "test": "vitest --project unit --run",
-    "test:watch": "vitest --project unit",
-    "test:integration": "vitest --project integration --run",
-    "e2e": "playwright test",
-    "e2e:install": "playwright install --with-deps chromium"
-  },
-  "dependencies": {
-    "clsx": "^2.1.1",
-    "hono": "^4.13.0",
-    "iovalkey": "^0.4.0",
-    "jose": "^6.2.8",
-    "next": "16.3.0",
-    "next-logger": "^5.0.2",
-    "pino": "^10.3.1",
-    "react": "19.2.8",
-    "react-dom": "19.2.8",
-    "react-syntax-highlighter": "^16.1.0",
-    "remeda": "^2.39.0",
-    "zod": "^4.4.3"
-  },
-  "devDependencies": {
-    "@playwright/test": "^1.62.1",
-    "@tailwindcss/postcss": "^4.3.3",
-    "@types/fhir": "^0.0.41",
-    "@types/node": "^24.13.3",
-    "@types/react": "^19.2.7",
-    "@types/react-dom": "^19.2.3",
-    "@types/react-syntax-highlighter": "^15.5.13",
-    "oxfmt": "^0.62.0",
-    "oxlint": "^1.77.0",
-    "tailwindcss": "^4.3.3",
-    "typescript": "^7.0.2",
-    "vitest": "^4.1.10"
-  },
-  "resolutions": {
-    "typescript": "npm:typescript@7.0.2"
-  }
+    "name": "smart-on-fhir-validator",
+    "version": "1.0.0",
+    "private": true,
+    "type": "module",
+    "scripts": {
+        "dev": "next dev",
+        "build": "next build",
+        "start": "next start",
+        "lint": "oxlint",
+        "lint:fix": "oxlint --fix",
+        "fmt": "oxfmt",
+        "fmt:check": "oxfmt --check",
+        "tsc": "tsc --noEmit",
+        "test": "vitest --project unit --run",
+        "test:watch": "vitest --project unit",
+        "test:integration": "vitest --project integration --run",
+        "e2e": "playwright test",
+        "e2e:install": "playwright install --with-deps chromium"
+    },
+    "dependencies": {
+        "clsx": "^2.1.1",
+        "hono": "^4.13.0",
+        "iovalkey": "^0.4.0",
+        "jose": "^6.2.8",
+        "next": "16.3.0",
+        "next-logger": "^5.0.2",
+        "pino": "^10.3.1",
+        "react": "19.2.8",
+        "react-dom": "19.2.8",
+        "react-syntax-highlighter": "^16.1.0",
+        "remeda": "^2.39.0",
+        "zod": "^4.4.3"
+    },
+    "devDependencies": {
+        "@playwright/test": "^1.62.1",
+        "@tailwindcss/postcss": "^4.3.3",
+        "@types/fhir": "^0.0.41",
+        "@types/node": "^24.13.3",
+        "@types/react": "^19.2.7",
+        "@types/react-dom": "^19.2.3",
+        "@types/react-syntax-highlighter": "^15.5.13",
+        "oxfmt": "^0.62.0",
+        "oxlint": "^1.77.0",
+        "tailwindcss": "^4.3.3",
+        "typescript": "^7.0.2",
+        "vitest": "^4.1.10"
+    },
+    "resolutions": {
+        "typescript": "npm:typescript@7.0.2"
+    },
+    "engines": {
+        "node": ">=24"
+    },
+    "packageManager": "yarn@4.18.0+sha512.fcb8716fe7cd0eece141ffc18b92193a9df9204c1ba83189c288835223fc0bbe64af473bab0d5e9927a7daeb5caf2bb07eb2787cc9338ca040ea125f2a1f2f7e"
 }

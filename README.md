@@ -11,7 +11,7 @@ according to NAVs requirements.
 ## Requirements
 
 | Technology | Minimum version |
-|------------|-----------------|
+| ---------- | --------------- |
 | Node       | 20              |
 | Vite       | 5.3             |
 | Typescript | 5.5             |
@@ -40,20 +40,20 @@ For example - HPR-number and Norwegian national identity number / D-number are r
 
 ```json
 {
-  "issuer": "CONDITIONAL, String conveying this system’s OpenID Connect Issuer URL. Required if the server’s capabilities include sso-openid-connect; otherwise, omitted.",
-  "jwks_uri": "CONDITIONAL, String conveying this system’s JSON Web Key Set URL. Required if the server’s capabilities include sso-openid-connect; otherwise, optional.",
-  "authorization_endpoint": "CONDITIONAL, URL to the OAuth2 authorization endpoint. Required if server supports the launch-ehr or launch-standalone capability; otherwise, optional.",
-  "grant_types_supported": "REQUIRED, Array of grant types supported at the token endpoint. The options are “authorization_code” (when SMART App Launch is supported) and “client_credentials” (when SMART Backend Services is supported).",
-  "token_endpoint": "REQUIRED, URL to the OAuth2 token endpoint.",
-  "capabilities": "REQUIRED, Array of strings representing SMART capabilities (e.g., sso-openid-connect or launch-standalone) that the server supports.",
-  "code_challenge_methods_supported": "REQUIRED, Array of PKCE code challenge methods supported. The S256 method SHALL be included in this list, and the plain method SHALL NOT be included in this list.",
-  "user_access_brand_bundle": "RECOMMENDED, URL for a Brand Bundle-",
-  "user_access_brand_identifier": "RECOMMENDED, Identifier for the primary entry in a Brand Bundle.",
-  "scopes_supported": "RECOMMENDED, Array of scopes a client may request. The server SHALL support all scopes listed here; additional scopes MAY be supported (so clients should not consider this an exhaustive list).",
-  "response_types_supported": "RECOMMENDED, Array of OAuth2 response_type values that are supported. Implementers can refer to response_types defined in OAuth 2.0 (RFC 6749) and in OIDC Core.",
-  "management_endpoint": "RECOMMENDED, URL where an end-user can view which applications currently have access to data and can make adjustments to these access rights.",
-  "introspection_endpoint": "RECOMMENDED, URL to a server’s introspection endpoint that can be used to validate a token.",
-  "revocation_endpoint": "RECOMMENDED, URL to a server’s revoke endpoint that can be used to revoke a token."
+    "issuer": "CONDITIONAL, String conveying this system’s OpenID Connect Issuer URL. Required if the server’s capabilities include sso-openid-connect; otherwise, omitted.",
+    "jwks_uri": "CONDITIONAL, String conveying this system’s JSON Web Key Set URL. Required if the server’s capabilities include sso-openid-connect; otherwise, optional.",
+    "authorization_endpoint": "CONDITIONAL, URL to the OAuth2 authorization endpoint. Required if server supports the launch-ehr or launch-standalone capability; otherwise, optional.",
+    "grant_types_supported": "REQUIRED, Array of grant types supported at the token endpoint. The options are “authorization_code” (when SMART App Launch is supported) and “client_credentials” (when SMART Backend Services is supported).",
+    "token_endpoint": "REQUIRED, URL to the OAuth2 token endpoint.",
+    "capabilities": "REQUIRED, Array of strings representing SMART capabilities (e.g., sso-openid-connect or launch-standalone) that the server supports.",
+    "code_challenge_methods_supported": "REQUIRED, Array of PKCE code challenge methods supported. The S256 method SHALL be included in this list, and the plain method SHALL NOT be included in this list.",
+    "user_access_brand_bundle": "RECOMMENDED, URL for a Brand Bundle-",
+    "user_access_brand_identifier": "RECOMMENDED, Identifier for the primary entry in a Brand Bundle.",
+    "scopes_supported": "RECOMMENDED, Array of scopes a client may request. The server SHALL support all scopes listed here; additional scopes MAY be supported (so clients should not consider this an exhaustive list).",
+    "response_types_supported": "RECOMMENDED, Array of OAuth2 response_type values that are supported. Implementers can refer to response_types defined in OAuth 2.0 (RFC 6749) and in OIDC Core.",
+    "management_endpoint": "RECOMMENDED, URL where an end-user can view which applications currently have access to data and can make adjustments to these access rights.",
+    "introspection_endpoint": "RECOMMENDED, URL to a server’s introspection endpoint that can be used to validate a token.",
+    "revocation_endpoint": "RECOMMENDED, URL to a server’s revoke endpoint that can be used to revoke a token."
 }
 ```
 
@@ -164,11 +164,13 @@ For basic testing and simulated error scenarios you can use the [SMART launcher]
 Ensure you fill in the following fields.
 
 **App Launch Options**
+
 > 1. Launch Type: Provider EHR Launch
 > 2. FHIR Version: R4
 > 3. App's Launch URL: http://localhost:5173/launch
 
 **Client Registration & Validation**
+
 > 1. Client Type: Public
 > 2. Client Identity Validation: Strict
 > 3. Client ID: NAV_SMART_on_FHIR_example
@@ -239,18 +241,18 @@ Basic examples:
 _READ access for the selected patient in the EHR system_
 
 | SCOPE             | Results in    |
-|-------------------|---------------|
+| ----------------- | ------------- |
 | patient/Patient.r | OK            |
 | patient/Patient.* | INVALID SCOPE |
 | patient/*.r       | INVALID SCOPE |
-| patient/*.*       | INVALID SCOPE |
+| patient/_._       | INVALID SCOPE |
 
 Advanced examples:
 
 _READ and UPDATE access to the selected patient and all its FHIR resources_
 
 | SCOPE                    | Results in    |
-|--------------------------|---------------|
+| ------------------------ | ------------- |
 | `patient/Patient.ru`     | OK            |
 | `patient/Appointment.ru` | OK            |
 | `patient/Observation.ru` | OK            |
@@ -265,6 +267,6 @@ want [fine grained access](https://build.fhir.org/ig/HL7/smart-app-launch/scopes
 to laboratory observations_
 
 | SCOPE                                                                                                       | Results in                |
-|-------------------------------------------------------------------------------------------------------------|---------------------------|
+| ----------------------------------------------------------------------------------------------------------- | ------------------------- |
 | `patient/Observation.r?category=http://terminology.hl7.org/CodeSystem/observation-category&#124;laboratory` | OK                        |
 | `patient/Observation.r`                                                                                     | OK (but undesired result) |
