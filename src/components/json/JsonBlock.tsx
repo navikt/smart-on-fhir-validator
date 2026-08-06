@@ -1,26 +1,26 @@
 import type { ReactElement } from 'react'
-import { PrismLight as SyntaxHighlighter } from 'react-syntax-highlighter'
-import json from 'react-syntax-highlighter/dist/esm/languages/prism/json'
-import prism from 'react-syntax-highlighter/dist/esm/styles/prism/prism'
 
-SyntaxHighlighter.registerLanguage('json', json)
+function toDisplayText(value: unknown): string {
+    // Bodies that failed to parse as JSON arrive here as plain strings (see ExchangePanel) — render
+    // them verbatim rather than JSON.stringify-ing them into a quoted, escaped string literal.
+    if (typeof value === 'string') return value
+
+    return JSON.stringify(value, null, 2) ?? 'null'
+}
 
 /**
- * Pretty-prints a JSON-serialisable value with syntax highlighting. `react-syntax-highlighter`
- * touches no browser-only API, so this renders entirely on the server — no client JS is shipped
- * just to colour a request or response body.
+ * Pretty-prints a JSON-serialisable value (or a raw non-JSON string body) as plain monospace text.
+ * A Server Component with no client JS: the value here is the exact evidence, not syntax colouring,
+ * and the full report is already downloadable as JSON for anyone who needs to inspect it further.
  */
 export function JsonBlock({ value }: { value: unknown }): ReactElement {
-    const text = JSON.stringify(value, null, 2) ?? 'null'
-
     return (
-        <SyntaxHighlighter
-            language="json"
-            style={prism}
-            customStyle={{ margin: 0, fontSize: '0.8rem' }}
+        <pre
             role="code"
+            tabIndex={0}
+            className="max-h-96 overflow-auto rounded bg-neutral-50 p-2 font-mono text-xs break-all whitespace-pre-wrap"
         >
-            {text}
-        </SyntaxHighlighter>
+            {toDisplayText(value)}
+        </pre>
     )
 }
