@@ -12,6 +12,10 @@ on:
       - package.json
       - Dockerfile
 
+concurrency:
+  group: node-matrix-${{ github.ref }}
+  cancel-in-progress: true
+
 permissions:
   contents: read
 
@@ -38,5 +42,14 @@ jobs:
       - run: yarn install --immutable --mode=update-lockfile
       - run: yarn install --immutable
       - run: yarn tsc
-      - run: yarn test
+      - run: yarn workspace e2e run tsc
+      - run: yarn test:coverage
       - run: yarn build
+      - run: yarn e2e:install
+      - run: yarn e2e
+      - uses: actions/upload-artifact@v4
+        if: failure()
+        with:
+          name: playwright-report-node-${{ matrix.node }}
+          path: e2e/playwright-report/
+          retention-days: 7
