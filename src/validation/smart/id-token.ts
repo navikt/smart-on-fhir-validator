@@ -2,18 +2,20 @@
  * Validation of the SMART `id_token` — an OpenID Connect ID Token carrying the SMART-specific
  * `fhirUser` claim that identifies the logged-in clinician.
  *
- * Signature verification is delegated to `jose`'s own `jwtVerify`. The key resolver is injected
- * by the caller (typically `createRemoteJWKSet(new URL(jwks_uri))` in production, or a fixed
- * public key / in-memory JWKS in tests), so this module performs no network IO itself — it turns
- * an already-resolvable key plus the token into findings, which is what keeps it testable without
- * a real network call.
+ * Signature/issuer/audience/expiry verification is `#core/smart/id-token`'s job — it owns the
+ * `jose` `jwtVerify` call and routes the JWKS fetch through the shared `SmartHttpClient` recorder
+ * so a broken `jwks_uri` still leaves an `HttpExchange` to look at. This module takes the
+ * already-computed `IdTokenVerificationResult` (evidence) and turns it, plus the SMART-specific
+ * claims, into findings — a pure function with no IO of its own, consistent with the other
+ * validators in this directory (they all take already-fetched data, never fetch it themselves).
  *
  * @see https://build.fhir.org/ig/HL7/smart-app-launch/scopes-and-launch-context.html#scopes-for-requesting-identity-data
  * @see https://openid.net/specs/openid-connect-core-1_0.html#IDToken
  */
 
-import { decodeJwt, jwtVerify, type JWTPayload } from 'jose'
+import type { JWTPayload } from 'jose'
 
+import { decodeIdTokenClaims, type IdTokenVerificationResult } from '#core/smart/id-token'
 import type { RefTypes } from '#validation/common-refs'
 import { Validator } from '#validation/Validator'
 import { validation, type Validation } from '#validation/validation'
@@ -52,41 +54,20 @@ function isFhirUserResourceType(resourceType: string): resourceType is FhirUserR
     return (FHIR_USER_RESOURCE_TYPES as readonly string[]).includes(resourceType)
 }
 
-/** The key material or key resolver `jwtVerify` accepts — reused as-is so this stays in lockstep with jose. */
-export type IdTokenKeyResolver = Parameters<typeof jwtVerify>[1]
-
 export type ValidateIdTokenOptions = {
     idToken: string | undefined
-    /** The SMART configuration's `issuer` — the id_token's required `iss`. */
-    issuer: string | undefined
-    /** This app's own `client_id` — the id_token's required audience. */
-    clientId: string
-    /** Injectable so tests can verify against an in-memory key instead of a real JWKS endpoint. */
-    keyResolver: IdTokenKeyResolver
+    /**
+     * The result of `verifyIdToken` (`#core/smart/id-token`), or `null` when verification could
+     * not even be attempted — e.g. the SMART configuration had no `issuer`/`jwks_uri`. Claim
+     * checks below still run against a best-effort decode in that case.
+     */
+    verification: IdTokenVerificationResult | null
+    /** Required when `verification` is `null`, to explain why in the finding. */
+    verificationSkippedReason?: string
     /** Whether an identity claim (`fhirUser`/`profile`) was requested via `openid` + one of them. */
     identityClaimRequested: boolean
     /** The nonce this app sent with the authorization request, if any. */
     sentNonce?: string
-}
-
-function describeVerificationError(cause: unknown): string {
-    if (cause instanceof Error) {
-        const code = 'code' in cause && typeof cause.code === 'string' ? cause.code : undefined
-        const claim = 'claim' in cause && typeof cause.claim === 'string' ? cause.claim : undefined
-        if (claim && claim !== 'unspecified')
-            return `${code ?? cause.name}: \`${claim}\` claim — ${cause.message}`
-        return code ? `${code}: ${cause.message}` : cause.message
-    }
-    return String(cause)
-}
-
-/** Unverified inspection only — used purely to surface *something* about a token that failed verification. */
-function decodeUnverified(idToken: string): JWTPayload | null {
-    try {
-        return decodeJwt(idToken)
-    } catch {
-        return null
-    }
 }
 
 function validateFhirUserClaim(
@@ -183,46 +164,44 @@ function validateNonce(
 }
 
 /**
- * Verifies the id_token's signature, issuer and audience, then validates its SMART-specific and
- * OIDC-required claims. Returns `[]` when there is no id_token to validate — its presence (or
- * required absence) is `token-response.ts`'s concern, not this module's.
+ * Turns an already-computed `IdTokenVerificationResult` plus the SMART/OIDC claim requirements
+ * into findings. Returns `[]` when there is no id_token to validate — its presence (or required
+ * absence) is `token-response.ts`'s concern, not this module's.
  */
-export async function validateIdToken(options: ValidateIdTokenOptions): Promise<Validation[]> {
-    const { idToken, issuer, clientId, keyResolver, identityClaimRequested, sentNonce } = options
+export function validateIdToken(options: ValidateIdTokenOptions): Validation[] {
+    const { idToken, verification, verificationSkippedReason, identityClaimRequested, sentNonce } = options
     const validator = new Validator()
     const ok: Validation[] = []
 
     if (!idToken) return []
 
-    const parts = idToken.split('.')
-    if (parts.length !== 3) {
-        validator.error(
-            `The id_token is not a well-formed JWS: expected three dot-separated parts, got ${parts.length}.`,
-            refs.idTokenClaims,
-        )
-        return validator.build()
-    }
-
-    if (!issuer) {
-        validator.error(
-            'Cannot verify the id_token signature: the SMART configuration did not advertise an `issuer`.',
-            refs.identityScopes,
-        )
-        return validator.build()
-    }
-
     let claims: JWTPayload
 
-    try {
-        const result = await jwtVerify(idToken, keyResolver, { issuer, audience: clientId })
-        claims = result.payload
+    if (verification === null) {
+        validator.error(
+            `The id_token signature could not be verified: ${verificationSkippedReason ?? 'no reason given'}.`,
+            refs.idTokenClaims,
+        )
+        claims = decodeIdTokenClaims(idToken) ?? {}
+    } else if (verification.status === 'verified') {
+        claims = verification.claims
         ok.push(
             validation("The id_token signature verifies against the issuer's JWKS", 'OK', refs.idTokenClaims),
         )
         ok.push(
-            validation(`\`iss\` matches the SMART configuration issuer (\`${issuer}\`)`, 'OK', refs.security),
+            validation(
+                `\`iss\` (\`${String(claims.iss)}\`) matches the SMART configuration issuer`,
+                'OK',
+                refs.security,
+            ),
         )
-        ok.push(validation(`\`aud\` includes this app's client_id (\`${clientId}\`)`, 'OK', refs.security))
+        ok.push(
+            validation(
+                `\`aud\` (\`${String(claims.aud)}\`) includes this app's client_id`,
+                'OK',
+                refs.security,
+            ),
+        )
         ok.push(
             validation(
                 'The id_token is not expired, and `nbf`/`iat` are satisfied',
@@ -230,12 +209,12 @@ export async function validateIdToken(options: ValidateIdTokenOptions): Promise<
                 refs.idTokenClaims,
             ),
         )
-    } catch (cause) {
+    } else {
         validator.error(
-            `The id_token failed verification: ${describeVerificationError(cause)}`,
+            `The id_token failed verification: ${verification.problems.join('; ')}`,
             refs.idTokenClaims,
         )
-        claims = decodeUnverified(idToken) ?? {}
+        claims = verification.claims ?? {}
     }
 
     if (typeof claims.sub !== 'string' || claims.sub.length === 0) {

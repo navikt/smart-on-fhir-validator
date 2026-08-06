@@ -12,34 +12,37 @@ export type IdTokenVerificationResult =
     | { status: 'verified'; claims: JWTPayload; problems: [] }
     | { status: 'failed'; claims: JWTPayload | null; problems: string[] }
 
+/** The key material or key resolver `jwtVerify` accepts — reused as-is so this stays in lockstep with jose. */
+export type IdTokenKeyResolver = Parameters<typeof jwtVerify>[1]
+
 export type VerifyIdTokenOptions = {
-    jwksUri: string
     issuer: string
     /** The SMART client's own `client_id` — the id token's required audience. */
     clientId: string
+    /** The issuer's JWKS endpoint. Ignored when `keyResolver` is given. */
+    jwksUri?: string
     /** Routes the JWKS fetch through the shared recorder so it appears in the evidence trail. */
-    httpClient: SmartHttpClient
+    httpClient?: SmartHttpClient
+    /**
+     * An already-resolvable key or key resolver, e.g. for hermetic tests that sign against an
+     * in-memory key pair rather than a fetched JWKS. Takes precedence over `jwksUri`/`httpClient`
+     * when given, and performs no network IO of its own.
+     */
+    keyResolver?: IdTokenKeyResolver
 }
 
 export async function verifyIdToken(
     idToken: string,
     options: VerifyIdTokenOptions,
 ): Promise<IdTokenVerificationResult> {
-    let jwksUrl: URL
-    try {
-        jwksUrl = new URL(options.jwksUri)
-    } catch {
-        return {
-            status: 'failed',
-            claims: decodeIdTokenClaims(idToken),
-            problems: [`jwks_uri is not a valid URL: ${options.jwksUri}`],
-        }
+    const key = options.keyResolver ?? buildJwksKeyResolver(options)
+    if (typeof key === 'string') {
+        // `buildJwksKeyResolver` returned an error message rather than a resolver.
+        return { status: 'failed', claims: decodeIdTokenClaims(idToken), problems: [key] }
     }
 
-    const jwks = createRemoteJWKSet(jwksUrl, { [customFetch]: recordedFetch(options.httpClient) })
-
     try {
-        const { payload } = await jwtVerify(idToken, jwks, {
+        const { payload } = await jwtVerify(idToken, key, {
             issuer: options.issuer,
             audience: options.clientId,
         })
@@ -51,6 +54,26 @@ export async function verifyIdToken(
             problems: [describeVerificationError(cause)],
         }
     }
+}
+
+/**
+ * Builds the JWKS-backed key resolver used when the caller did not inject one directly. Returns
+ * a plain string (rather than throwing) when `jwksUri`/`httpClient` are missing or malformed, so
+ * `verifyIdToken` can turn that straight into a `failed` result without a network call.
+ */
+function buildJwksKeyResolver(options: VerifyIdTokenOptions): IdTokenKeyResolver | string {
+    if (!options.jwksUri || !options.httpClient) {
+        return 'verifyIdToken requires either a `keyResolver` or both `jwksUri` and `httpClient`'
+    }
+
+    let jwksUrl: URL
+    try {
+        jwksUrl = new URL(options.jwksUri)
+    } catch {
+        return `jwks_uri is not a valid URL: ${options.jwksUri}`
+    }
+
+    return createRemoteJWKSet(jwksUrl, { [customFetch]: recordedFetch(options.httpClient) })
 }
 
 /** Unverified inspection only — never use this result to authorize anything. */
@@ -70,9 +93,16 @@ function recordedFetch(httpClient: SmartHttpClient): (url: string) => Promise<Re
     }
 }
 
-function describeVerificationError(cause: unknown): string {
+/**
+ * Extracts jose's own `code` and, where present, the specific `claim` that failed (e.g. `iss`,
+ * `aud`, `exp`) so a caller doesn't have to re-derive which claim was at fault from prose alone.
+ */
+export function describeVerificationError(cause: unknown): string {
     if (cause instanceof Error) {
         const code = 'code' in cause && typeof cause.code === 'string' ? cause.code : undefined
+        const claim = 'claim' in cause && typeof cause.claim === 'string' ? cause.claim : undefined
+        if (claim && claim !== 'unspecified')
+            return `${code ?? cause.name}: \`${claim}\` claim — ${cause.message}`
         return code ? `${code}: ${cause.message}` : cause.message
     }
     return String(cause)
