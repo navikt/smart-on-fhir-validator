@@ -74,7 +74,7 @@ export function buildWellKnownUrl(fhirBaseUrl: string): string {
 }
 
 /**
- * Resolves a (possibly relative) endpoint URL against the FHIR base URL, per RFC1808, for
+ * Resolves a (possibly relative) endpoint URL against the FHIR base URL, per RFC 3986 §5, for
  * legacy servers that return relative endpoint URLs. The spec requires absolute URLs, so this
  * is a courtesy for otherwise non-conformant servers rather than something to rely on.
  */

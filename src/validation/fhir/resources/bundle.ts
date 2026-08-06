@@ -48,7 +48,7 @@ export function validateBatchBundleRequest(bundle: Bundle): Validation[] {
 
         if (!entry.request) {
             validator.error(`Bundle.${label} does not contain a request object with a method and url`, {
-                hl7: hl7Refs.bundleTransactionRules,
+                hl7: hl7Refs.bundleBatchRules,
             })
             return
         }
@@ -56,14 +56,14 @@ export function validateBatchBundleRequest(bundle: Bundle): Validation[] {
         if (entry.request.method !== 'PUT') {
             validator.error(
                 `Bundle.${label}.request.method should be "PUT", was "${entry.request.method}". Nav sets the resource id itself (the sykmelding id) so each entry is an idempotent upsert rather than a server-assigned create.`,
-                { nav: navRefs.adr01, hl7: hl7Refs.bundleTransactionRules },
+                { nav: navRefs.adr01, hl7: hl7Refs.bundleBatchRules },
             )
         } else {
             ok.push(validation(`Bundle.${label}.request.method is correctly "PUT"`, 'OK'))
         }
 
         if (!entry.request.url) {
-            validator.error(`Bundle.${label}.request.url is missing`, { hl7: hl7Refs.bundleTransactionRules })
+            validator.error(`Bundle.${label}.request.url is missing`, { hl7: hl7Refs.bundleBatchRules })
         } else {
             ok.push(validation(`Bundle.${label}.request.url is "${entry.request.url}"`, 'OK'))
         }
@@ -80,7 +80,7 @@ export function validateBatchBundleRequest(bundle: Bundle): Validation[] {
 
 /**
  * Checks that references between entries resolve, per
- * https://hl7.org/fhir/R4/http.html#trules.
+ * https://hl7.org/fhir/R4/http.html#brules.
  *
  * Nav's own batch (see bundle.md) does not use `urn:uuid:` fullUrls: because the sykmelding id is
  * known up front, `fullUrl` and inter-entry references use the plain `<Type>/<id>` form instead.
@@ -101,7 +101,7 @@ function validateInternalReferences(bundle: Bundle, validator: Validator, ok: Va
     if (unresolved.length > 0) {
         validator.error(
             `Bundle contains references that do not resolve to any entry.fullUrl: ${unresolved.join(', ')}`,
-            { hl7: hl7Refs.bundleTransactionRules },
+            { hl7: hl7Refs.bundleBatchRules },
         )
     } else if (referencedIds.length > 0) {
         ok.push(

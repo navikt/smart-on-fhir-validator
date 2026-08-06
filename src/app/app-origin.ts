@@ -3,8 +3,9 @@ import { headers } from 'next/headers'
 /**
  * This deployment's own public origin, derived from the incoming request's `Host` header.
  * Route handlers can read this straight off `NextRequest.nextUrl.origin`; Server Components have
- * no `Request` object, so they go through `next/headers` instead. Mirrors the same derivation
- * `src/app/api/mocks/fhir/[[...path]]/route.ts` uses for its own base URL.
+ * no `Request` object, so they go through `next/headers` instead. The `x-forwarded-*` fallback
+ * mirrors `isRequestSecure` in `#core/session/session-cookie`, since nais's ingress terminates TLS
+ * and forwards plain HTTP to the app.
  */
 export async function getAppOrigin(): Promise<string> {
     const requestHeaders = await headers()

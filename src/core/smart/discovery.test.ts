@@ -56,7 +56,7 @@ describe('resolveEndpoint', () => {
         )
     })
 
-    it('resolves a root-relative URL against the FHIR base per RFC1808', () => {
+    it('resolves a root-relative URL against the FHIR base per RFC 3986 §5', () => {
         expect(resolveEndpoint('/auth/authorize', 'https://ehr.example.com/fhir')).toBe(
             'https://ehr.example.com/auth/authorize',
         )

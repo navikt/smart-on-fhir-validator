@@ -137,7 +137,7 @@ describe('defects that break the launch or callback itself, before any report ca
     it('well-known-relative-urls: the authorize redirect 404s because the resolved URL drops the FHIR base path', async () => {
         // The mock strips the *entire* `baseUrl` (including its `/fhir` path segment) from each
         // endpoint URL, leaving root-relative paths like `/authorize`. This app's `resolveEndpoint`
-        // (RFC1808 courtesy resolution) correctly resolves `/authorize` against the *origin*, per
+        // (RFC 3986 §5 courtesy resolution) correctly resolves `/authorize` against the *origin*, per
         // spec — but that lands on `https://mock-ehr.example.com/authorize`, not
         // `.../fhir/authorize`, since a root-relative reference discards the base's path
         // entirely. That is a property of how this particular defect constructs its relative

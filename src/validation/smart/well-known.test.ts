@@ -208,12 +208,12 @@ describe('validateSmartConfiguration — grant_types_supported', () => {
 })
 
 describe('validateSmartConfiguration — absolute URL requirement', () => {
-    it('errors on a relative endpoint URL and mentions RFC1808 resolution and the exchange id', () => {
+    it('errors on a relative endpoint URL and mentions RFC 3986 resolution and the exchange id', () => {
         const errors = bySeverity({ token_endpoint: '/auth/token' }, 'ERROR').map((v) => v.message)
         const relevant = errors.find((m) => m.includes('token_endpoint'))
 
         expect(relevant).toBeDefined()
-        expect(relevant).toContain('RFC1808')
+        expect(relevant).toContain('RFC 3986')
         expect(relevant).toContain(EXCHANGE_ID)
     })
 
