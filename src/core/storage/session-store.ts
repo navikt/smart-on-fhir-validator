@@ -2,6 +2,9 @@ import * as z from 'zod'
 
 import type { HttpExchange } from '#core/http/exchange'
 import type { SmartSession } from '#core/smart/types'
+import { processSingleton, resetProcessSingleton } from '#core/storage/process-singleton'
+
+const SESSION_STORE_KEY = 'session-store'
 
 /**
  * Storage for `SmartSession`s, keyed by the opaque session id carried in the session cookie.
@@ -174,8 +177,6 @@ export function createInMemorySessionStore(): SessionStore {
     }
 }
 
-let store: Promise<SessionStore> | undefined
-
 /**
  * Picks the backend from the environment: a nais-provided Valkey instance in deployed
  * environments, an in-memory store for local dev where no Valkey instance is configured. Kept
@@ -188,22 +189,19 @@ let store: Promise<SessionStore> | undefined
  * complete at all. Against Valkey it is a resource leak instead: a fresh client per call opens a
  * new connection on every request.
  *
- * The *promise* is cached rather than the resolved store, so two concurrent first-callers cannot
- * race into constructing two backends.
+ * See `#core/storage/process-singleton` for why the memo cannot be a plain module-level variable.
  */
 export function createSessionStore(): Promise<SessionStore> {
-    store ??= (async (): Promise<SessionStore> => {
+    return processSingleton(SESSION_STORE_KEY, async (): Promise<SessionStore> => {
         if (!process.env.VALKEY_URI_SESSIONS) return createInMemorySessionStore()
 
         const { createValkeySessionStore, createValkeyClientFromEnv } = await import('./valkey')
         return createValkeySessionStore(createValkeyClientFromEnv())
-    })()
-
-    return store
+    })
 }
 
 /** Test-only: drops the memoised store so a test can change `VALKEY_URI_SESSIONS` and get a
  * store built from the new value, rather than one another test already built. */
 export function resetSessionStoreForTests(): void {
-    store = undefined
+    resetProcessSingleton(SESSION_STORE_KEY)
 }

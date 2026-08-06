@@ -16,7 +16,10 @@
  */
 
 import type { ValidationReport } from '#core/run'
+import { processSingleton } from '#core/storage/process-singleton'
 import { createValkeyClientFromEnv, type ValkeyLike } from '#core/storage/valkey'
+
+const REPORT_STORE_KEY = 'report-store'
 
 /** Mirrors `ACTIVE_SESSION_TTL_SECONDS` in `#core/smart/callback`: a report is only useful for as
  * long as the session it was produced from would still be considered active. */
@@ -74,14 +77,14 @@ function createValkeyReportStore(client: ValkeyLike): ReportStore {
     }
 }
 
-let store: ReportStore | undefined
-
-/** Lazy singleton, mirroring `createSessionStore`: a report is written by the callback request
- * and read by a later `/report` request, so a store rebuilt per call would lose it. */
+/** Lazy singleton: a report is written by the `/callback` Route Handler and read by the `/report`
+ * Page, which Next.js compiles into separate module graphs — so this must be anchored on
+ * `globalThis` rather than a module-level variable, or the read finds an empty store. See
+ * `#core/storage/process-singleton`. */
 export function getReportStore(): ReportStore {
-    store ??= process.env.VALKEY_URI_SESSIONS
-        ? createValkeyReportStore(createValkeyClientFromEnv())
-        : createInMemoryReportStore()
-
-    return store
+    return processSingleton(REPORT_STORE_KEY, (): ReportStore =>
+        process.env.VALKEY_URI_SESSIONS
+            ? createValkeyReportStore(createValkeyClientFromEnv())
+            : createInMemoryReportStore(),
+    )
 }
