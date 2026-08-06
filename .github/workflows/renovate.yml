@@ -16,6 +16,10 @@ on:
 permissions:
   contents: read
 
+concurrency:
+  group: renovate
+  cancel-in-progress: true
+
 jobs:
   renovate:
     runs-on: ubuntu-latest

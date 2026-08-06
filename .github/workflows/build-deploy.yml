@@ -11,6 +11,15 @@ on:
 env:
   IMAGE: europe-north1-docker.pkg.dev/${{ vars.NAIS_MANAGEMENT_PROJECT_ID }}/helseopplysninger/${{ github.event.repository.name }}
 
+concurrency:
+  # Queue rather than cancel: a build/deploy already in flight should finish (or fail on its
+  # own terms) rather than be killed mid-push of an image or mid-deploy.
+  group: build-deploy-${{ github.ref }}
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+
 jobs:
   verify:
     uses: ./.github/workflows/ci.yml

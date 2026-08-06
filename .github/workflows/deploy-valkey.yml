@@ -10,6 +10,10 @@ on:
       - .github/workflows/deploy-valkey.yml
       - .nais/valkey.yaml
 
+concurrency:
+  group: deploy-valkey-${{ github.ref }}
+  cancel-in-progress: false
+
 permissions:
   contents: read
   id-token: write
