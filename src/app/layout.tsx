@@ -1,6 +1,8 @@
 import type { Metadata } from 'next'
 import type { ReactElement } from 'react'
 
+import { SiteHeader } from '#components/site/SiteHeader'
+
 import './globals.css'
 
 export const metadata: Metadata = {
@@ -11,7 +13,10 @@ export const metadata: Metadata = {
 export default function RootLayout({ children }: LayoutProps<'/'>): ReactElement {
     return (
         <html lang="en" className="h-full antialiased">
-            <body className="min-h-full flex flex-col">{children}</body>
+            <body className="flex min-h-full flex-col bg-neutral-50 text-neutral-900">
+                <SiteHeader />
+                {children}
+            </body>
         </html>
     )
 }
