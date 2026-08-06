@@ -16,8 +16,9 @@
       "platformAutomerge": true
     },
     {
-      "description": "TypeScript moves fast and breaks type-level things; keep it in its own PR so a failure is unambiguous.",
+      "description": "TypeScript moves fast and breaks type-level things; keep it in its own PR so a failure is unambiguous. Majors still require a human via the catch-all major rule below.",
       "matchPackageNames": ["typescript"],
+      "matchUpdateTypes": ["minor", "patch", "pin", "digest"],
       "groupName": "typescript",
       "automerge": true,
       "platformAutomerge": true
@@ -28,7 +29,9 @@
       "groupName": "next and react"
     },
     {
+      "description": "Low-risk dev tooling that is exercised by the same CI gate as everything else; majors still require a human via the catch-all major rule below.",
       "matchPackageNames": ["oxlint", "oxfmt", "vitest", "@playwright/test", "@types/node"],
+      "matchUpdateTypes": ["minor", "patch", "pin", "digest"],
       "groupName": "dev tooling",
       "automerge": true,
       "platformAutomerge": true
