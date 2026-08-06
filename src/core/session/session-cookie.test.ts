@@ -22,8 +22,8 @@ describe('createSessionId', () => {
 })
 
 describe('buildSessionCookie', () => {
-    it('sets HttpOnly, Secure and SameSite=Lax, per the security requirements', () => {
-        const attributes = buildSessionCookie('abc')
+    it('sets HttpOnly, Secure and SameSite=Lax when the request is secure', () => {
+        const attributes = buildSessionCookie('abc', true)
 
         expect(attributes.httpOnly).toBe(true)
         expect(attributes.secure).toBe(true)
@@ -35,18 +35,26 @@ describe('buildSessionCookie', () => {
         expect(attributes.value).toBe('abc')
     })
 
+    it('omits Secure when the request is plain HTTP, so the cookie is not silently dropped', () => {
+        const attributes = buildSessionCookie('abc', false)
+
+        expect(attributes.secure).toBe(false)
+        expect(attributes.httpOnly).toBe(true)
+        expect(attributes.sameSite).toBe('lax')
+    })
+
     it('omits maxAge when not given', () => {
-        expect(buildSessionCookie('abc').maxAge).toBeUndefined()
+        expect(buildSessionCookie('abc', true).maxAge).toBeUndefined()
     })
 
     it('includes maxAge when given', () => {
-        expect(buildSessionCookie('abc', 600).maxAge).toBe(600)
+        expect(buildSessionCookie('abc', true, 600).maxAge).toBe(600)
     })
 })
 
 describe('serializeSessionCookie', () => {
-    it('produces a Set-Cookie value with all required attributes', () => {
-        const header = serializeSessionCookie('abc123', 600)
+    it('produces a Set-Cookie value with all required attributes when secure', () => {
+        const header = serializeSessionCookie('abc123', true, 600)
 
         expect(header).toContain(`${SESSION_COOKIE_NAME}=abc123`)
         expect(header).toContain('Path=/')
@@ -56,12 +64,21 @@ describe('serializeSessionCookie', () => {
         expect(header).toContain('Max-Age=600')
     })
 
+    it('omits the Secure attribute over plain HTTP, so local dev keeps the cookie', () => {
+        const header = serializeSessionCookie('abc123', false)
+
+        expect(header).toContain(`${SESSION_COOKIE_NAME}=abc123`)
+        expect(header).toContain('HttpOnly')
+        expect(header).not.toContain('Secure')
+        expect(header).toContain('SameSite=Lax')
+    })
+
     it('omits Max-Age when no maxAgeSeconds is given (session cookie)', () => {
-        expect(serializeSessionCookie('abc123')).not.toContain('Max-Age')
+        expect(serializeSessionCookie('abc123', true)).not.toContain('Max-Age')
     })
 
     it('percent-encodes the session id value', () => {
-        const header = serializeSessionCookie('a b/c')
+        const header = serializeSessionCookie('a b/c', true)
         expect(header).toContain(`${SESSION_COOKIE_NAME}=${encodeURIComponent('a b/c')}`)
     })
 })
@@ -92,7 +109,7 @@ describe('parseSessionCookie', () => {
     })
 
     it('round-trips through serializeSessionCookie', () => {
-        const header = serializeSessionCookie('a-real-session-id-123')
+        const header = serializeSessionCookie('a-real-session-id-123', true)
         expect(parseSessionCookie(header)).toBe('a-real-session-id-123')
     })
 
