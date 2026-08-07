@@ -1,0 +1,64 @@
+apiVersion: "nais.io/v1alpha1"
+kind: "Application"
+metadata:
+  name: nav-smart-on-fhir-validator
+  namespace: helseopplysninger
+  labels:
+    team: helseopplysninger
+spec:
+  valkey:
+    - instance: nav-smart-on-fhir-validator
+      access: readwrite
+  image: {{ image }}
+
+  port: 3000
+  replicas:
+    max: 2
+    min: 1
+    cpuThresholdPercentage: 90
+  resources:
+    limits:
+      memory: 1024Mi
+    requests:
+      cpu: 50m
+      memory: 256Mi
+
+  liveness:
+    path: /api/internal/is_alive
+  readiness:
+    path: /api/internal/is_ready
+  preStopHook:
+    http:
+      path: /api/internal/pre_stop
+  observability:
+    autoInstrumentation:
+      enabled: true
+      runtime: nodejs
+    logging:
+      destinations:
+        - id: loki
+  ingresses:
+    - "https://nav-on-fhir.ekstern.dev.nav.no"
+
+  filesFrom:
+    - emptyDir:
+        medium: Memory
+      mountPath: /app/.next/cache
+
+  accessPolicy:
+    inbound:
+      rules:
+        - application: zara
+    outbound:
+      external:
+        - host: "api.dips.no"
+        - host: "fhirapi.public.webmedepj.no"
+        - host: "launch.smarthealthit.org"
+        - host: "epj.ansatt.dev.nav.no"
+
+  envFrom:
+    - secret: smart-on-fhir-validator-clients
+
+  env:
+    - name: NEXT_PUBLIC_ENVIRONMENT
+      value: dev

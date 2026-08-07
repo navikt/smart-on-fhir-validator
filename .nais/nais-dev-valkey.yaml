@@ -1,0 +1,11 @@
+apiVersion: aiven.io/v1alpha1
+kind: Valkey
+metadata:
+  labels:
+    app: nav-smart-on-fhir-validator
+    team: helseopplysninger
+  name: valkey-helseopplysninger-nav-smart-on-fhir-validator
+  namespace: helseopplysninger
+spec:
+  plan: startup-4
+  project: nav-dev
