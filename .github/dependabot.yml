@@ -1,0 +1,55 @@
+version: 2
+
+registries:
+  npm-github:
+    type: npm-registry
+    url: https://npm.pkg.github.com
+    token: ${{ secrets.READER_TOKEN }}
+
+updates:
+  - package-ecosystem: npm
+    directory: '/'
+    schedule:
+      interval: 'monthly'
+    commit-message:
+      prefix: fix
+      prefix-development: chore
+      include: scope
+    open-pull-requests-limit: 20
+    registries: '*'
+    ignore:
+      - dependency-name: 'eslint'
+        versions: ['9.x']
+    groups:
+      react-dependencies:
+        patterns:
+          - 'clsx'
+          - 'react'
+          - 'react-dom'
+          - '@types/react'
+          - '@types/react-dom'
+      security:
+        patterns:
+          - 'jose'
+      styling:
+        patterns:
+          - 'pino'
+          - 'oxfmt'
+          - 'oxlint'
+          - 'tailwindcss'
+          - '@tailwindcss/postcss'
+      next:
+        patterns:
+          - 'next'
+          - 'next-logger'
+      testing:
+        patterns:
+          - 'vitest'
+          - '@vitest/coverage-v8'
+      language:
+        patterns:
+          - 'typescript'
+      utils:
+        patterns:
+          - 'zod'
+          - 'iovalkey'
