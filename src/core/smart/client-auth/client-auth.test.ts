@@ -47,10 +47,9 @@ describe('symmetric client authentication', () => {
     })
 
     it('form-urlencodes client_id and client_secret individually before joining with a colon (RFC 6749 §2.3.1)', async () => {
-        // A client_id containing a colon would corrupt a naive `base64(id + ':' + secret)`
-        // implementation — the decoded value must still split unambiguously on the *first* colon
-        // after per-value form-encoding, because encodeURIComponent-style encoding of ':' happens
-        // per RFC 6749 Appendix B (application/x-www-form-urlencoded).
+        // A client_id containing a colon would corrupt a naive `base64(id + ':' + secret)`: the
+        // decoded value must still split unambiguously on the first colon, which per-value
+        // form-encoding (RFC 6749 Appendix B) guarantees.
         const clientId = 'id with space:and+plus'
         const clientSecret = 'secret&with=reserved chars'
 
@@ -71,8 +70,7 @@ describe('symmetric client authentication', () => {
         const expectedEncodedSecret = new URLSearchParams([['v', clientSecret]]).toString().slice('v='.length)
 
         expect(decoded).toBe(`${expectedEncodedId}:${expectedEncodedSecret}`)
-        // The encoded id must not contain a raw, un-encoded colon or space — otherwise the
-        // separator would be ambiguous.
+        // A raw colon or space in the encoded id would make the separator ambiguous.
         expect(expectedEncodedId).not.toContain(' ')
         expect(expectedEncodedId).toContain('%3A') // ':' percent-encoded
     })

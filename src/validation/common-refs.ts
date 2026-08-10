@@ -1,11 +1,8 @@
 /**
- * The spec-citation model every finding's `refs` is built from.
- *
- * A citation is a real source of truth, not a decoration: it names the authority that makes a
- * finding a finding (`authority`), the exact clause a reader can cross-check the claim against
- * (`cite`, taken from the target section's actual heading text), and the URL to that clause
- * (`href`). Nothing here guesses an authority from a URL substring; every `SpecRef` states its
- * own authority.
+ * The spec-citation model every finding's `refs` is built from. A citation names the authority
+ * that makes a finding a finding (`authority`), the exact clause a reader can cross-check it
+ * against (`cite`, taken from the target section's heading text), and the URL to that clause
+ * (`href`). Authority is always stated explicitly, never guessed from the URL.
  */
 export type SpecAuthority = 'smart' | 'fhir' | 'oauth' | 'oidc' | 'no-basis' | 'nav'
 
@@ -104,8 +101,8 @@ export const hl7Refs = {
         cite: 'FHIR R4 §Resource List',
         href: 'https://hl7.org/fhir/R4/resourcelist.html',
     },
-    /** Moved out of `simplifierRefs`: the target authority is FHIR R4 itself, not the no-basis
-     *  profile, and the simplifier.net link this used to carry returned HTTP 404. */
+    /** The authority is FHIR R4 itself, not the no-basis profile — and the simplifier.net link
+     *  this used to carry in `simplifierRefs` returned HTTP 404, so do not move it back. */
     telecom: {
         authority: 'fhir',
         cite: 'FHIR R4 §ContactPoint',

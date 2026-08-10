@@ -1,10 +1,5 @@
 import type { HttpExchange } from '#core/http/exchange'
 
-/**
- * Shared vocabulary for the SMART layer. Owned centrally so the discovery, client-auth and
- * session modules can be developed and tested independently.
- */
-
 /** https://build.fhir.org/ig/HL7/smart-app-launch/conformance.html#capabilities */
 export type SmartCapability =
     | 'launch-ehr'
@@ -32,9 +27,8 @@ export type TokenEndpointAuthMethod = 'client_secret_post' | 'client_secret_basi
 /**
  * The `.well-known/smart-configuration` document.
  *
- * Every field is optional at the type level even where the spec says REQUIRED: the app must be
- * able to parse and then *report on* a non-conformant document. Rejecting it at parse time would
- * turn the finding we want to surface into a crash.
+ * Every field is optional even where the spec says REQUIRED: a non-conformant document must be
+ * parseable so it can be reported on, instead of turning the finding into a crash.
  */
 export type SmartConfiguration = {
     issuer?: string
@@ -129,8 +123,8 @@ export type SmartSession = PendingSession | ActiveSession
 /**
  * Everything the EHR told us at launch, and nothing more.
  *
- * FHIR probes may only build searches from these values. That is the point of the read phase:
- * if a resource cannot be reached from launch context alone, Nav cannot pre-fill from it.
+ * FHIR probes may only build searches from these values: if a resource cannot be reached from
+ * launch context alone, Nav cannot pre-fill from it.
  */
 export type LaunchContext = {
     /** From the `patient` token-response parameter. */
@@ -145,10 +139,7 @@ export type LaunchContext = {
     grantedScopes: string[]
 }
 
-/**
- * Errors are values throughout the SMART layer. A failing EHR is the expected case for a
- * validator, so it must be reportable rather than thrown.
- */
+/** Errors are values here: a failing EHR is the expected case, so it must be reportable. */
 export type SmartError = {
     error: string
     detail?: string

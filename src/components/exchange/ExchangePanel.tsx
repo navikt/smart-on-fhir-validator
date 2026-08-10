@@ -40,10 +40,7 @@ function statusColorClass(status: number): string {
 
 /**
  * The raw evidence behind a finding: the exact request this app sent and the exact response the
- * EHR returned, verbatim (already redacted at recording time — see `#core/http/redact`). Uses a
- * native `<details>`/`<summary>` for the expand/collapse interaction rather than client-side
- * state: it needs no JavaScript, works with assistive tech for free, and every value here is
- * already JSON-serialisable, so nothing about it requires a client component.
+ * EHR returned, verbatim (already redacted at recording time — see `#core/http/redact`).
  */
 export function ExchangePanel({ exchange }: { exchange: HttpExchange }): ReactElement {
     return (

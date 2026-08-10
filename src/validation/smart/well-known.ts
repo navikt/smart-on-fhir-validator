@@ -33,7 +33,6 @@ type FieldSpec = {
     label: string
     /** Only checked when true — used for the CONDITIONAL requirements. */
     when?: (config: SmartConfiguration) => boolean
-    /** Explains a conditional requirement in the finding message. */
     reason?: string
 }
 

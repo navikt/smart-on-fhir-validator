@@ -27,16 +27,12 @@ export type { MockClientAuthMethod, MockEhrConfig } from './state'
 /**
  * Builds an in-memory mock EHR: a SMART authorization server plus a FHIR R4 server, conformant
  * by default and misbehaving only in the ways named in `config.defects`.
- *
- * Returns a `Hono` app — `app.fetch` is a standard `(Request) => Promise<Response>` function,
- * so it can be called directly in-process (tests) or mounted behind a Next.js route handler,
- * with no listening port required either way.
  */
 export async function createMockEhr(config: MockEhrConfig): Promise<Hono> {
     const state = await createMockState(config)
     const basePath = new URL(config.baseUrl).pathname
-    // `strict: false` so `POST {baseUrl}` and `POST {baseUrl}/` both reach the Bundle route —
-    // real clients are inconsistent about a trailing slash on the FHIR service base URL.
+    // `POST {baseUrl}` and `POST {baseUrl}/` must both reach the Bundle route — real clients are
+    // inconsistent about a trailing slash on the FHIR service base URL.
     const app = new Hono({ strict: false }).basePath(basePath)
 
     app.get('/metadata', () => fhirJson(buildCapabilityStatement(state)))

@@ -1,6 +1,5 @@
 /**
- * A validator's output is only as trustworthy as the evidence behind it. Every HTTP call the
- * app makes against an EHR is therefore recorded as an `HttpExchange` and shown alongside the
+ * Every HTTP call against an EHR is recorded as an `HttpExchange` and shown alongside the
  * findings it produced, so a vendor can reproduce any result with `curl`.
  *
  * Exchanges are rendered in the browser and may be pasted into support tickets, so credentials
@@ -18,7 +17,7 @@ export type ExchangePhase =
     | 'fhir-write'
 
 export type HttpExchange = {
-    /** Stable id, used to link a validation finding back to the call that produced it. */
+    /** Links a validation finding back to the call that produced it. */
     id: string
     phase: ExchangePhase
     request: {

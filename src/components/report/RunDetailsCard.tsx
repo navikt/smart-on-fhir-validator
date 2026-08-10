@@ -2,11 +2,6 @@ import type { ReactElement } from 'react'
 
 import type { ValidationReport } from '#core/run'
 
-/**
- * The identifying facts about this specific run: who issued the launch, which FHIR server was
- * tested, which client registered, and when the report was generated. Rendered as a `<dl>` since
- * these are label/value pairs, not prose.
- */
 export function RunDetailsCard({ report }: { report: ValidationReport }): ReactElement {
     return (
         <section className="rounded border border-ax-border-neutral-subtle bg-white">

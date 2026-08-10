@@ -1,7 +1,4 @@
-/**
- * Phase 3: validates the access token response persisted on the session during `/callback`.
- * Purely a re-interpretation of already-collected evidence — no new HTTP call.
- */
+/** Phase 3: validates the token response persisted during `/callback`. No new HTTP call. */
 
 import type { ActiveSession } from '#core/smart/types'
 import { validateTokenResponse } from '#validation/smart/token-response'

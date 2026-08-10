@@ -1,7 +1,7 @@
 /**
  * Modulus-11 check digits for the Norwegian identifiers used across the synthetic data set.
- * These are the real algorithms, applied to invented base digits — never real personal data —
- * so the generated identifiers pass the same validation an EHR vendor's own system would apply.
+ * Real algorithms applied to invented base digits — never real personal data — so the generated
+ * identifiers pass the same validation an EHR vendor's own system would apply.
  *
  * @see https://www.skatteetaten.no/person/folkeregister/fodsel-og-navnevalg/barn-fodt-i-norge/fodselsnummer/
  */

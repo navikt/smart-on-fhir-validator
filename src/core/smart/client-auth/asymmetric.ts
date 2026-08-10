@@ -16,10 +16,10 @@ export type AsymmetricAuthConfig = {
 }
 
 /**
- * https://build.fhir.org/ig/HL7/smart-app-launch/client-confidential-asymmetric.html
+ * `private_key_jwt`: the client authenticates with a short-lived signed JWT assertion instead of
+ * a shared secret.
  *
- * `private_key_jwt`: the client authenticates by signing a short-lived JWT assertion with its
- * own private key, rather than presenting a shared secret.
+ * @see https://build.fhir.org/ig/HL7/smart-app-launch/client-confidential-asymmetric.html
  */
 export function createAsymmetricClientAuthentication(
     clientId: string,

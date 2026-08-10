@@ -1,7 +1,4 @@
-/**
- * Phase 5: compares requested vs granted scopes. Purely a re-interpretation of already-collected
- * evidence — no new HTTP call.
- */
+/** Phase 5: compares requested vs granted scopes. No new HTTP call. */
 
 import type { ActiveSession, SmartConfiguration } from '#core/smart/types'
 import { validateScopes } from '#validation/smart/scopes'

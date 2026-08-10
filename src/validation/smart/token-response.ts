@@ -51,7 +51,6 @@ const refs = {
     navEncounter: navRefs.smartGettingStarted,
 } satisfies Record<string, SpecRef>
 
-/** Reads a string field from an unknown value without throwing on the wrong shape. */
 function readString(source: object, field: string): string | undefined {
     const value = (source as Record<string, unknown>)[field]
     return typeof value === 'string' ? value : undefined
@@ -71,8 +70,7 @@ function hasRequestedScope(
 /**
  * Validates the raw body of a token endpoint response against RFC 6749 §5.1 and the SMART App
  * Launch response requirements. `raw` is genuinely `unknown`: a non-conformant server may return
- * anything, and the point of this function is to report that rather than throw or silently
- * ignore it.
+ * anything, and reporting that is the point.
  */
 export function validateTokenResponse(
     raw: unknown,
@@ -95,7 +93,7 @@ export function validateTokenResponse(
     const body = raw as object
 
     // An OAuth error response (RFC 6749 §5.2) is mutually exclusive with a successful token
-    // response, so surface it and stop — every other field check below would just be noise.
+    // response, so surface it and stop — every other field check below would be noise.
     const errorCode = readString(body, 'error')
     if (errorCode !== undefined) {
         const description = readString(body, 'error_description')
@@ -304,8 +302,8 @@ function validateEncounter(
 
     if (!ehrLaunchRequested) return
 
-    // The SMART spec does not universally require `encounter` on an EHR launch, but Nav's
-    // pre-fill flow reads Encounter for kontakttype — so this is a Nav requirement, not a SMART one.
+    // SMART does not universally require `encounter` on an EHR launch; this is a Nav requirement,
+    // since the sykmelding pre-fill flow reads Encounter for kontakttype.
     validator.warn(
         '`encounter` is missing from the token response for an EHR launch (`launch` scope was requested). ' +
             'The SMART spec does not universally require this, but Nav requires an Encounter to be reachable ' +

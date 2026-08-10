@@ -1,8 +1,7 @@
 /**
- * Phase 4: verifies the `id_token`'s signature against the issuer's JWKS (a fresh call, so a
- * revoked or rotated key is caught) and turns the result plus the SMART/OIDC claims into
- * findings. Skipped, rather than failed, when the id_token is absent entirely or the SMART
- * configuration lacks the `issuer`/`jwks_uri` needed to even attempt verification.
+ * Phase 4: verifies the `id_token` signature against a freshly fetched JWKS, so a rotated or
+ * revoked key is caught. Skipped rather than failed when the id_token is absent or the SMART
+ * configuration lacks the `issuer`/`jwks_uri` needed to attempt verification.
  */
 
 import type { ExchangeRecorder } from '#core/http/exchange'

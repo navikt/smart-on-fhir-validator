@@ -10,10 +10,9 @@ export const SYKMELDING_DOCUMENT_TYPE_SYSTEM = 'urn:oid:2.16.578.1.12.4.1.1.9602
 export const SYKMELDING_DOCUMENT_TYPE_CODE = 'J01-2'
 
 /**
- * What the caller expects a written-back DocumentReference to actually say, taken from launch
- * context and from the payload the probe itself sent. `null`/`undefined` fields are not checked,
- * so this same function can validate a resource we just wrote (everything known) or one read back
- * with only launch context in hand.
+ * What a written-back DocumentReference is expected to say. Unset fields are not checked, so the
+ * same validation covers a resource just written (everything known) and one read back with only
+ * launch context in hand.
  */
 export type DocumentReferenceExpectations = {
     id?: string | null
@@ -25,11 +24,8 @@ export type DocumentReferenceExpectations = {
 }
 
 /**
- * Validates a DocumentReference against the FHIR R4 shape and against Nav's sykmelding
- * write-back rules (`document-reference.md`, `bundle.md`, ADR01).
- *
- * Pure by design: takes a resource and what it should say, returns findings. No network access,
- * so every rule here is unit-testable without a FHIR server.
+ * Validates a DocumentReference against FHIR R4 and Nav's sykmelding write-back rules
+ * (`document-reference.md`, `bundle.md`, ADR01).
  */
 export function validateDocumentReference(
     documentReference: DocumentReference | null,

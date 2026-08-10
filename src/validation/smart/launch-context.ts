@@ -1,7 +1,7 @@
 /**
  * Builds the `LaunchContext` this app's FHIR probes are allowed to use — patient, encounter and
- * practitioner ids, plus the scopes actually granted — from a completed token exchange, and
- * reports what is missing and which probes that will prevent.
+ * practitioner ids, plus the granted scopes — from a completed token exchange, and reports what
+ * is missing and which probes that will prevent.
  *
  * @see https://hl7.org/fhir/smart-app-launch/STU2.2/scopes-and-launch-context.html
  */
@@ -33,7 +33,6 @@ export type BuildLaunchContextResult = {
     validations: Validation[]
 }
 
-/** Reads the `fhirUser` string claim from decoded id_token claims, tolerating any shape. */
 function readFhirUserClaim(idTokenClaims: Record<string, unknown> | null): string | null {
     if (!idTokenClaims) return null
     const value = idTokenClaims.fhirUser
@@ -50,8 +49,8 @@ function splitGrantedScopes(scope: string): string[] {
 /**
  * Builds the `LaunchContext` and the findings explaining what it will and will not support.
  * `idTokenClaims` takes precedence over the token response's own `fhirUser` — the id_token is the
- * cryptographically verifiable source, the token-response field is a same-response convenience
- * copy some servers omit or leave stale.
+ * cryptographically verifiable source; the token-response field is a convenience copy some
+ * servers omit or leave stale.
  */
 export function buildLaunchContext(
     tokenResponse: TokenResponse,

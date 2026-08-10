@@ -67,7 +67,6 @@ export function validatePractitionerRoleResource(role: PractitionerRole): Valida
     return validator.build()
 }
 
-/** The `Organization/{id}` reference discovered from the first matched role, if any. */
 export function firstOrganizationReference(roles: readonly PractitionerRole[]): string | null {
     for (const role of roles) {
         if (role.organization?.reference?.startsWith('Organization/')) return role.organization.reference
@@ -77,15 +76,14 @@ export function firstOrganizationReference(roles: readonly PractitionerRole[]): 
 }
 
 export type PractitionerRoleDiscovery = {
-    /** Populated as a side effect of `run()`, so the Organization probe can read it afterwards. */
+    /** Populated by `run()`, so the Organization probe can follow the reference afterwards. */
     organizationReference: string | null
 }
 
 /**
- * Factory rather than a single exported constant: `read-probes.ts` needs a fresh, private
- * `discovery` object per report run so the Organization probe (which runs immediately after,
- * per the read-probe ordering) can pick up the reference this probe discovers — without
- * widening `ProbeContext`, which this module does not own.
+ * Factory rather than a shared constant: `read-probes.ts` supplies a fresh, private discovery
+ * object per report run, so the Organization probe (which runs right after) picks up the
+ * reference this run discovered and never one from a previous run.
  */
 export function createPractitionerRoleProbe(discovery: PractitionerRoleDiscovery): ResourceProbe {
     const probe: ResourceProbe = {

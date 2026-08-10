@@ -71,10 +71,8 @@ describe('evaluateAudEnforcementResponse — inconclusive', () => {
     })
 
     it('is inconclusive when the Location header cannot be resolved to a URL at all', () => {
-        // A relative `Location` needs a valid absolute base to resolve against; an invalid
-        // `requestUrl` (which in practice never happens — see `resolveEndpoint`) is the only way
-        // to exercise the "genuinely unparseable" branch, since almost any string resolves to
-        // *something* against a valid absolute base.
+        // A relative `Location` needs a valid absolute base to resolve against, so an invalid
+        // `requestUrl` is the only way to exercise the genuinely-unparseable branch.
         const verdict = evaluateAudEnforcementResponse(
             { status: 302, location: 'https://validator.nav.no/callback?error=invalid_request' },
             { requestUrl: 'not-a-valid-base-url', redirectUri: CONTEXT.redirectUri },

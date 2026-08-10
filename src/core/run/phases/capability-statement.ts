@@ -1,7 +1,7 @@
 /**
- * Phase 2: fetches the FHIR `CapabilityStatement` (`GET /metadata`) purely to confirm the FHIR
- * version the server implements. SMART configuration itself always comes from the well-known
- * document (`discovery.ts`) — this endpoint is otherwise deprecated for that purpose.
+ * Phase 2: fetches `GET /metadata` only to confirm the FHIR version the server implements.
+ * SMART configuration always comes from the well-known document (`discovery.ts`); this endpoint
+ * is deprecated for that purpose.
  */
 
 import type { SmartHttpClient } from '#core/http/smart-http-client'

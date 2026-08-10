@@ -1,7 +1,7 @@
 /**
- * A real parser for SMART App Launch scope strings — v1 clinical scopes (`read`/`write`/`*`), v2
- * granular clinical scopes (CRUDS letters, optionally with a `?` query), context/identity/refresh
- * scopes, and the v1<->v2 permission equivalence the spec defines between them.
+ * Parser for SMART App Launch scope strings — v1 clinical scopes (`read`/`write`/`*`), v2 granular
+ * clinical scopes (CRUDS letters, optionally with a `?` query), context/identity/refresh scopes,
+ * and the v1<->v2 permission equivalence the spec defines between them.
  *
  * @see https://hl7.org/fhir/smart-app-launch/STU2.2/scopes-and-launch-context.html
  */
@@ -61,7 +61,6 @@ export type ClinicalScope = {
     permission: string
     /** The permission normalized to its canonically-ordered, de-duplicated CRUDS letters. */
     cruds: string
-    /** The raw query string after `?`, when this is a v2 granular sub-scope. `null` otherwise. */
     query: string | null
     /** True when the CRUDS letters in `permission` were out of canonical order, or duplicated. */
     permissionMalformedOrder: boolean
@@ -98,8 +97,8 @@ export function v1EquivalentCruds(permission: 'read' | 'write' | '*'): string {
 }
 
 /**
- * The inverse mapping. Only `rs`, `cud` and `cruds` (in any order, without duplicates) have a v1
- * equivalent; every other CRUDS combination (e.g. `r`, `cu`, `rds`) is only expressible in v2.
+ * Only `rs`, `cud` and `cruds` (in any order, without duplicates) have a v1 equivalent; every
+ * other CRUDS combination (e.g. `r`, `cu`, `rds`) is only expressible in v2.
  */
 export function v2EquivalentV1(cruds: string): 'read' | 'write' | '*' | null {
     const normalized = [...new Set(cruds)].toSorted().join('')
@@ -178,7 +177,7 @@ function parseClinicalScope(raw: string): ClinicalScope | MalformedScope {
     }
 }
 
-/** Parses a single scope token. Never throws — an unparseable token becomes a `malformed` scope. */
+/** Never throws — an unparseable token becomes a `malformed` scope. */
 export function parseScope(raw: string): ParsedScope {
     if (raw === 'launch') return { kind: 'context', raw, context: 'launch' }
     if (raw === 'launch/patient') return { kind: 'context', raw, context: 'launch/patient' }
@@ -195,7 +194,7 @@ export function parseScope(raw: string): ParsedScope {
     return { kind: 'unrecognised', raw }
 }
 
-/** Splits a `scope` string on whitespace and parses each token. Tolerates repeated/odd whitespace. */
+/** Tolerates repeated/odd whitespace between tokens. */
 export function parseScopeString(scopeString: string): ParsedScope[] {
     return scopeString
         .trim()
@@ -237,10 +236,10 @@ export type ScopeDiffEntry = {
 }
 
 /**
- * Compares what was requested against what was granted, per scope. Clinical scopes are matched
- * by compartment/resource/query — a granular sub-scope's `?query` is part of its identity, so a
- * server that grants the same resource without the restriction is treated as a different scope
- * (visible as a `not-granted` + `ungranted-extra` pair) rather than silently merged.
+ * Compares requested against granted, per scope. Clinical scopes are matched by
+ * compartment/resource/query — a granular sub-scope's `?query` is part of its identity, so a
+ * server that grants the same resource without the restriction shows up as a `not-granted` +
+ * `ungranted-extra` pair rather than being silently merged.
  */
 export function diffScopes(requested: string, granted: string): ScopeDiffEntry[] {
     const requestedScopes = parseScopeString(requested)
@@ -289,10 +288,9 @@ export function diffScopes(requested: string, granted: string): ScopeDiffEntry[]
 }
 
 /**
- * The scopes Nav's own client registration requests (see the getting-started guide), used as the
- * default set of "Nav depends on this" scopes for `validateScopes`. Expressed as raw v1 scope
- * strings because that is what Nav's client currently requests; matching is by
- * compartment/resource family, so a server granting the v2 equivalent still satisfies it.
+ * The scopes Nav's own client registration requests. Expressed as v1 strings because that is what
+ * Nav's client requests; matching is by compartment/resource family, so a server granting the v2
+ * equivalent still satisfies it.
  */
 export const NAV_REQUIRED_SCOPES: readonly string[] = [
     'openid',
@@ -332,10 +330,9 @@ export type ValidateScopesOptions = {
 }
 
 /**
- * Turns a requested/granted scope pair into a full checklist of findings: malformed scope
- * strings, CRUDS-order problems, narrowed or ungranted permissions, over-granting, v1/v2 version
- * mismatches against the server's advertised capabilities, and Nav-critical scopes that were
- * requested but never granted.
+ * Turns a requested/granted scope pair into findings: malformed scopes, CRUDS-order problems,
+ * narrowed or ungranted permissions, over-granting, v1/v2 mismatches against the server's
+ * advertised capabilities, and Nav-critical scopes that were requested but never granted.
  */
 export function validateScopes(options: ValidateScopesOptions): Validation[] {
     const { requestedScope, grantedScope, smartConfiguration } = options
@@ -388,8 +385,8 @@ export function validateScopes(options: ValidateScopesOptions): Validation[] {
     )
 
     for (const entry of diff) {
-        // Malformed/unrecognised scopes already produced their own finding above; a "not granted"
-        // note about the same scope would just be noise since it can never be sensibly granted.
+        // Malformed/unrecognised scopes already produced their own finding; a "not granted" note
+        // would be noise since they can never be sensibly granted.
         const requestedKind = entry.requested?.kind
         if (requestedKind === 'malformed' || requestedKind === 'unrecognised') continue
 

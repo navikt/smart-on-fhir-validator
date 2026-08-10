@@ -8,10 +8,9 @@ type ErrorPageProps = {
 }
 
 /**
- * Next.js requires an error boundary to be a Client Component. This only catches genuinely
- * unexpected rendering bugs in this app's own UI — every SMART/FHIR failure the validator itself
- * detects is already a `ReportFinding` or a `SmartError`, rendered as ordinary content rather than
- * thrown, so a crash here is never a finding about the EHR being validated.
+ * Only catches genuinely unexpected rendering bugs in this app's own UI — every SMART/FHIR
+ * failure the validator detects is a `ReportFinding` or `SmartError` rendered as ordinary
+ * content, so a crash here is never a finding about the EHR being validated.
  */
 export default function Error({ error, reset }: ErrorPageProps) {
     return (

@@ -1,12 +1,7 @@
 /**
- * Shared helpers for interpreting a FHIR HTTP response.
- *
- * Every resource probe issues a `read` or `search` request and then has to answer the same
- * questions before it can look at the resource itself: did the transport work, was the status
- * code the one FHIR R4 requires, was the `Content-Type` correct, did the server hand back an
- * `OperationOutcome` instead of the resource, and — for a search — was the body actually a
- * `searchset` Bundle. Centralising that here keeps every probe in `resources/*.ts` short and
- * focused on what the resource itself must contain.
+ * Shared checks every read/search response must pass before a probe looks at the resource itself:
+ * transport, the status code FHIR R4 requires, `Content-Type`, an `OperationOutcome` returned in
+ * place of the resource, and — for a search — that the body is a `searchset` Bundle.
  *
  * @see https://hl7.org/fhir/R4/http.html
  * @see https://hl7.org/fhir/R4/search.html
@@ -24,10 +19,8 @@ export type Interaction = 'read' | 'search'
 const SEVERITY_ORDER: Record<Severity, number> = { OK: 0, INFO: 1, WARNING: 2, ERROR: 3 }
 
 /**
- * Clamps every finding's severity to at most `max`. Used for checks that are informative
- * bonuses (e.g. an optional search a resource probe tries in addition to the read that already
- * satisfied Nav's requirement) rather than a hard requirement in their own right — a failure
- * there should never look as serious as the main check failing.
+ * Caps severity for checks that are informative extras (e.g. an optional search beyond the read
+ * that already satisfied Nav's requirement), so they never look as serious as the main check.
  */
 export function capSeverity(validations: readonly Validation[], max: Severity): Validation[] {
     return validations.map((entry) =>
@@ -36,8 +29,8 @@ export function capSeverity(validations: readonly Validation[], max: Severity): 
 }
 
 /**
- * Whether any granted scope authorizes `interaction` on `resourceType`, understanding both
- * SMART v1 (`read`/`write`/`*`) and v2 (CRUDS letter) scope syntax via the real scope parser.
+ * Whether any granted scope authorizes `interaction` on `resourceType`. Both SMART v1
+ * (`read`/`write`/`*`) and v2 (CRUDS letters) syntax are accepted, since EHRs may grant either.
  */
 export function grantsFhirAccess(
     grantedScopes: readonly string[],
@@ -170,7 +163,6 @@ function issueSeverity(severity: OperationOutcome['issue'][number]['severity']):
     return 'INFO'
 }
 
-/** Turns `issue[].severity/code/diagnostics` into findings — the server telling us what went wrong. */
 export function operationOutcomeFindings(outcome: OperationOutcome, url: string): Validation[] {
     const issues = outcome.issue ?? []
     if (issues.length === 0) {
@@ -216,10 +208,6 @@ export type ReadCheckOptions = {
     grantedScopes: readonly string[]
 }
 
-/**
- * Interprets the response to a `read` interaction: status, `Content-Type`, an `OperationOutcome`
- * in place of the resource, and finally the resource shape itself.
- */
 export function interpretRead<T extends FhirResource>(
     response: RecordedResponse,
     options: ReadCheckOptions,
@@ -289,11 +277,6 @@ function extractSearchsetEntries<T extends FhirResource>(bundle: Bundle, resourc
         .filter((resource): resource is T => resource !== undefined && resource.resourceType === resourceType)
 }
 
-/**
- * Interprets the response to a `search` interaction: status, `Content-Type`, an
- * `OperationOutcome` in place of a Bundle, that the body really is a `searchset` Bundle, and the
- * matched entries plus `total`.
- */
 export function interpretSearch<T extends FhirResource>(
     response: RecordedResponse,
     options: SearchCheckOptions,

@@ -11,9 +11,8 @@ const STATUS_LABEL: Record<SectionStatus, string> = {
 }
 
 /**
- * `skipped` gets its own visual treatment — a dashed border and a neutral grey, never green —
- * distinct from every other status. A section that could not run proved nothing, and must never
- * be mistaken for a pass at a glance, colour-blind or not. See `#core/run/report`'s `SectionStatus`.
+ * `skipped` gets a dashed border and neutral grey, never green: a section that could not run
+ * proved nothing, and must never be mistaken for a pass.
  */
 const STATUS_CLASSES: Record<SectionStatus, string> = {
     passed: 'border border-ax-border-success bg-ax-bg-success-soft text-ax-text-success',

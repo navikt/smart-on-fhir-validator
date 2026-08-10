@@ -5,10 +5,8 @@ import { logger } from '#core/logger'
 import { capExchanges, parseStoredSession, type SessionStore } from './session-store'
 
 /**
- * Nais provisions a Valkey instance with three env vars per named instance: `VALKEY_URI_<name>`
- * (a `rediss://` or `redis://` connection string, host and port already resolved) plus
- * `VALKEY_USERNAME_<name>` and `VALKEY_PASSWORD_<name>` for ACL auth. This app's instance is
- * named `sessions`. See https://doc.nais.io/persistence/valkey/.
+ * Nais provisions `VALKEY_URI_<name>`, `VALKEY_USERNAME_<name>` and `VALKEY_PASSWORD_<name>` per
+ * instance; this app's instance is named `sessions`. See https://doc.nais.io/persistence/valkey/.
  */
 export type ValkeyEnv = {
     uri: string
@@ -42,10 +40,7 @@ export function createValkeyClientFromEnv(): Redis {
     return client
 }
 
-/**
- * The subset of the `iovalkey`/`Redis` API this store needs. Kept minimal and structural so
- * tests can inject a fake without depending on a real client or a network connection.
- */
+/** Minimal structural subset of the Valkey client API, so tests can inject a fake. */
 export interface ValkeyLike {
     get(key: string): Promise<string | null>
     set(key: string, value: string, secondsToken: 'EX', seconds: number): Promise<'OK' | null>
@@ -68,7 +63,7 @@ export function createValkeySessionStore(client: ValkeyLike): SessionStore {
             try {
                 parsed = JSON.parse(raw)
             } catch {
-                // Corrupt or truncated record: treat exactly like a miss rather than crashing the caller.
+                // Corrupt or truncated record: treat as a miss rather than crashing the caller.
                 return null
             }
 

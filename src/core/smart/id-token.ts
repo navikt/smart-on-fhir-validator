@@ -3,16 +3,14 @@ import { createRemoteJWKSet, customFetch, decodeJwt, type JWTPayload, jwtVerify 
 import type { SmartHttpClient } from '#core/http/smart-http-client'
 
 /**
- * A validator's whole purpose is to surface non-conformance, so a failed signature, issuer,
- * audience or expiry check is a finding to report — never an exception to throw. `claims` is
- * populated on both outcomes (best-effort decoded, unverified, when verification failed) so a
- * caller can still show *something* about the token that was received.
+ * A failed signature, issuer, audience or expiry check is a finding to report, never an
+ * exception. `claims` is populated on both outcomes (unverified when verification failed) so the
+ * report can still show what the EHR actually issued.
  */
 export type IdTokenVerificationResult =
     | { status: 'verified'; claims: JWTPayload; problems: [] }
     | { status: 'failed'; claims: JWTPayload | null; problems: string[] }
 
-/** The key material or key resolver `jwtVerify` accepts — reused as-is so this stays in lockstep with jose. */
 export type IdTokenKeyResolver = Parameters<typeof jwtVerify>[1]
 
 export type VerifyIdTokenOptions = {
@@ -24,9 +22,8 @@ export type VerifyIdTokenOptions = {
     /** Routes the JWKS fetch through the shared recorder so it appears in the evidence trail. */
     httpClient?: SmartHttpClient
     /**
-     * An already-resolvable key or key resolver, e.g. for hermetic tests that sign against an
-     * in-memory key pair rather than a fetched JWKS. Takes precedence over `jwksUri`/`httpClient`
-     * when given, and performs no network IO of its own.
+     * An already-resolvable key or key resolver, for hermetic tests that sign against an
+     * in-memory key pair. Takes precedence over `jwksUri`/`httpClient` and performs no network IO.
      */
     keyResolver?: IdTokenKeyResolver
 }
@@ -57,9 +54,8 @@ export async function verifyIdToken(
 }
 
 /**
- * Builds the JWKS-backed key resolver used when the caller did not inject one directly. Returns
- * a plain string (rather than throwing) when `jwksUri`/`httpClient` are missing or malformed, so
- * `verifyIdToken` can turn that straight into a `failed` result without a network call.
+ * Returns an error message rather than throwing when `jwksUri`/`httpClient` are missing or
+ * malformed, so that becomes a reported failure instead of an exception or a wasted network call.
  */
 function buildJwksKeyResolver(options: VerifyIdTokenOptions): IdTokenKeyResolver | string {
     if (!options.jwksUri || !options.httpClient) {
@@ -93,10 +89,7 @@ function recordedFetch(httpClient: SmartHttpClient): (url: string) => Promise<Re
     }
 }
 
-/**
- * Extracts jose's own `code` and, where present, the specific `claim` that failed (e.g. `iss`,
- * `aud`, `exp`) so a caller doesn't have to re-derive which claim was at fault from prose alone.
- */
+/** Surfaces jose's error `code` and, where present, the claim that failed (`iss`, `aud`, `exp`). */
 export function describeVerificationError(cause: unknown): string {
     if (cause instanceof Error) {
         const code = 'code' in cause && typeof cause.code === 'string' ? cause.code : undefined

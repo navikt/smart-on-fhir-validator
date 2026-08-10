@@ -14,12 +14,10 @@ import { requireBearerAuth } from './auth-middleware'
 const FHIR_JSON_CONTENT_TYPES = ['application/fhir+json', 'application/json']
 
 /**
- * `POST`/`PUT` on Binary is the one place in FHIR R4 where the body need not be a FHIR resource
- * at all: "When binary data is written to the server (create/update - POST or PUT), the data is
- * accepted as is and treated as the content of a Binary" (https://hl7.org/fhir/R4/binary.html#rest).
- * A non-FHIR-JSON `Content-Type` therefore means the whole body is the artifact's bytes, not a
- * `{resourceType: "Binary", ...}` document — parse it into that shape here so `validateBinary`
- * downstream never has to know which upload mechanism produced it.
+ * `POST`/`PUT` on Binary is the one place in FHIR R4 where the body need not be a FHIR resource:
+ * "the data is accepted as is and treated as the content of a Binary"
+ * (https://hl7.org/fhir/R4/binary.html#rest). A non-FHIR-JSON `Content-Type` therefore means the
+ * whole body is the artifact's bytes; parse it into Binary shape here.
  */
 async function parseBinaryBody(c: Context): Promise<unknown> {
     const contentType = c.req.header('Content-Type') ?? ''

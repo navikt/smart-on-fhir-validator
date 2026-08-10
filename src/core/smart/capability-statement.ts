@@ -1,7 +1,7 @@
 /**
- * Fetching and classifying the FHIR `CapabilityStatement`, used only to detect the FHIR
- * version the server implements — SMART configuration itself comes from the well-known
- * document (see `discovery.ts`); the CapabilityStatement mechanism for that is deprecated.
+ * The FHIR `CapabilityStatement`, used only to detect the server's FHIR version: SMART
+ * configuration comes from the well-known document, since the CapabilityStatement mechanism for
+ * that is deprecated.
  *
  * @see https://build.fhir.org/ig/HL7/smart-app-launch/conformance.html#using-well-known
  */
@@ -48,8 +48,7 @@ export function detectFhirVersion(capabilityStatement: unknown): string | null {
 export type FhirVersionClass = 'R4' | 'R4B' | 'R5' | 'DSTU2' | 'STU3' | 'unknown'
 
 /**
- * Classifies by major.minor prefix rather than exact patch match, since patch releases within
- * a family (e.g. `4.0.0` and `4.0.1`) are both R4.
+ * Classified by major.minor prefix: patch releases within a family (`4.0.0`, `4.0.1`) are both R4.
  *
  * @see https://hl7.org/fhir/directory.html
  */

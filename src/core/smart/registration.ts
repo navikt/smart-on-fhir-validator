@@ -1,7 +1,6 @@
 /**
- * RFC 7591 Dynamic Client Registration, used as a fallback when an EHR advertises a
- * `registration_endpoint` and this app has no statically configured credentials for it (see
- * `#core/config/issuers`).
+ * RFC 7591 Dynamic Client Registration, the fallback when an EHR advertises a
+ * `registration_endpoint` and no static credentials are configured for it.
  *
  * @see https://datatracker.ietf.org/doc/html/rfc7591
  */
@@ -17,7 +16,7 @@ import { getSigningKey } from './jwks'
 import { isSmartError } from './types'
 
 export type RegistrationParams = {
-    /** The SMART issuer this registration is for — distinct from `registrationEndpoint` itself. */
+    /** The SMART issuer this registration is for — not the `registrationEndpoint` itself. */
     issuer: string
     clientName: string
     redirectUris: string[]
@@ -28,9 +27,9 @@ export type RegistrationParams = {
 }
 
 /**
- * The registration response is client metadata the *server* controls, so it is parsed as
- * leniently as the discovery document: only `client_id` is required by RFC 7591 §3.2.1, and a
- * server may omit or override anything else, including the granted `token_endpoint_auth_method`.
+ * Parsed as leniently as the discovery document: only `client_id` is required by RFC 7591
+ * §3.2.1, and a server may omit or override anything else, including the granted
+ * `token_endpoint_auth_method`.
  */
 const RegistrationResponseSchema = z.looseObject({
     client_id: z.string(),
@@ -105,9 +104,8 @@ function registrationFailure(body: unknown, status: number, exchangeId: string):
 }
 
 /**
- * Maps the granted `token_endpoint_auth_method` back to this app's `ClientAuthMode`. A server
- * may not echo `token_endpoint_auth_method` at all (RFC 7591 does not require it in the
- * response), in which case what was requested is assumed granted.
+ * Maps the granted `token_endpoint_auth_method` back to a `ClientAuthMode`. RFC 7591 does not
+ * require the server to echo it, so what was requested is assumed granted when absent.
  */
 async function buildClientAuthMode(
     requested: TokenEndpointAuthMethod | 'none',

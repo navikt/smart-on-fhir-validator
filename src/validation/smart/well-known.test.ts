@@ -235,8 +235,8 @@ describe('validateSmartConfiguration — hostile input', () => {
 
         const errors = bySeverity(config, 'ERROR').map((v) => v.message)
         expect(errors.some((m) => m.includes('`capabilities`'))).toBe(true)
-        // Since capabilities could not be read as an array, the conditional launch-ehr
-        // requirement cannot be evaluated and must not be spuriously triggered.
+        // Capabilities could not be read as an array, so the conditional launch-ehr requirement
+        // cannot be evaluated and must not be spuriously triggered.
         expect(errors.some((m) => m.includes('`authorization_endpoint`'))).toBe(false)
     })
 

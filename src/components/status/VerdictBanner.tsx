@@ -7,17 +7,14 @@ const VERDICT_LABEL: Record<Verdict, string> = {
     pass: 'Pass',
     'pass-with-warnings': 'Pass, with warnings',
     fail: 'Fail',
-    // Deliberately not worded as any kind of pass: some checks could not run at all, so general
-    // conformance was never fully demonstrated. Which checks, and how many, is stated by
-    // `verdictSentence` directly beneath. See `summarize` in `#core/run/report`.
+    // Deliberately not worded as any kind of pass: some checks could not run, so conformance was
+    // never fully demonstrated. See `summarize` in `#core/run/report`.
     skipped: 'Incomplete',
 }
 
 /**
- * `skipped` gets a dashed neutral border and no status hue at all — never green, never any
- * colour that could read as a soft pass. Dashed is the same "we don't know" language used by
- * `SectionStatusBadge`'s `skipped` state, kept visually distinct from every state that does
- * carry a verdict.
+ * `skipped` gets a dashed neutral border and no status hue — never a colour that could read as a
+ * soft pass. Same "we don't know" language as `SectionStatusBadge`'s `skipped` state.
  */
 const VERDICT_CLASSES: Record<Verdict, string> = {
     pass: 'border-ax-border-success bg-ax-bg-success-soft text-ax-text-success',

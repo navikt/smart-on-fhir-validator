@@ -20,7 +20,6 @@ type Call = { method: string; url: string; headers: Record<string, string>; body
 
 type StoredResource = Record<string, unknown> & { id?: string }
 
-/** Builds an injectable `fetch` stub that dispatches to a fixed `handler` and records every call made. */
 function stubFetch(handler: (call: Call) => Response | Promise<Response>): {
     fetchImpl: typeof fetch
     calls: Call[]
@@ -38,11 +37,10 @@ function stubFetch(handler: (call: Call) => Response | Promise<Response>): {
 }
 
 /**
- * A minimal in-memory FHIR server: `PUT`s an id-addressed resource (201 the first time, 200 once
- * it already exists — the real update-as-create semantics this test suite is trying to prove),
- * `POST` assigns a server id, `GET` reads a single resource or lists everything of a type as a
- * `searchset`. `onRead` lets a single test simulate a server that mutates a resource between
- * writing it and reading it back (e.g. dropping a field).
+ * A minimal in-memory FHIR server with the update-as-create semantics these tests assert: `PUT`
+ * returns 201 the first time and 200 once the id exists, `POST` assigns a server id, `GET` reads
+ * one resource or a `searchset`. `onRead` simulates a server that mutates a resource between
+ * writing it and reading it back.
  */
 function createFakeFhirServer(options: { onRead?: (resource: StoredResource) => StoredResource } = {}): {
     fetchImpl: typeof fetch

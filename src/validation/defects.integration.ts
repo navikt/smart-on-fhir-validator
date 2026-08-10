@@ -1,39 +1,18 @@
 /**
  * Defect-driven proof that this validator actually validates, rather than just returning green.
  *
- * Every named misbehaviour in `src/mocks/defects.ts` (29 at last count) is injected into the
- * in-repo mock EHR, a full launch is driven through this app's own SMART client
- * (`#test/mock-ehr`'s `launchAgainstMockEhr`/`requireSuccessfulLaunch`), and either:
+ * Each misbehaviour in `src/mocks/defects.ts` is injected into the mock EHR and a full launch is
+ * driven through this app's own SMART client. Each defect must either fail the launch/callback
+ * outright (correct when this app's client hard-requires the broken field) or produce a specific
+ * finding from `runValidation`. A conformant server must produce zero ERROR findings — false
+ * positives train people to ignore the report, false negatives mean nothing is validated.
  *
- *  - the launch/callback fails outright with a `SmartError` (the correct behaviour when the
- *    defect breaks something this app's own client hard-requires to function at all — a missing
- *    `authorization_endpoint`, an unparseable well-known document, a token response missing a
- *    RFC 6749-required field); or
- *  - `runValidation` (the real run engine, `#core/run/engine`) is run against the completed
- *    session and produces the specific finding that defect must surface.
- *
- * Both directions matter, and this file is split accordingly:
- *
- *  1. "no defects injected" must produce zero ERROR findings at all — a false positive from a
- *     fully conformant server is exactly the kind of noise that trains people to ignore the
- *     report.
- *  2. every individual defect must produce its expected ERROR/WARNING, or fail the launch in a
- *     way that is itself the correct, loud response to that non-conformance — a false negative
- *     (silently green) would mean the validator does not actually validate anything.
- *
- * Where neither happens — the defect exists, the launch completes, and no finding says
- * anything about it — that is a genuine coverage gap in the product. This suite does not paper
- * over such gaps: any that exists is named explicitly, with the reasoning for why, so it is
- * visible rather than hidden by a passing test suite (see e.g. the `aud-not-validated` history
- * in git blame for what that looked like before the `#core/run/phases/aud-enforcement` probe
- * closed it).
+ * Coverage gaps (defect present, launch completes, no finding) are named explicitly below rather
+ * than hidden behind a passing suite.
  */
 /* oxlint-disable vitest/expect-expect --
- * Nearly every test below asserts through `expectFinding`, a helper that throws its own detailed
- * error (see below) rather than calling a bare `expect(...)` in the test body. The rule cannot see
- * assertions made inside a called function, so it flags every one of these tests as having "no
- * assertions" even though a failing `expectFinding` call fails the test exactly as a direct
- * `expect` would, with a more useful message naming the missing finding.
+ * Nearly every test asserts through `expectFinding`, which throws its own detailed error rather
+ * than calling a bare `expect(...)`. The rule cannot see assertions inside a called function.
  */
 import { describe, expect, it } from 'vitest'
 
@@ -99,14 +78,12 @@ describe('baseline: the fully conformant mock (no defects injected)', () => {
 })
 
 describe('defects that break the launch or callback itself, before any report can be produced', () => {
-    // These defects remove something this app's own SMART client hard-requires to function —
-    // proof the client actually depends on the field, rather than silently tolerating its
-    // absence. There is no `ValidationReport` to inspect for any of these: the failure itself
-    // *is* the evidence the defect was noticed.
+    // These defects remove something this app's own SMART client hard-requires, so there is no
+    // `ValidationReport` to inspect: the failure itself *is* the evidence the defect was noticed.
 
     it('well-known-404: launch fails when the well-known document 404s', async () => {
-        // Duplicates the equivalent case in `launch-flow.integration.ts` deliberately, so this
-        // file alone is a complete map of all 29 defects without needing to cross-reference.
+        // Deliberately duplicates the equivalent case in `launch-flow.integration.ts`, so this
+        // file alone stays a complete map of every defect.
         const outcome = await launchAgainstMockEhr({ defects: ['well-known-404'] })
         expect(outcome.ok).toBe(false)
         if (outcome.ok) return
@@ -122,11 +99,9 @@ describe('defects that break the launch or callback itself, before any report ca
     })
 
     it('well-known-missing-required-fields: launch fails without an authorization_endpoint', async () => {
-        // This one defect deletes `authorization_endpoint`, `token_endpoint`,
-        // `grant_types_supported` and `capabilities` together (see `well-known.ts`); the launch
-        // step fails on the first of those it needs (`authorization_endpoint`), so the other
-        // three REQUIRED-field ERRORs (already unit-tested directly in `well-known.test.ts`)
-        // can never be observed through a live launch with this defect alone.
+        // This defect deletes `authorization_endpoint`, `token_endpoint`, `grant_types_supported`
+        // and `capabilities` together; the launch fails on the first one it needs, so the other
+        // three REQUIRED-field ERRORs are only observable in `well-known.test.ts`.
         const outcome = await launchAgainstMockEhr({ defects: ['well-known-missing-required-fields'] })
         expect(outcome.ok).toBe(false)
         if (outcome.ok) return
@@ -135,17 +110,11 @@ describe('defects that break the launch or callback itself, before any report ca
     })
 
     it('well-known-relative-urls: the authorize redirect 404s because the resolved URL drops the FHIR base path', async () => {
-        // The mock strips the *entire* `baseUrl` (including its `/fhir` path segment) from each
-        // endpoint URL, leaving root-relative paths like `/authorize`. This app's `resolveEndpoint`
-        // (RFC 3986 §5 courtesy resolution) correctly resolves `/authorize` against the *origin*, per
-        // spec — but that lands on `https://mock-ehr.example.com/authorize`, not
-        // `.../fhir/authorize`, since a root-relative reference discards the base's path
-        // entirely. That is a property of how this particular defect constructs its relative
-        // URLs, not a bug in this app: a real EHR returning genuinely relative (non-rooted)
-        // endpoint paths would resolve correctly. The ERROR this produces in `discovery`
-        // ("relative URL") is already unit-tested directly against `validateSmartConfiguration`
-        // in `well-known.test.ts`; here we only prove that a server advertising broken endpoint
-        // URLs breaks the live launch, which is itself the correct, loud outcome.
+        // The mock strips the whole `baseUrl` including its `/fhir` path, leaving root-relative
+        // paths. `resolveEndpoint` resolves those against the origin per RFC 3986 §5, which is
+        // correct but lands off the FHIR base — an artefact of this defect, not an app bug. The
+        // "relative URL" ERROR is unit-tested in `well-known.test.ts`; here we only prove broken
+        // endpoint URLs break the live launch, which is the correct loud outcome.
         const outcome = await launchAgainstMockEhr({ defects: ['well-known-relative-urls'] })
         expect(outcome.ok).toBe(false)
         if (outcome.ok) return
@@ -153,11 +122,9 @@ describe('defects that break the launch or callback itself, before any report ca
     })
 
     it('token-response-missing-scope: callback fails because `scope` is RFC 6749-required', async () => {
-        // `handleCallback`'s own `tokenResponseSchema` (`#core/smart/callback.ts`) requires
-        // `scope: z.string()`; a token response omitting it fails schema validation before a
-        // session is ever created, so `token-response.ts`'s own "`scope` is missing" ERROR (unit
-        // -tested directly in `token-response.test.ts`) can never be reached via a live launch
-        // with this defect — the app rejects the malformed response even earlier than that.
+        // `handleCallback`'s schema requires `scope`, so the response is rejected before a session
+        // exists — `token-response.ts`'s own "`scope` is missing" ERROR is unreachable via a live
+        // launch and is unit-tested in `token-response.test.ts` instead.
         const outcome = await launchAgainstMockEhr({ defects: ['token-response-missing-scope'] })
         expect(outcome.ok).toBe(false)
         if (outcome.ok) return
@@ -189,11 +156,9 @@ describe('SMART discovery defects (src/mocks/auth/well-known.ts)', () => {
     })
 
     it('no-sso-openid-connect: token-response ERRORs on the missing id_token', async () => {
-        // Removing `sso-openid-connect` also removes `issuer`/`jwks_uri` from the well-known
-        // document and stops the mock issuing an `id_token` at all. Since those fields are only
-        // CONDITIONALLY required (when `sso-openid-connect` is advertised), `discovery` does not
-        // ERROR on their absence — the observable failure is `token-response`'s: an identity
-        // scope (`openid`+`fhirUser`) was requested but no `id_token` came back.
+        // Removing `sso-openid-connect` also removes `issuer`/`jwks_uri` and the `id_token`. Those
+        // fields are only CONDITIONALLY required, so `discovery` does not ERROR — the observable
+        // failure is that an identity scope was requested but no `id_token` came back.
         const report = await runReportWithDefects(['no-sso-openid-connect'])
         expectFinding(
             report,
@@ -229,10 +194,9 @@ describe('token response defects (src/mocks/auth/token.ts)', () => {
     })
 
     it('token-response-narrows-scopes: scopes WARNs that a requested scope was not granted at all', async () => {
-        // The mock drops the *entire last requested scope* rather than narrowing its CRUDS
-        // letters, so `diffScopes` reports it as `not-granted` rather than `narrowed`.
-        // `patient/QuestionnaireResponse.cruds` is last in `DEFAULT_SCOPE` and is not one of
-        // Nav's `NAV_REQUIRED_SCOPES`, so the finding is a WARNING, not an ERROR.
+        // The mock drops the entire last requested scope rather than narrowing its CRUDS letters,
+        // so `diffScopes` reports `not-granted`. That scope is not in `NAV_REQUIRED_SCOPES`, so
+        // the finding is a WARNING rather than an ERROR.
         const report = await runReportWithDefects(['token-response-narrows-scopes'])
         expectFinding(
             report,
@@ -408,13 +372,10 @@ describe('FHIR write-resource defects (src/mocks/fhir/*.ts)', () => {
 
 describe('authorize endpoint defects (src/mocks/auth/authorize.ts)', () => {
     it('aud-not-validated: the aud-enforcement probe ERRORs on a server that does not enforce aud', async () => {
-        // `aud-not-validated` disables the mock's own enforcement that the authorize request's
-        // `aud` equals its FHIR base URL (see `src/mocks/auth/authorize.ts`). This app's own
-        // client (`#core/smart/launch.ts`) always sends the correct `aud`, so nothing about the
-        // real launch itself changes when this defect is enabled — the finding below comes
-        // entirely from the dedicated `aud-enforcement` diagnostic probe
-        // (`#core/run/phases/aud-enforcement`), which deliberately sends a *wrong* `aud` on a
-        // separate request and reports whether the server rejects it.
+        // `aud-not-validated` disables the mock's own check that the authorize request's `aud`
+        // equals its FHIR base URL. This app always sends the correct `aud`, so the finding comes
+        // entirely from the dedicated `aud-enforcement` probe, which sends a wrong `aud` on a
+        // separate request.
         const report = await runReportWithDefects(['aud-not-validated'])
         expectFinding(
             report,

@@ -8,7 +8,6 @@ export function fhirJson(body: unknown, status = 200, headers: Record<string, st
     })
 }
 
-/** A conformant `searchset` Bundle: `total` and `entry[].fullUrl` for every matched resource. */
 export function toSearchBundle<T extends FhirResource>(
     baseUrl: string,
     resourceType: string,

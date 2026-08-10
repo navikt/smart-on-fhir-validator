@@ -12,20 +12,14 @@ import type { SmartHttpClient } from '#core/http/smart-http-client'
 import type { SmartConfiguration, SmartError } from './types'
 
 /**
- * Every field optional and unknown fields passed through: a non-conformant server's document
- * must still parse so the validation layer can report on exactly what was wrong, rather than
- * throwing before a finding can ever be produced. A field present with the wrong runtime type
- * is treated the same as an absent field via `.catch(undefined)` — the validator then reports
- * it missing, which is the same practical failure a vendor needs to fix.
+ * Every field optional, unknown fields passed through: a non-conformant document must still
+ * parse so the validator reports a finding instead of crashing. A field of the wrong type is
+ * treated as absent and reported missing, which is the same failure a vendor must fix.
  */
 const optionalString = () => z.string().optional().catch(undefined)
 const optionalStringArray = () => z.array(z.string()).optional().catch(undefined)
 
-/**
- * `associated_endpoints` entries require both fields per `SmartConfiguration`. A malformed
- * entry (missing `url`, wrong type) is dropped from the array entirely via `.catch(null)` +
- * filter, rather than defaulting `url` to an empty string and producing a useless "endpoint".
- */
+/** A malformed `associated_endpoints` entry is dropped rather than reported as a bogus endpoint. */
 const AssociatedEndpointSchema = z
     .looseObject({
         url: z.string(),
@@ -64,9 +58,8 @@ const SmartConfigurationSchema = z.looseObject({
 })
 
 /**
- * Appends the well-known path per RFC5785, which the spec explicitly overrides: the
- * `.well-known` segment is appended even when the FHIR base URL already has a path
- * component (e.g. `www.ehr.example.com/apis/fhir` -> `.../apis/fhir/.well-known/...`).
+ * SMART overrides RFC 5785: `.well-known` is appended to the full FHIR base URL, path included
+ * (`www.ehr.example.com/apis/fhir` -> `.../apis/fhir/.well-known/...`).
  */
 export function buildWellKnownUrl(fhirBaseUrl: string): string {
     const base = fhirBaseUrl.endsWith('/') ? fhirBaseUrl.slice(0, -1) : fhirBaseUrl
@@ -74,9 +67,8 @@ export function buildWellKnownUrl(fhirBaseUrl: string): string {
 }
 
 /**
- * Resolves a (possibly relative) endpoint URL against the FHIR base URL, per RFC 3986 §5, for
- * legacy servers that return relative endpoint URLs. The spec requires absolute URLs, so this
- * is a courtesy for otherwise non-conformant servers rather than something to rely on.
+ * Resolves a relative endpoint URL against the FHIR base URL per RFC 3986 §5. The spec requires
+ * absolute URLs; this leniency only keeps a non-conformant server reachable enough to report on.
  */
 export function resolveEndpoint(value: string | undefined, fhirBaseUrl: string): string | undefined {
     if (value === undefined) return undefined
@@ -89,11 +81,8 @@ export function resolveEndpoint(value: string | undefined, fhirBaseUrl: string):
 }
 
 /**
- * Lenient parse of the well-known document body. Anything other than a JSON object (an array,
- * a primitive, or a body that failed to parse as JSON at all) is treated as an empty
- * configuration rather than a parse failure — the caller only needs to know the endpoint
- * responded with *something* other than a JSON document, and that is already surfaced via the
- * "non-JSON body" `SmartError` in `fetchSmartConfiguration`.
+ * A body that is not a JSON object yields an empty configuration rather than a parse failure;
+ * the non-JSON case is already surfaced as a `SmartError` by `fetchSmartConfiguration`.
  */
 function parseLenient(raw: unknown): SmartConfiguration {
     if (typeof raw !== 'object' || raw === null || Array.isArray(raw)) return {}
@@ -119,8 +108,8 @@ export async function fetchSmartConfiguration(
         }
     }
 
-    // `parseBody` on the client only produces a string when the body is empty or failed to
-    // parse as JSON — a JSON object, array, or primitive body already comes through as such.
+    // `null` means an empty body and a string means the body did not parse as JSON (or was a bare
+    // JSON string), so neither is the JSON document this endpoint must return.
     if (response.body === null || typeof response.body === 'string') {
         return {
             error: 'The well-known SMART configuration endpoint did not return a JSON document',

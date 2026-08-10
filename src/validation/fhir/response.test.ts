@@ -12,7 +12,6 @@ import {
     operationOutcomeFindings,
 } from './response'
 
-/** Builds an injectable `fetch` stub so tests never touch the network. */
 function stubFetch(handler: (url: string) => Response | Promise<Response>): typeof fetch {
     return (async (input: RequestInfo | URL) => {
         const url = typeof input === 'string' ? input : input.toString()

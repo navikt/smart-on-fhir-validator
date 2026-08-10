@@ -10,11 +10,8 @@ export type FhirClientOptions = {
 }
 
 /**
- * Builds a FHIR R4 search URL.
- *
- * Search parameters are the whole point of the validator's read phase: every resource must be
- * reachable from launch context alone, so the URL is built from named parameters rather than
- * from an id the app happened to already know.
+ * Builds a FHIR R4 search URL. The read phase must reach every resource from launch context
+ * alone, so searches are built from named parameters rather than from a known id.
  */
 export function buildSearchUrl(baseUrl: string, resourceType: string, params: FhirSearchParams): string {
     const search = new URLSearchParams()
@@ -35,11 +32,8 @@ export function buildSearchUrl(baseUrl: string, resourceType: string, params: Fh
 }
 
 /**
- * A thin, honest FHIR R4 client.
- *
- * It deliberately does not normalise, retry or validate. Every response is returned exactly as
- * the EHR sent it, together with the recorded exchange, because the report has to be able to
- * show the vendor what their own server returned.
+ * A thin FHIR R4 client that deliberately does not normalise, retry or validate: the report must
+ * show the vendor exactly what their own server returned, alongside the recorded exchange.
  */
 export class FhirClient {
     private readonly http: SmartHttpClient
@@ -65,12 +59,10 @@ export class FhirClient {
         return this.http.get('fhir-read', `${this.baseUrl}/${resourceType}/${id}`, this.headers())
     }
 
-    /** `GET [base]/[type]?[params]` */
     search(resourceType: string, params: FhirSearchParams): Promise<RecordedResponse> {
         return this.http.get('fhir-read', buildSearchUrl(this.baseUrl, resourceType, params), this.headers())
     }
 
-    /** `POST [base]/[type]` */
     create(resourceType: string, resource: unknown): Promise<RecordedResponse> {
         return this.http.send('fhir-write', `${this.baseUrl}/${resourceType}`, {
             method: 'POST',
@@ -80,10 +72,8 @@ export class FhirClient {
     }
 
     /**
-     * `PUT [base]/[type]/[id]` — update as create, with a client-assigned id.
-     *
-     * This is how Nav writes back: the id is derived from the sykmelding, so re-sending the
-     * same document is idempotent rather than producing a duplicate in the journal.
+     * Update as create, with a client-assigned id derived from the sykmelding: re-sending the
+     * same document must be idempotent rather than duplicate it in the journal.
      */
     update(resourceType: string, id: string, resource: unknown): Promise<RecordedResponse> {
         return this.http.send('fhir-write', `${this.baseUrl}/${resourceType}/${id}`, {
@@ -94,10 +84,8 @@ export class FhirClient {
     }
 
     /**
-     * `POST [base]/Binary` with the payload as the raw HTTP body.
-     *
-     * R4 allows a Binary to be sent either as a FHIR resource or as the bare bytes with the
-     * payload's own media type. Servers commonly support only one, so both are worth testing.
+     * R4 allows a Binary as either a FHIR resource or bare bytes with the payload's own media
+     * type. Servers commonly support only one, so both mechanisms are probed.
      */
     createBinaryRaw(contentType: string, body: BodyInit): Promise<RecordedResponse> {
         return this.http.send('fhir-write', `${this.baseUrl}/Binary`, {
@@ -107,7 +95,6 @@ export class FhirClient {
         })
     }
 
-    /** `POST [base]` with a `batch` or `transaction` Bundle. */
     submitBundle(bundle: unknown): Promise<RecordedResponse> {
         return this.http.send('fhir-write', this.baseUrl, {
             method: 'POST',

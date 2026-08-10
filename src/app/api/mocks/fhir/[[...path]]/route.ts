@@ -30,8 +30,8 @@ function configFromEnv(baseUrl: string): MockEhrConfig {
     }
 }
 
-// One instance per server process: state (issued codes/tokens, dynamically registered clients,
-// written resources) must persist across requests for a manual `yarn dev` launch flow to work.
+// One instance per server process: issued codes/tokens, dynamically registered clients and
+// written resources must persist across requests for a launch flow to complete.
 const MOCK_EHR_KEY = 'mock-ehr'
 
 function getMockEhr(baseUrl: string): ReturnType<typeof createMockEhr> {
@@ -41,11 +41,8 @@ function getMockEhr(baseUrl: string): ReturnType<typeof createMockEhr> {
 async function handle(request: Request): Promise<Response> {
     if (!isEnabled()) return new Response(null, { status: 404 })
 
-    // Deliberately not `new URL(request.url).host`. Under `output: 'standalone'` — which is how
-    // the Dockerfile actually runs this app — Next rewrites `request.url` to the server's own bind
-    // address, so a mock EHR configured from it would advertise endpoints on `0.0.0.0` and every
-    // URL it issued downstream would be unreachable. The forwarded headers carry the host the
-    // client really used.
+    // Deliberately not `new URL(request.url).host`: under `output: 'standalone'` that is the
+    // server's own bind address, so the mock EHR would advertise unreachable `0.0.0.0` endpoints.
     const baseUrl = `${await getAppOrigin()}/api/mocks/fhir`
     const app = await getMockEhr(baseUrl)
 

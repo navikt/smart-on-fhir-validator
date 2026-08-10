@@ -10,26 +10,21 @@ import type { ActiveSession, ClientAuthMode, IssuerConfig, SmartError } from '#c
 import { isSmartError } from '#core/smart/types'
 import { capExchanges, type SessionStore } from '#core/storage/session-store'
 
-/**
- * A callback-completed session is kept for a day: long enough to cover a validation run that
- * pauses and resumes, short enough that an abandoned test session does not linger indefinitely.
- */
+/** Long enough for a validation run that pauses and resumes, short enough not to linger. */
 export const ACTIVE_SESSION_TTL_SECONDS = 60 * 60 * 24
 
 /** A non-conformant server may omit `expires_in` entirely; assume the shortest sane lifetime. */
 const DEFAULT_EXPIRES_IN_SECONDS = 300
 
 export type CallbackRequest = {
-    /** The session id read from the session cookie by the caller. */
     sessionId: string
     code?: string
     state?: string
-    /** The OAuth error response: https://www.rfc-editor.org/rfc/rfc6749#section-4.1.2.1 */
+    /** https://www.rfc-editor.org/rfc/rfc6749#section-4.1.2.1 */
     error?: string
     error_description?: string
 }
 
-/** Mirrors `#core/smart/client-auth`'s `ClientAuthentication`, injected rather than imported directly. */
 export type ClientAuthentication = {
     formFields: () => Promise<Record<string, string>>
     headers: () => Promise<Record<string, string>>
@@ -54,11 +49,9 @@ export type CallbackDependencies = {
 }
 
 /**
- * Lenient on purpose: only the three fields the SMART scopes spec actually requires are
- * enforced. Everything else — `expires_in`, `id_token`, launch context, vendor extensions — is
- * optional or passed through, so a non-conformant token response can still be persisted and
- * reported on rather than rejected outright. Only a non-2xx status or a body that isn't even
- * parseable JSON is treated as a hard failure by `handleCallback`.
+ * Only the three fields SMART actually requires are enforced; everything else is optional or
+ * passed through, so a non-conformant token response is still persisted and reported on rather
+ * than rejected. Only a non-2xx status or an unparseable body is a hard failure.
  */
 export const tokenResponseSchema = z.looseObject({
     access_token: z.string(),
@@ -91,11 +84,9 @@ function statesMatch(expected: string, actual: string): boolean {
 }
 
 /**
- * `PendingSession`/`ActiveSession` only carry `clientId`, not a full `ClientAuthMode` — a
- * dynamically-registered client's auth mode cannot travel from the launch step to this one. That
- * is sound because `launch.ts` always requests dynamic registration as a public client
- * (`tokenEndpointAuthMethod: 'none'`), so falling back to `{ type: 'public' }` here is exactly
- * correct whenever the issuer is not (or no longer) present in static configuration.
+ * Sessions only carry `clientId`, not a full `ClientAuthMode`, so a dynamically-registered
+ * client's auth mode cannot travel from launch to callback. `launch.ts` always registers as a
+ * public client, so falling back to `{ type: 'public' }` here is exactly correct.
  */
 function resolveCallbackIssuerConfig(
     issuer: string,
@@ -129,8 +120,8 @@ export async function handleCallback(
     if (pending.state !== 'pending')
         return { error: 'session_not_pending', detail: 'Session has already completed its launch' }
 
-    // CSRF defense: without this check an attacker could trick a victim into completing the
-    // attacker's own authorization_code exchange inside the victim's session.
+    // CSRF defense: without this an attacker could complete their own authorization_code
+    // exchange inside the victim's session.
     if (!statesMatch(pending.oauthState, request.state)) {
         return { error: 'state_mismatch', detail: 'state parameter does not match the pending session' }
     }

@@ -1,8 +1,6 @@
 /**
- * Encounter: searchable by `subject=Patient/{patientId}` (the R4-defined parameter this probe
- * relies on) and, where the EHR also supports it, by `patient=Patient/{patientId}` — R4 defines
- * both. When launch context has an `encounterId`, this probe additionally reads it directly,
- * since that id is itself launch-context-derived and a legal `GET`.
+ * Encounter: searched by `subject=Patient/{patientId}` and, where supported, `patient=` — R4
+ * defines both. With an `encounterId` in launch context the probe also reads it directly.
  *
  * @see https://hl7.org/fhir/R4/encounter.html
  * @see https://github.com/navikt/syk-inn/blob/main/docs/fhir/encounter.md

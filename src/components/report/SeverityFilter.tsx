@@ -19,11 +19,6 @@ function pillsFor(counts: SeverityFilterCounts): Pill[] {
     ]
 }
 
-/**
- * Plain `<Link href="?severity=...">` pills, resolved from `searchParams` in the Server
- * Component that renders this page. No client state: the active pill is whichever `severity`
- * value is currently in the URL.
- */
 export function SeverityFilter({
     active,
     counts,

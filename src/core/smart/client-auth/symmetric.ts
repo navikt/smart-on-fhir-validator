@@ -1,10 +1,10 @@
 import type { ClientAuthentication } from './index'
 
 /**
- * https://build.fhir.org/ig/HL7/smart-app-launch/client-confidential-symmetric.html
+ * `client_secret_basic` sends the shared secret via HTTP Basic (RFC 7617), `client_secret_post`
+ * as form fields.
  *
- * `client_secret_basic` sends credentials via HTTP Basic (RFC 7617); `client_secret_post` sends
- * them as regular form fields. Both are shared-secret ("symmetric") methods.
+ * @see https://build.fhir.org/ig/HL7/smart-app-launch/client-confidential-symmetric.html
  */
 export function createSymmetricClientAuthentication(
     clientId: string,
@@ -27,11 +27,9 @@ export function createSymmetricClientAuthentication(
 }
 
 /**
- * RFC 6749 §2.3.1: the client identifier and secret are each individually encoded with the
- * `application/x-www-form-urlencoded` algorithm *before* being joined with a colon and
- * base64-encoded — not simply `base64(clientId + ':' + clientSecret)`. Skipping the per-value
- * form-encoding step is the most common mistake in implementations of this header, and breaks
- * any client_id/secret containing ':', '@', or other reserved characters.
+ * RFC 6749 §2.3.1: client id and secret are each form-urlencoded *before* being joined with a
+ * colon and base64-encoded — not `base64(clientId + ':' + clientSecret)`. Skipping the per-value
+ * encoding is the most common mistake here, and breaks any value containing ':' or '@'.
  */
 function basicAuthValue(clientId: string, clientSecret: string): string {
     return Buffer.from(`${formUrlEncode(clientId)}:${formUrlEncode(clientSecret)}`, 'utf-8').toString(
@@ -39,7 +37,6 @@ function basicAuthValue(clientId: string, clientSecret: string): string {
     )
 }
 
-/** Encodes a single value the same way `URLSearchParams` encodes a form field. */
 function formUrlEncode(value: string): string {
     return new URLSearchParams([['v', value]]).toString().slice('v='.length)
 }
