@@ -18,7 +18,7 @@ export function JsonBlock({ value }: { value: unknown }): ReactElement {
         <pre
             role="code"
             tabIndex={0}
-            className="max-h-96 overflow-auto rounded bg-neutral-50 p-2 font-mono text-xs break-all whitespace-pre-wrap"
+            className="text-13 max-h-96 overflow-auto rounded-[3px] bg-ax-bg-neutral-soft p-3 leading-[1.6]"
         >
             {toDisplayText(value)}
         </pre>

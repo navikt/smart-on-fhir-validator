@@ -3,22 +3,30 @@
  * practitioner ids, plus the scopes actually granted — from a completed token exchange, and
  * reports what is missing and which probes that will prevent.
  *
- * @see https://build.fhir.org/ig/HL7/smart-app-launch/scopes-and-launch-context.html
+ * @see https://hl7.org/fhir/smart-app-launch/STU2.2/scopes-and-launch-context.html
  */
 
 import type { LaunchContext, TokenResponse } from '#core/smart/types'
-import type { RefTypes } from '#validation/common-refs'
+import type { SpecRef } from '#validation/common-refs'
 import { navRefs } from '#validation/common-refs'
 import { parseFhirReference } from '#validation/smart/id-token'
 import { validation, type Validation } from '#validation/validation'
 
-const scopesUrl = 'https://build.fhir.org/ig/HL7/smart-app-launch/scopes-and-launch-context.html'
+const scopesUrl = 'https://hl7.org/fhir/smart-app-launch/STU2.2/scopes-and-launch-context.html'
 
 const refs = {
-    launchContext: { hl7: `${scopesUrl}#launch-context-arrives-with-your-access_token` },
-    identityScopes: { hl7: `${scopesUrl}#scopes-for-requesting-identity-data` },
-    navPreFill: { nav: navRefs.smartGettingStarted },
-} satisfies Record<string, RefTypes>
+    launchContext: {
+        authority: 'smart',
+        cite: 'SMART App Launch 2.2 §Launch context arrives with your access_token',
+        href: `${scopesUrl}#launch-context-arrives-with-your-access_token`,
+    },
+    identityScopes: {
+        authority: 'smart',
+        cite: 'SMART App Launch 2.2 §Scopes for requesting identity data',
+        href: `${scopesUrl}#scopes-for-requesting-identity-data`,
+    },
+    navPreFill: navRefs.smartGettingStarted,
+} satisfies Record<string, SpecRef>
 
 export type BuildLaunchContextResult = {
     launchContext: LaunchContext
@@ -68,7 +76,7 @@ export function buildLaunchContext(
                         'Practitioner; probes that need the signing clinician (e.g. resolving `Practitioner` ' +
                         'for a sykmelder) cannot run from launch context alone.',
                     'INFO',
-                    refs.identityScopes,
+                    [refs.identityScopes],
                 ),
             )
         } else {
@@ -77,7 +85,7 @@ export function buildLaunchContext(
                     `\`fhirUser\` (\`${fhirUser}\`) is not a parseable FHIR reference; the signing ` +
                         'Practitioner cannot be resolved from launch context.',
                     'WARNING',
-                    refs.identityScopes,
+                    [refs.identityScopes],
                 ),
             )
         }
@@ -88,18 +96,16 @@ export function buildLaunchContext(
                     'response carried one); the signing Practitioner cannot be resolved, which Nav needs ' +
                     'to identify the clinician.',
                 'WARNING',
-                { ...refs.identityScopes, nav: navRefs.smartGettingStarted },
+                [refs.identityScopes, navRefs.smartGettingStarted],
             ),
         )
     }
 
     if (patientId) {
         validations.push(
-            validation(
-                `\`patient\` (\`${patientId}\`) is available; Patient probes can run`,
-                'OK',
+            validation(`\`patient\` (\`${patientId}\`) is available; Patient probes can run`, 'OK', [
                 refs.launchContext,
-            ),
+            ]),
         )
     } else {
         validations.push(
@@ -107,18 +113,16 @@ export function buildLaunchContext(
                 'No `patient` is available in launch context, so Patient-context probes cannot be run ' +
                     'from launch context alone.',
                 'WARNING',
-                refs.launchContext,
+                [refs.launchContext],
             ),
         )
     }
 
     if (encounterId) {
         validations.push(
-            validation(
-                `\`encounter\` (\`${encounterId}\`) is available; Encounter probes can run`,
-                'OK',
+            validation(`\`encounter\` (\`${encounterId}\`) is available; Encounter probes can run`, 'OK', [
                 refs.launchContext,
-            ),
+            ]),
         )
     } else {
         validations.push(
@@ -127,7 +131,7 @@ export function buildLaunchContext(
                     'be run from launch context alone. Nav requires an Encounter to be reachable for its ' +
                     'sykmelding pre-fill flow.',
                 'WARNING',
-                { ...refs.launchContext, nav: navRefs.smartGettingStarted },
+                [refs.launchContext, navRefs.smartGettingStarted],
             ),
         )
     }
@@ -137,7 +141,7 @@ export function buildLaunchContext(
             validation(
                 `${grantedScopes.length} scope(s) were granted and will gate which probes may run`,
                 'OK',
-                refs.launchContext,
+                [refs.launchContext],
             ),
         )
     } else {
@@ -145,7 +149,7 @@ export function buildLaunchContext(
             validation(
                 'The granted `scope` string is empty; no probe that depends on a specific permission can run.',
                 'WARNING',
-                refs.launchContext,
+                [refs.launchContext],
             ),
         )
     }

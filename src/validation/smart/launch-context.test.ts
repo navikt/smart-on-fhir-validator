@@ -71,7 +71,7 @@ describe('buildLaunchContext — missing context', () => {
         expect(encounterWarning).toBeDefined()
         expect(encounterWarning?.severity).toBe('WARNING')
         expect(encounterWarning?.message).toContain('Nav requires')
-        expect(encounterWarning?.refs?.nav).toBeDefined()
+        expect(encounterWarning?.refs?.some((r) => r.authority === 'nav')).toBe(true)
     })
 
     it('reports a WARNING when no fhirUser is available at all', () => {

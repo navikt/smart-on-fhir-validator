@@ -89,7 +89,7 @@ export function validateDocumentReference(
     if (!documentReference.date) {
         validator.warn(
             'DocumentReference does not contain a date field. FHIR R4 recommends it for tracking, ordering and searching versions of the document.',
-            { hl7: hl7Refs.documentReference },
+            [hl7Refs.documentReference],
         )
     } else {
         ok.push(validation('DocumentReference.date is present', 'OK'))
@@ -373,7 +373,7 @@ function validateContext(
         if (!relatedRefs.includes(expected)) {
             validator.error(
                 `DocumentReference.context.related does not contain a reference to the structured data ("${expected}"). ADR01 requires DocumentReference.context.related to link the two resources.`,
-                { nav: navRefs.adr01, hl7: hl7Refs.documentReference },
+                [hl7Refs.documentReference, navRefs.adr01],
             )
         } else {
             ok.push(

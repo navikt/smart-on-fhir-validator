@@ -174,7 +174,7 @@ function validateItemTree(
         const label = `${path}[${index}]`
 
         if (!item.linkId) {
-            validator.error(`${label} does not contain a linkId`, { hl7: hl7Refs.questionnaireResponse })
+            validator.error(`${label} does not contain a linkId`, [hl7Refs.questionnaireResponse])
         } else {
             ok.push(validation(`${label} ("${item.linkId}") has a linkId`, 'OK'))
         }
@@ -185,7 +185,7 @@ function validateItemTree(
         if (hasAnswer && hasNestedItem) {
             validator.error(
                 `${label} ("${item.linkId ?? 'unknown'}") has both "answer" and nested "item". FHIR R4 groups cannot have answers: a group item must only nest "item", and a question item must only carry "answer".`,
-                { hl7: hl7Refs.questionnaireResponse },
+                [hl7Refs.questionnaireResponse],
             )
         }
 
@@ -195,7 +195,7 @@ function validateItemTree(
                 if (valueKeys.length < 1) {
                     validator.error(
                         `${label} ("${item.linkId ?? 'unknown'}") has an answer with no value[x] field`,
-                        { hl7: hl7Refs.questionnaireResponse },
+                        [hl7Refs.questionnaireResponse],
                     )
                 }
             })

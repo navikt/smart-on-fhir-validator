@@ -24,7 +24,7 @@ export type CallbackRequest = {
     sessionId: string
     code?: string
     state?: string
-    /** The OAuth error response: https://build.fhir.org/ig/HL7/smart-app-launch/app-launch.html#error-responses */
+    /** The OAuth error response: https://www.rfc-editor.org/rfc/rfc6749#section-4.1.2.1 */
     error?: string
     error_description?: string
 }

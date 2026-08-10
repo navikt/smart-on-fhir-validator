@@ -2,30 +2,54 @@
  * Validation of the access token response returned by the token endpoint during the
  * `authorization_code` exchange.
  *
- * @see https://build.fhir.org/ig/HL7/smart-app-launch/app-launch.html#response-5
+ * @see https://hl7.org/fhir/smart-app-launch/STU2.2/app-launch.html#response-5
  * @see https://www.rfc-editor.org/rfc/rfc6749#section-5.1
  * @see https://www.rfc-editor.org/rfc/rfc6749#section-5.2
  */
 
-import type { RefTypes } from '#validation/common-refs'
+import type { SpecRef } from '#validation/common-refs'
 import { navRefs } from '#validation/common-refs'
 import { parseScopeString } from '#validation/smart/scopes'
 import { Validator } from '#validation/Validator'
 import { validation, type Validation } from '#validation/validation'
 
-const appLaunchUrl = 'https://build.fhir.org/ig/HL7/smart-app-launch/app-launch.html'
-const scopesUrl = 'https://build.fhir.org/ig/HL7/smart-app-launch/scopes-and-launch-context.html'
+const appLaunchUrl = 'https://hl7.org/fhir/smart-app-launch/STU2.2/app-launch.html'
+const scopesUrl = 'https://hl7.org/fhir/smart-app-launch/STU2.2/scopes-and-launch-context.html'
 const rfc6749 = 'https://www.rfc-editor.org/rfc/rfc6749'
 
 const refs = {
-    tokenResponse: { hl7: `${appLaunchUrl}#response-5` },
-    errorResponse: { hl7: `${rfc6749}#section-5.2` },
-    accessTokenResponse: { hl7: `${rfc6749}#section-5.1` },
-    launchContext: { hl7: `${scopesUrl}#launch-context-arrives-with-your-access_token` },
-    identityToken: { hl7: `${scopesUrl}#scopes-for-requesting-identity-data` },
-    refreshScopes: { hl7: `${scopesUrl}#scopes-for-obtaining-refresh-tokens` },
-    navEncounter: { nav: navRefs.smartGettingStarted },
-} satisfies Record<string, RefTypes>
+    tokenResponse: {
+        authority: 'smart',
+        cite: 'SMART App Launch 2.2 §Token response',
+        href: `${appLaunchUrl}#response-5`,
+    },
+    errorResponse: {
+        authority: 'oauth',
+        cite: 'RFC 6749 §5.2 Error response',
+        href: `${rfc6749}#section-5.2`,
+    },
+    accessTokenResponse: {
+        authority: 'oauth',
+        cite: 'RFC 6749 §5.1 Successful response',
+        href: `${rfc6749}#section-5.1`,
+    },
+    launchContext: {
+        authority: 'smart',
+        cite: 'SMART App Launch 2.2 §Launch context arrives with your access_token',
+        href: `${scopesUrl}#launch-context-arrives-with-your-access_token`,
+    },
+    identityToken: {
+        authority: 'smart',
+        cite: 'SMART App Launch 2.2 §Scopes for requesting identity data',
+        href: `${scopesUrl}#scopes-for-requesting-identity-data`,
+    },
+    refreshScopes: {
+        authority: 'smart',
+        cite: 'SMART App Launch 2.2 §Scopes for requesting a refresh token',
+        href: `${scopesUrl}#scopes-for-requesting-a-refresh-token`,
+    },
+    navEncounter: navRefs.smartGettingStarted,
+} satisfies Record<string, SpecRef>
 
 /** Reads a string field from an unknown value without throwing on the wrong shape. */
 function readString(source: object, field: string): string | undefined {
@@ -63,7 +87,7 @@ export function validateTokenResponse(
         validator.error(
             `The token endpoint response (exchange ${exchangeId}) is not a JSON object; got ` +
                 `${shape}. RFC 6749 requires a JSON object body.`,
-            refs.accessTokenResponse,
+            [refs.accessTokenResponse],
         )
         return validator.build()
     }
@@ -77,9 +101,9 @@ export function validateTokenResponse(
         const description = readString(body, 'error_description')
         validator.error(
             `The token endpoint returned an OAuth error: \`${errorCode}\`` +
-                (description ? ` — ${description}` : ' (no error_description was given)') +
+                (description ? `: ${description}` : ' (no error_description was given)') +
                 `. See exchange ${exchangeId}.`,
-            refs.errorResponse,
+            [refs.errorResponse],
         )
         return validator.build()
     }
@@ -111,14 +135,14 @@ export function validateTokenResponse(
 function validateAccessToken(body: object, validator: Validator, ok: Validation[]) {
     const value = readValue(body, 'access_token')
     if (typeof value === 'string' && value.length > 0) {
-        ok.push(validation('`access_token` is present and non-empty', 'OK', refs.accessTokenResponse))
+        ok.push(validation('`access_token` is present and non-empty', 'OK', [refs.accessTokenResponse]))
         return
     }
 
     validator.error(
         `\`access_token\` is ${value === undefined ? 'missing' : 'present but not a non-empty string'} from the ` +
             'token response; RFC 6749 §5.1 requires it.',
-        refs.accessTokenResponse,
+        [refs.accessTokenResponse],
     )
 }
 
@@ -128,13 +152,13 @@ function validateTokenType(body: object, validator: Validator, ok: Validation[])
         validator.error(
             '`token_type` is missing from the token response; RFC 6749 §5.1 requires it (SMART requires ' +
                 'the value `Bearer`).',
-            refs.accessTokenResponse,
+            [refs.accessTokenResponse],
         )
         return
     }
 
     if (value === 'Bearer') {
-        ok.push(validation('`token_type` is exactly `Bearer`, as SMART requires', 'OK', refs.tokenResponse))
+        ok.push(validation('`token_type` is exactly `Bearer`, as SMART requires', 'OK', [refs.tokenResponse]))
         return
     }
 
@@ -142,7 +166,7 @@ function validateTokenType(body: object, validator: Validator, ok: Validation[])
         validator.warn(
             `\`token_type\` is \`${value}\`, not exactly \`Bearer\`. RFC 6749 says the value is ` +
                 'case-insensitive, but SMART App Launch expects the literal string `Bearer`.',
-            refs.tokenResponse,
+            [refs.tokenResponse],
         )
         return
     }
@@ -150,7 +174,7 @@ function validateTokenType(body: object, validator: Validator, ok: Validation[])
     validator.error(
         `\`token_type\` is \`${value}\`, a different scheme than \`Bearer\` entirely. SMART App Launch ` +
             'requires `Bearer` tokens.',
-        refs.tokenResponse,
+        [refs.tokenResponse],
     )
 }
 
@@ -160,7 +184,7 @@ function validateExpiresIn(body: object, validator: Validator, ok: Validation[])
         validator.warn(
             '`expires_in` is absent from the token response. RFC 6749 §5.1 RECOMMENDS it, and SMART App ' +
                 'Launch strongly recommends it so the app knows when to refresh.',
-            refs.accessTokenResponse,
+            [refs.accessTokenResponse],
         )
         return
     }
@@ -168,31 +192,29 @@ function validateExpiresIn(body: object, validator: Validator, ok: Validation[])
     if (typeof value !== 'number' || !Number.isFinite(value) || value <= 0) {
         validator.error(
             `\`expires_in\` is present but not a positive number (got ${JSON.stringify(value)}).`,
-            refs.accessTokenResponse,
+            [refs.accessTokenResponse],
         )
         return
     }
 
     ok.push(
-        validation(
-            `\`expires_in\` is present and a positive number (${value}s)`,
-            'OK',
+        validation(`\`expires_in\` is present and a positive number (${value}s)`, 'OK', [
             refs.accessTokenResponse,
-        ),
+        ]),
     )
 }
 
 function validateScope(body: object, validator: Validator, ok: Validation[]) {
     const value = readValue(body, 'scope')
     if (typeof value === 'string' && value.length > 0) {
-        ok.push(validation('`scope` (the granted scope string) is present', 'OK', refs.tokenResponse))
+        ok.push(validation('`scope` (the granted scope string) is present', 'OK', [refs.tokenResponse]))
         return
     }
 
     validator.error(
         '`scope` is missing from the token response; without it the app cannot know what it is actually ' +
             'authorized to do, since a server may grant less than was requested.',
-        refs.tokenResponse,
+        [refs.tokenResponse],
     )
 }
 
@@ -202,7 +224,7 @@ function validateIdToken(body: object, identityRequested: boolean, validator: Va
 
     if (present) {
         ok.push(
-            validation('`id_token` is present, as required for identity scopes', 'OK', refs.identityToken),
+            validation('`id_token` is present, as required for identity scopes', 'OK', [refs.identityToken]),
         )
         return
     }
@@ -211,7 +233,7 @@ function validateIdToken(body: object, identityRequested: boolean, validator: Va
         validator.error(
             '`id_token` is missing from the token response, even though `openid` plus `fhirUser` or ' +
                 '`profile` were requested. Without it the app cannot identify the logged-in clinician.',
-            refs.identityToken,
+            [refs.identityToken],
         )
     }
 }
@@ -226,7 +248,7 @@ function validateRefreshToken(
     const present = typeof value === 'string' && value.length > 0
 
     if (present) {
-        ok.push(validation('`refresh_token` is present, as requested', 'OK', refs.refreshScopes))
+        ok.push(validation('`refresh_token` is present, as requested', 'OK', [refs.refreshScopes]))
         return
     }
 
@@ -234,7 +256,7 @@ function validateRefreshToken(
         validator.warn(
             '`refresh_token` is missing from the token response, even though `offline_access` or ' +
                 '`online_access` was requested.',
-            refs.refreshScopes,
+            [refs.refreshScopes],
         )
     }
 }
@@ -250,11 +272,9 @@ function validatePatient(
 
     if (present) {
         ok.push(
-            validation(
-                '`patient` is present in the token response, enabling patient-context probes',
-                'OK',
+            validation('`patient` is present in the token response, enabling patient-context probes', 'OK', [
                 refs.launchContext,
-            ),
+            ]),
         )
         return
     }
@@ -263,7 +283,7 @@ function validatePatient(
         validator.error(
             '`patient` is missing from the token response, even though a `launch` or `launch/patient` ' +
                 'scope was requested. Without it, no patient-context FHIR probe can be run.',
-            refs.launchContext,
+            [refs.launchContext],
         )
     }
 }
@@ -278,7 +298,7 @@ function validateEncounter(
     const present = typeof value === 'string' && value.length > 0
 
     if (present) {
-        ok.push(validation('`encounter` is present in the token response', 'OK', refs.launchContext))
+        ok.push(validation('`encounter` is present in the token response', 'OK', [refs.launchContext]))
         return
     }
 
@@ -290,7 +310,7 @@ function validateEncounter(
         '`encounter` is missing from the token response for an EHR launch (`launch` scope was requested). ' +
             'The SMART spec does not universally require this, but Nav requires an Encounter to be reachable ' +
             'from launch context for its sykmelding pre-fill flow.',
-        { ...refs.launchContext, nav: navRefs.smartGettingStarted },
+        [refs.launchContext, navRefs.smartGettingStarted],
     )
 }
 
@@ -306,6 +326,6 @@ function reportOptionalFields(body: object, ok: Validation[]) {
         const value = readValue(body, field)
         if (value === undefined) continue
 
-        ok.push(validation(`${label} is present: ${JSON.stringify(value)}`, 'INFO', refs.tokenResponse))
+        ok.push(validation(`${label} is present: ${JSON.stringify(value)}`, 'INFO', [refs.tokenResponse]))
     }
 }

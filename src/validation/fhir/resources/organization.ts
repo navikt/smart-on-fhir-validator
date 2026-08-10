@@ -14,6 +14,7 @@ import type { ProbeContext, ProbeOutcome, ResourceProbe } from '#validation/fhir
 import { skipped } from '#validation/fhir/probe'
 import { interpretRead } from '#validation/fhir/response'
 import type { PractitionerRoleDiscovery } from '#validation/fhir/resources/practitioner-role'
+import type { RefTypes } from '#validation/common-refs'
 import { hl7Refs, navRefs, simplifierRefs } from '#validation/common-refs'
 import { Validator } from '#validation/Validator'
 import type { Validation } from '#validation/validation'
@@ -21,11 +22,8 @@ import type { Validation } from '#validation/validation'
 const ORGANISASJONSNUMMER_OID = 'urn:oid:2.16.578.1.12.4.1.4.101'
 const NO_BASIS_ORGANIZATION_PROFILE = 'http://hl7.no/fhir/StructureDefinition/no-basis-Organization'
 
-const refs = {
-    hl7: hl7Refs.organization,
-    simplifier: simplifierRefs.noBasisOrganization,
-    nav: navRefs.organization,
-}
+const refs: RefTypes = [hl7Refs.organization, simplifierRefs.noBasisOrganization, navRefs.organization]
+const telecomRefs: RefTypes = [...refs, hl7Refs.telecom]
 
 export function validateOrganizationResource(organization: Organization): Validation[] {
     const validator = new Validator()
@@ -52,13 +50,10 @@ export function validateOrganizationResource(organization: Organization): Valida
         validator.error(
             `Organization/${organization.id} has no \`telecom\` entry with \`system: phone\`; Nav's ` +
                 'saksbehandlere need a phone number to follow up on the sykmelding.',
-            { ...refs, simplifier: simplifierRefs.telecom },
+            telecomRefs,
         )
     } else if (!phone.value) {
-        validator.error(`Organization/${organization.id}.telecom (phone) has no \`value\`.`, {
-            ...refs,
-            simplifier: simplifierRefs.telecom,
-        })
+        validator.error(`Organization/${organization.id}.telecom (phone) has no \`value\`.`, telecomRefs)
     }
 
     return validator.build()

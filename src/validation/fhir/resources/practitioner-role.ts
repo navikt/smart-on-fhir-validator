@@ -12,17 +12,18 @@ import type { PractitionerRole } from 'fhir/r4'
 import type { ProbeContext, ProbeOutcome, ResourceProbe } from '#validation/fhir/probe'
 import { skipped } from '#validation/fhir/probe'
 import { interpretSearch } from '#validation/fhir/response'
+import type { RefTypes } from '#validation/common-refs'
 import { hl7Refs, navRefs, simplifierRefs } from '#validation/common-refs'
 import { Validator } from '#validation/Validator'
 import type { Validation } from '#validation/validation'
 
 const NO_BASIS_PRACTITIONER_ROLE_PROFILE = 'http://hl7.no/fhir/StructureDefinition/no-basis-PractitionerRole'
 
-const refs = {
-    hl7: hl7Refs.practitionerRole,
-    simplifier: simplifierRefs.noBasisPractitionerRole,
-    nav: navRefs.practitionerRole,
-}
+const refs: RefTypes = [
+    hl7Refs.practitionerRole,
+    simplifierRefs.noBasisPractitionerRole,
+    navRefs.practitionerRole,
+]
 
 export function validatePractitionerRoleResource(role: PractitionerRole): Validation[] {
     const validator = new Validator()

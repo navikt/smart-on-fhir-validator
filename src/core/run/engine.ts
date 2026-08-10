@@ -81,7 +81,7 @@ function fatalSection(cause: unknown): ReportSection {
         validations: [
             validation(
                 `The validation run itself failed unexpectedly: ${message}. This is a bug in the ` +
-                    'validator, not necessarily a problem with the EHR — please report it.',
+                    'validator, not necessarily a problem with the EHR. Please report it.',
                 'ERROR',
             ),
         ],

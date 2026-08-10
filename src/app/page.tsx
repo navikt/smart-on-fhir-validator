@@ -3,7 +3,9 @@ import type { ReactElement } from 'react'
 import { getAppOrigin } from './app-origin'
 import { isMockEhrEnabled } from './mock-ehr-enabled'
 
-async function MockEhrTryIt(): Promise<ReactElement | null> {
+const LAUNCH_CONTRACT = 'GET /launch?iss={fhir base url}&launch={launch token}'
+
+async function MockEhrCard(): Promise<ReactElement | null> {
     if (!isMockEhrEnabled()) return null
 
     const origin = await getAppOrigin()
@@ -11,16 +13,16 @@ async function MockEhrTryIt(): Promise<ReactElement | null> {
     const launchUrl = `/launch?iss=${encodeURIComponent(mockIss)}&launch=demo`
 
     return (
-        <section className="rounded-lg border border-neutral-300 bg-white p-6">
-            <h2 className="text-lg font-semibold">Try it against the built-in mock EHR</h2>
-            <p className="mt-2 text-sm text-neutral-700">
-                Runs the exact same validation this tool would run against your own system, but against an
-                in-repo mock EHR that is conformant by default — a good way to see a known-good report before
-                pointing this tool at your own server.
+        <section className="border-ax-border-accent-strong flex flex-col rounded border-2 bg-white p-5">
+            <h2 className="text-22 font-semibold">Try it against the mock EHR</h2>
+            <p className="text-16 mt-2 flex-1">
+                Runs the same validation this tool performs against your own system, but against an in-repo
+                mock EHR that conforms by default. Useful for seeing a known-good report before pointing this
+                tool at your own server.
             </p>
             <a
                 href={launchUrl}
-                className="mt-4 inline-block rounded bg-neutral-900 px-4 py-2 text-sm font-medium text-white hover:bg-neutral-700 focus-visible:ring-2 focus-visible:ring-neutral-500 focus-visible:outline-none"
+                className="bg-ax-bg-accent-strong hover:bg-ax-bg-accent-strong-pressed text-17 mt-4 inline-flex min-h-12 items-center justify-center rounded px-4 font-semibold text-white"
             >
                 Launch the mock EHR
             </a>
@@ -28,31 +30,32 @@ async function MockEhrTryIt(): Promise<ReactElement | null> {
     )
 }
 
-function StandaloneLaunchForm(): ReactElement {
+function StandaloneLaunchCard(): ReactElement {
     return (
-        <section className="rounded-lg border border-neutral-300 bg-white p-6">
-            <h2 className="text-lg font-semibold">Launch standalone</h2>
-            <p className="mt-2 text-sm text-neutral-700">
-                Testing outside an EHR session? Enter your FHIR server&apos;s base URL (the <code>iss</code> a
-                SMART launch would supply) to start a launch directly.
+        <section className="border-ax-border-neutral-subtle flex flex-col rounded border bg-white p-5">
+            <h2 className="text-22 font-semibold">Launch standalone</h2>
+            <p className="text-16 mt-2 flex-1">
+                Starts a launch directly, without an EHR session. Supply your FHIR server&apos;s base URL, the{' '}
+                <code>iss</code> value a SMART launch would provide.
             </p>
-            <form action="/launch" method="get" className="mt-4 flex flex-wrap items-end gap-3">
-                <div className="flex flex-col gap-1">
-                    <label htmlFor="iss" className="text-sm font-medium text-neutral-700">
-                        FHIR server base URL
-                    </label>
-                    <input
-                        id="iss"
-                        name="iss"
-                        type="url"
-                        required
-                        placeholder="https://ehr.example.com/fhir"
-                        className="w-80 max-w-full rounded border border-neutral-400 px-3 py-2 text-sm focus-visible:ring-2 focus-visible:ring-neutral-500 focus-visible:outline-none"
-                    />
-                </div>
+            <form action="/launch" method="get" className="mt-4 flex flex-col gap-1">
+                <label htmlFor="iss" className="text-14 font-semibold">
+                    FHIR base URL
+                </label>
+                <input
+                    id="iss"
+                    name="iss"
+                    type="url"
+                    required
+                    placeholder="https://ehr.example.com/fhir"
+                    className="border-ax-border-neutral-strong text-16 font-mono box-border min-h-12 w-full rounded border px-3"
+                />
+                <p className="text-14 text-ax-text-neutral-subtle mt-1">
+                    Must expose <code>/.well-known/smart-configuration</code>.
+                </p>
                 <button
                     type="submit"
-                    className="rounded border border-neutral-400 px-4 py-2 text-sm font-medium hover:bg-neutral-50 focus-visible:ring-2 focus-visible:ring-neutral-500 focus-visible:outline-none"
+                    className="border-ax-border-accent-strong text-ax-text-accent hover:bg-ax-bg-accent-soft text-17 mt-3 inline-flex min-h-12 items-center justify-center rounded border-2 bg-white px-4 font-semibold"
                 >
                     Launch
                 </button>
@@ -63,34 +66,34 @@ function StandaloneLaunchForm(): ReactElement {
 
 export default function HomePage(): ReactElement {
     return (
-        <main className="mx-auto max-w-4xl space-y-8 p-8">
-            <section>
-                <h1 className="text-2xl font-semibold">What this tool does</h1>
-                <p className="mt-3 text-neutral-700">
-                    This validator checks that your EHR&apos;s SMART on FHIR and FHIR R4 implementation
-                    conforms to the SMART App Launch specification and to Nav&apos;s requirements for the
-                    sykmelding write-back flow.
-                </p>
-                <p className="mt-3 text-neutral-700">
-                    Every check is evidence-based: the report shows the exact request this tool sent to your
-                    server and the exact response it received, so every finding is something you can reproduce
-                    yourself with <code>curl</code> — not just a pass/fail claim.
-                </p>
-            </section>
+        <main className="mx-auto max-w-[960px] px-6 pt-10 pb-20">
+            <h1 className="text-32 max-w-[22ch] font-semibold">Check your SMART on FHIR implementation</h1>
 
-            <section>
-                <h2 className="text-lg font-semibold">How to launch from your EHR</h2>
-                <p className="mt-2 text-sm text-neutral-700">
+            <p className="text-18 text-pretty mt-4 max-w-[68ch]">
+                This validator checks that your EHR&apos;s SMART on FHIR and FHIR R4 implementation conforms
+                to the SMART App Launch specification and to Nav&apos;s requirements for the sykmelding
+                write-back flow. Every check is evidence-based: the report shows the exact request this tool
+                sent and the exact response it received, so you can reproduce any finding yourself with{' '}
+                <code>curl</code>.
+            </p>
+
+            <section className="border-ax-border-neutral-subtle bg-ax-bg-neutral-soft mt-8 rounded border p-[22px]">
+                <h2 className="text-13 tracking-eyebrow text-ax-text-neutral-subtle font-bold uppercase">
+                    How a real EHR launches it
+                </h2>
+                <p className="text-16 mt-2">
                     Configure your EHR to launch this app at <code>/launch</code>. When a user starts the app,
-                    your EHR should redirect the browser here with the standard SMART EHR-launch parameters:
+                    your EHR redirects the browser here with the standard SMART EHR-launch parameters:
                 </p>
-                <pre className="mt-2 overflow-x-auto rounded bg-neutral-900 p-3 text-xs text-neutral-100">
-                    {'GET /launch?iss={your FHIR server base URL}&launch={opaque launch id}'}
+                <pre className="border-ax-border-neutral-subtle text-14 mt-3 overflow-x-auto rounded border bg-white p-3 whitespace-pre">
+                    {LAUNCH_CONTRACT}
                 </pre>
             </section>
 
-            <MockEhrTryIt />
-            <StandaloneLaunchForm />
+            <div className="mt-5 grid grid-cols-[repeat(auto-fit,minmax(300px,1fr))] gap-5">
+                <MockEhrCard />
+                <StandaloneLaunchCard />
+            </div>
         </main>
     )
 }

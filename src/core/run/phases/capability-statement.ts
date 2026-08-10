@@ -12,12 +12,19 @@ import {
 } from '#core/smart/capability-statement'
 import type { ActiveSession } from '#core/smart/types'
 import { isSmartError } from '#core/smart/types'
+import type { RefTypes } from '#validation/common-refs'
 import { validation, type Validation } from '#validation/validation'
 
 import { buildSection, errorSection, type ReportSection } from '../report'
 
 /** No dedicated ref exists in `#validation/common-refs` for FHIR's version families. */
-const FHIR_VERSION_REF = { hl7: 'https://hl7.org/fhir/directory.html' }
+const FHIR_VERSION_REF: RefTypes = [
+    {
+        authority: 'fhir',
+        cite: 'FHIR §Publication (Version) History',
+        href: 'https://hl7.org/fhir/directory.html',
+    },
+]
 
 function fhirVersionFindings(capabilityStatement: unknown): Validation[] {
     const version = detectFhirVersion(capabilityStatement)
@@ -61,7 +68,7 @@ export async function runCapabilityStatementPhase(
         return errorSection({
             id: 'capability-statement',
             title: 'FHIR Capability Statement',
-            category: 'smart',
+            category: 'fhir-conformance',
             error: result,
         })
     }
@@ -69,7 +76,7 @@ export async function runCapabilityStatementPhase(
     return buildSection({
         id: 'capability-statement',
         title: 'FHIR Capability Statement',
-        category: 'smart',
+        category: 'fhir-conformance',
         exchangeId: result.exchange.id,
         validations: fhirVersionFindings(result.capabilityStatement),
     })

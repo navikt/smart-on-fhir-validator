@@ -15,6 +15,7 @@ import type { Condition } from 'fhir/r4'
 import type { ProbeContext, ProbeOutcome, ResourceProbe } from '#validation/fhir/probe'
 import { skipped } from '#validation/fhir/probe'
 import { capSeverity, interpretSearch } from '#validation/fhir/response'
+import type { RefTypes } from '#validation/common-refs'
 import { hl7Refs, navRefs } from '#validation/common-refs'
 import { Validator } from '#validation/Validator'
 import { validation, type Validation } from '#validation/validation'
@@ -24,7 +25,7 @@ const ICPC2_OID = 'urn:oid:2.16.578.1.12.4.1.1.7170'
 const ICPC2B_OID = 'urn:oid:2.16.578.1.12.4.1.1.7171'
 const VALID_CODE_SYSTEMS = [ICD10_OID, ICPC2_OID, ICPC2B_OID]
 
-const refs = { hl7: hl7Refs.condition, nav: navRefs.condition }
+const refs: RefTypes = [hl7Refs.condition, navRefs.condition]
 
 export function validateConditionResource(conditions: readonly Condition[]): Validation[] {
     const validator = new Validator()

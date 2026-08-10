@@ -15,7 +15,7 @@ import type { Severity, Validation } from '#validation/validation'
 
 /** Groups sections for the UI without encoding an opinion about SMART vs FHIR vs Nav — that
  * distinction lives per-finding in `refs`, since a single section can mix all three. */
-export type SectionCategory = 'smart' | 'fhir-read' | 'fhir-write'
+export type SectionCategory = 'smart' | 'fhir-conformance' | 'fhir-read' | 'fhir-write'
 
 /**
  * `skipped` is deliberately its own status, never folded into `passed`: a probe that could not

@@ -11,15 +11,19 @@
  * response to a *separate, deliberately wrong* `aud` request; the HTTP call itself is made by
  * `#core/run/phases/aud-enforcement`, which is the only place that IO happens.
  *
- * @see https://build.fhir.org/ig/HL7/smart-app-launch/app-launch.html#step-4-authorization-code
+ * @see https://hl7.org/fhir/smart-app-launch/STU2.2/app-launch.html#step-4-authorization-code
  */
 
 import type { RefTypes } from '#validation/common-refs'
 import { validation, type Validation } from '#validation/validation'
 
-const refs: RefTypes = {
-    hl7: 'https://build.fhir.org/ig/HL7/smart-app-launch/app-launch.html#step-4-authorization-code',
-}
+const refs: RefTypes = [
+    {
+        authority: 'smart',
+        cite: 'SMART App Launch 2.2 §Obtain authorization code',
+        href: 'https://hl7.org/fhir/smart-app-launch/STU2.2/app-launch.html#step-4-authorization-code',
+    },
+]
 
 export type AudEnforcementProbeResponse = {
     /** `0` denotes a transport failure (see `SmartHttpClient`), never a real HTTP status. */
@@ -147,7 +151,7 @@ export function buildAudEnforcementFinding(verdict: ConclusiveAudEnforcementVerd
         case 'not-rejected':
             return validation(
                 'The authorization server did NOT reject an authorization request whose `aud` parameter ' +
-                    "deliberately did not match the FHIR server's base URL — it issued an authorization " +
+                    "deliberately did not match the FHIR server's base URL. It issued an authorization " +
                     'code anyway. SMART App Launch requires servers to validate `aud` precisely to prevent ' +
                     'a confused-deputy attack: a malicious FHIR server could replay a captured launch ' +
                     'request to obtain an access token minted for a different, genuine resource server.',

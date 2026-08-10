@@ -2,20 +2,28 @@
  * Validation of the `.well-known/smart-configuration` document against the SMART App Launch
  * conformance rules.
  *
- * @see https://build.fhir.org/ig/HL7/smart-app-launch/conformance.html#metadata
+ * @see https://hl7.org/fhir/smart-app-launch/STU2.2/conformance.html#metadata
  */
 
 import type { SmartConfiguration } from '#core/smart/types'
-import type { RefTypes } from '#validation/common-refs'
+import type { SpecRef } from '#validation/common-refs'
 import { Validator } from '#validation/Validator'
 import { validation, type Severity, type Validation } from '#validation/validation'
 
-const conformanceUrl = 'https://build.fhir.org/ig/HL7/smart-app-launch/conformance.html'
+const conformanceUrl = 'https://hl7.org/fhir/smart-app-launch/STU2.2/conformance.html'
 
 const refs = {
-    metadata: { hl7: `${conformanceUrl}#metadata` },
-    usingWellKnown: { hl7: `${conformanceUrl}#using-well-known` },
-} satisfies Record<string, RefTypes>
+    metadata: {
+        authority: 'smart',
+        cite: 'SMART App Launch 2.2 §Metadata',
+        href: `${conformanceUrl}#metadata`,
+    },
+    usingWellKnown: {
+        authority: 'smart',
+        cite: 'SMART App Launch 2.2 §FHIR Authorization Endpoint and Capabilities Discovery using a Well-Known Uniform Resource Identifiers (URIs)',
+        href: `${conformanceUrl}#using-well-known`,
+    },
+} satisfies Record<string, SpecRef>
 
 type FieldKind = 'string' | 'array'
 
@@ -121,15 +129,15 @@ function evaluateGroup(
 
         const value = config[spec.field]
         if (isValidField(value, spec.kind)) {
-            okValidations.push(validation(`${spec.label} is present, as required`, 'OK', refs.metadata))
+            okValidations.push(validation(`${spec.label} is present, as required`, 'OK', [refs.metadata]))
             continue
         }
 
         const suffix = spec.reason ? `, required because ${spec.reason}` : ''
         const message = `${spec.label} is missing from the well-known SMART configuration document${suffix}`
-        if (severity === 'ERROR') validator.error(message, refs.metadata)
-        else if (severity === 'WARNING') validator.warn(message, refs.metadata)
-        else validator.info(message, refs.metadata)
+        if (severity === 'ERROR') validator.error(message, [refs.metadata])
+        else if (severity === 'WARNING') validator.warn(message, [refs.metadata])
+        else validator.info(message, [refs.metadata])
     }
 }
 
@@ -141,27 +149,26 @@ function evaluateCodeChallengeMethods(config: SmartConfiguration, validator: Val
 
     if (methods.includes('S256')) {
         ok.push(
-            validation(
-                '`code_challenge_methods_supported` includes `S256`, as required',
-                'OK',
+            validation('`code_challenge_methods_supported` includes `S256`, as required', 'OK', [
                 refs.metadata,
-            ),
+            ]),
         )
     } else {
         validator.error(
             '`code_challenge_methods_supported` does not include `S256`, which SHALL be supported',
-            refs.metadata,
+            [refs.metadata],
         )
     }
 
     if (methods.includes('plain')) {
-        validator.error(
-            '`code_challenge_methods_supported` includes `plain`, which SHALL NOT be supported',
+        validator.error('`code_challenge_methods_supported` includes `plain`, which SHALL NOT be supported', [
             refs.metadata,
-        )
+        ])
     } else {
         ok.push(
-            validation('`code_challenge_methods_supported` correctly excludes `plain`', 'OK', refs.metadata),
+            validation('`code_challenge_methods_supported` correctly excludes `plain`', 'OK', [
+                refs.metadata,
+            ]),
         )
     }
 }
@@ -171,11 +178,11 @@ function evaluateGrantTypes(config: SmartConfiguration, validator: Validator, ok
     if (grantTypes.length === 0) return
 
     if (grantTypes.includes('authorization_code')) {
-        ok.push(validation('`grant_types_supported` includes `authorization_code`', 'OK', refs.metadata))
+        ok.push(validation('`grant_types_supported` includes `authorization_code`', 'OK', [refs.metadata]))
     } else {
         validator.warn(
             '`grant_types_supported` does not include `authorization_code`, which SMART App Launch requires',
-            refs.metadata,
+            [refs.metadata],
         )
     }
 }
@@ -191,7 +198,7 @@ function evaluateAbsoluteUrls(
         if (typeof value !== 'string' || value.length === 0) continue
 
         if (isAbsoluteUrl(value)) {
-            ok.push(validation(`\`${field}\` is an absolute URL, as required`, 'OK', refs.usingWellKnown))
+            ok.push(validation(`\`${field}\` is an absolute URL, as required`, 'OK', [refs.usingWellKnown]))
             continue
         }
 
@@ -199,7 +206,7 @@ function evaluateAbsoluteUrls(
             `\`${field}\` ("${value}") is a relative URL; the spec requires absolute URLs. This app ` +
                 `resolves it against the FHIR base URL per RFC 3986 §5, but the server should be fixed ` +
                 `(see HTTP exchange ${exchangeId})`,
-            refs.usingWellKnown,
+            [refs.usingWellKnown],
         )
     }
 }

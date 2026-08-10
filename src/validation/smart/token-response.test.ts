@@ -222,7 +222,7 @@ describe('validateTokenResponse — patient and encounter launch context', () =>
         const encounterWarning = warnings.find((w) => w.message.includes('`encounter`'))
         expect(encounterWarning).toBeDefined()
         expect(encounterWarning?.message).toContain('Nav requires')
-        expect(encounterWarning?.refs?.nav).toBeDefined()
+        expect(encounterWarning?.refs?.some((r) => r.authority === 'nav')).toBe(true)
     })
 
     it('does not require patient/encounter when no launch context scope was requested', () => {
