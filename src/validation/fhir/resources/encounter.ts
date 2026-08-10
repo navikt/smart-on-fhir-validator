@@ -13,15 +13,16 @@ import type { Encounter } from 'fhir/r4'
 import type { ProbeContext, ProbeOutcome, ResourceProbe } from '#validation/fhir/probe'
 import { skipped } from '#validation/fhir/probe'
 import { capSeverity, interpretRead, interpretSearch } from '#validation/fhir/response'
+import type { RefTypes } from '#validation/common-refs'
 import { hl7Refs, navRefs } from '#validation/common-refs'
 import { Validator } from '#validation/Validator'
 import type { Validation } from '#validation/validation'
 
-const patientRefs = { hl7: hl7Refs.patient, nav: navRefs.patient }
-const practitionerRefs = { hl7: hl7Refs.practitioner, nav: navRefs.practitioner }
-const conditionRefs = { hl7: hl7Refs.condition, nav: navRefs.condition }
-const organizationRefs = { hl7: hl7Refs.organization, nav: navRefs.organization }
-const encounterRefs = { hl7: hl7Refs.encounter, nav: navRefs.encounter }
+const patientRefs: RefTypes = [hl7Refs.patient, navRefs.patient]
+const practitionerRefs: RefTypes = [hl7Refs.practitioner, navRefs.practitioner]
+const conditionRefs: RefTypes = [hl7Refs.condition, navRefs.condition]
+const organizationRefs: RefTypes = [hl7Refs.organization, navRefs.organization]
+const encounterRefs: RefTypes = [hl7Refs.encounter, navRefs.encounter]
 
 export function validateEncounterResource(encounter: Encounter): Validation[] {
     const validator = new Validator()

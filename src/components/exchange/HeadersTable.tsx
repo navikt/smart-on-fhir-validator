@@ -5,25 +5,25 @@ export function HeadersTable({ headers }: { headers: Record<string, string> }): 
     if (entries.length === 0) return null
 
     return (
-        <table className="w-full border-collapse text-xs">
+        <table className="text-13 w-full border-collapse">
             <caption className="sr-only">HTTP headers</caption>
             <thead>
-                <tr className="border-b border-neutral-300 text-left">
-                    <th scope="col" className="py-1 pr-3 font-medium text-neutral-600">
+                <tr className="border-ax-border-neutral-subtle border-b text-left">
+                    <th scope="col" className="text-ax-text-neutral-subtle py-1 pr-3 font-medium">
                         Header
                     </th>
-                    <th scope="col" className="py-1 font-medium text-neutral-600">
+                    <th scope="col" className="text-ax-text-neutral-subtle py-1 font-medium">
                         Value
                     </th>
                 </tr>
             </thead>
             <tbody>
                 {entries.map(([name, value]) => (
-                    <tr key={name} className="border-b border-neutral-100 align-top">
-                        <th scope="row" className="py-1 pr-3 font-mono font-normal whitespace-nowrap">
+                    <tr key={name} className="border-ax-border-neutral-subtleA border-b align-top">
+                        <th scope="row" className="font-mono py-1 pr-3 font-normal whitespace-nowrap">
                             {name}
                         </th>
-                        <td className="py-1 font-mono break-all">{value}</td>
+                        <td className="font-mono py-1 break-all">{value}</td>
                     </tr>
                 ))}
             </tbody>

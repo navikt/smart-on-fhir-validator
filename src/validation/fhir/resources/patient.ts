@@ -10,18 +10,19 @@ import type { Patient } from 'fhir/r4'
 import type { ProbeContext, ProbeOutcome, ResourceProbe } from '#validation/fhir/probe'
 import { skipped } from '#validation/fhir/probe'
 import { capSeverity, interpretRead, interpretSearch } from '#validation/fhir/response'
+import type { RefTypes } from '#validation/common-refs'
 import { hl7Refs, navRefs, simplifierRefs } from '#validation/common-refs'
 import { Validator } from '#validation/Validator'
 import type { Validation } from '#validation/validation'
 
 /**
- * @see https://www.ehelse.no/teknisk-dokumentasjon/oid-identifikatorserier-i-helse-og-omsorgstjenesten#nasjonale-identifikatorserier-for-personer
+ * @see https://www.ehelse.no/teknisk-dokumentasjon/oid-identifikatorserier-i-helse-og-omsorgstjenesten
  */
 const FODSELSNUMMER_OID = 'urn:oid:2.16.578.1.12.4.1.4.1'
 const D_NUMMER_OID = 'urn:oid:2.16.578.1.12.4.1.4.2'
 const NO_BASIS_PATIENT_PROFILE = 'http://hl7.no/fhir/StructureDefinition/no-basis-Patient'
 
-const refs = { hl7: hl7Refs.patient, simplifier: simplifierRefs.noBasisPasient, nav: navRefs.patient }
+const refs: RefTypes = [hl7Refs.patient, simplifierRefs.noBasisPasient, navRefs.patient]
 
 /** Pure conformance check against no-basis-Patient and Nav's identification requirements. */
 export function validatePatientResource(patient: Patient): Validation[] {

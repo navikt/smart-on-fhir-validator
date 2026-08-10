@@ -10,6 +10,7 @@ import type { Practitioner } from 'fhir/r4'
 import type { ProbeContext, ProbeOutcome, ResourceProbe } from '#validation/fhir/probe'
 import { skipped } from '#validation/fhir/probe'
 import { interpretRead } from '#validation/fhir/response'
+import type { RefTypes } from '#validation/common-refs'
 import { hl7Refs, navRefs, simplifierRefs } from '#validation/common-refs'
 import { Validator } from '#validation/Validator'
 import type { Validation } from '#validation/validation'
@@ -17,11 +18,7 @@ import type { Validation } from '#validation/validation'
 const HPR_NUMMER_OID = 'urn:oid:2.16.578.1.12.4.1.4.4'
 const NO_BASIS_PRACTITIONER_PROFILE = 'http://hl7.no/fhir/StructureDefinition/no-basis-Practitioner'
 
-const refs = {
-    hl7: hl7Refs.practitioner,
-    simplifier: simplifierRefs.noBasisPractitioner,
-    nav: navRefs.practitioner,
-}
+const refs: RefTypes = [hl7Refs.practitioner, simplifierRefs.noBasisPractitioner, navRefs.practitioner]
 
 export function validatePractitionerResource(practitioner: Practitioner): Validation[] {
     const validator = new Validator()

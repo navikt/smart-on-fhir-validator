@@ -117,7 +117,7 @@ function createOutcomeValidations(response: RecordedResponse, resourceType: stri
             validation(
                 `POST ${url} returned 200 OK instead of 201 Created for a new ${resourceType}. FHIR R4 requires a successful create to return 201.`,
                 'WARNING',
-                { hl7: hl7Refs.fhirHttpCreate },
+                [hl7Refs.fhirHttpCreate],
             ),
         )
     } else {
@@ -128,7 +128,7 @@ function createOutcomeValidations(response: RecordedResponse, resourceType: stri
             validation(
                 `POST ${url} failed to create the ${resourceType} with status ${response.status}${transport}. ${outcomeSummary ? `Server returned: ${outcomeSummary}` : 'No OperationOutcome was returned to explain the failure.'}`,
                 'ERROR',
-                { hl7: hl7Refs.fhirHttpCreate },
+                [hl7Refs.fhirHttpCreate],
             ),
         )
         return validations
@@ -140,7 +140,7 @@ function createOutcomeValidations(response: RecordedResponse, resourceType: stri
             validation(
                 `POST ${url} did not include a Location or Content-Location header pointing at the created ${resourceType}`,
                 'WARNING',
-                { hl7: hl7Refs.fhirHttpCreate },
+                [hl7Refs.fhirHttpCreate],
             ),
         )
     } else {
@@ -171,7 +171,7 @@ function upsertOutcomeValidations(
                 validation(
                     `${attemptLabel} PUT ${url} returned 201 Created, a legal update-as-create response per FHIR R4.`,
                     'OK',
-                    { hl7: hl7Refs.fhirHttpUpsert },
+                    [hl7Refs.fhirHttpUpsert],
                 ),
             ]
         }
@@ -180,7 +180,7 @@ function upsertOutcomeValidations(
             validation(
                 `${attemptLabel} PUT ${url} (same client-assigned id, repeated) returned 201 Created again. Per FHIR R4 upsert semantics, a repeated PUT to an id that already exists should return 200 OK; returning 201 a second time may mean the server created a second, distinct resource instead of updating the first, which risks the sykmelding being filed twice in the patient's journal.`,
                 'WARNING',
-                { hl7: hl7Refs.fhirHttpUpsert, nav: navRefs.adr01 },
+                [hl7Refs.fhirHttpUpsert, navRefs.adr01],
             ),
         ]
     }
@@ -190,7 +190,7 @@ function upsertOutcomeValidations(
             validation(
                 `${attemptLabel} PUT ${url} returned 200 OK, a legal update-as-create response per FHIR R4.`,
                 'OK',
-                { hl7: hl7Refs.fhirHttpUpsert },
+                [hl7Refs.fhirHttpUpsert],
             ),
         ]
     }
@@ -202,7 +202,7 @@ function upsertOutcomeValidations(
         validation(
             `${attemptLabel} PUT ${url} failed to upsert the ${resourceType} with status ${response.status}${transport}. ${outcomeSummary ? `Server returned: ${outcomeSummary}` : 'No OperationOutcome was returned to explain the failure.'}`,
             'ERROR',
-            { hl7: hl7Refs.fhirHttpUpsert },
+            [hl7Refs.fhirHttpUpsert],
         ),
     ]
 }
@@ -226,16 +226,16 @@ function idempotencyValidation(
 
     if (firstMatches && secondMatches) {
         return validation(
-            `Repeating PUT ${second.exchange.request.url} with the same client-assigned id "${id}" did not produce a different resource id: both responses are consistent with a single ${resourceType}/${id}. This is the idempotency property Nav's write-back depends on (ADR01) — a retried write after a network blip must not double-file the sykmelding.`,
+            `Repeating PUT ${second.exchange.request.url} with the same client-assigned id "${id}" did not produce a different resource id: both responses are consistent with a single ${resourceType}/${id}. This is the idempotency property Nav's write-back depends on (ADR01): a retried write after a network blip must not double-file the sykmelding.`,
             'OK',
-            { nav: navRefs.adr01 },
+            [navRefs.adr01],
         )
     }
 
     return validation(
         `Repeating PUT ${second.exchange.request.url} with the same client-assigned id "${id}" produced a different resource id (first response id: "${String(firstId)}", second response id: "${String(secondId)}"). A compliant PUT-as-upsert must always operate on ${resourceType}/${id}; returning a different id risks the sykmelding being filed twice in the patient's journal.`,
         'ERROR',
-        { hl7: hl7Refs.fhirHttpUpsert, nav: navRefs.adr01 },
+        [hl7Refs.fhirHttpUpsert, navRefs.adr01],
     )
 }
 
@@ -257,9 +257,9 @@ function scopeEnforcementOutcome(
     if (response.status === 403) {
         validations.push(
             validation(
-                `No write scope for ${resourceType} was granted (granted scopes: ${grantedScopesText(launch)}). ${method} ${url} was correctly rejected with 403 Forbidden — this is the expected, secure behaviour for a write attempted outside the granted scopes.`,
+                `No write scope for ${resourceType} was granted (granted scopes: ${grantedScopesText(launch)}). ${method} ${url} was correctly rejected with 403 Forbidden. This is the expected behaviour for a write attempted outside the granted scopes.`,
                 'OK',
-                { hl7: hl7Refs.smartLaunch },
+                [hl7Refs.smartLaunch],
             ),
         )
     } else if (response.ok) {
@@ -267,7 +267,7 @@ function scopeEnforcementOutcome(
             validation(
                 `No write scope for ${resourceType} was granted (granted scopes: ${grantedScopesText(launch)}), yet ${method} ${url} succeeded with status ${response.status}. A SMART-conformant server must enforce granted scopes and reject writes outside them with 403 Forbidden.`,
                 'ERROR',
-                { hl7: hl7Refs.smartLaunch },
+                [hl7Refs.smartLaunch],
             ),
         )
     } else {
@@ -275,7 +275,7 @@ function scopeEnforcementOutcome(
             validation(
                 `No write scope for ${resourceType} was granted (granted scopes: ${grantedScopesText(launch)}). ${method} ${url} was rejected with status ${response.status} rather than 403 Forbidden. 403 is the status a SMART server should use to signal insufficient authorization for an otherwise well-formed request.`,
                 'WARNING',
-                { hl7: hl7Refs.smartLaunch },
+                [hl7Refs.smartLaunch],
             ),
         )
     }
@@ -285,7 +285,7 @@ function scopeEnforcementOutcome(
 
 function testResourceNotice(resourceType: string, id: string): Validation {
     return validation(
-        `Created a test ${resourceType} in the vendor's EHR with id "${id}". This is a real record written to their system by this validator — please delete/clean up "${resourceType}/${id}" after reviewing this report.`,
+        `Created a test ${resourceType} in the vendor's EHR with id "${id}". This is a real record written to their system by this validator. Delete or clean up "${resourceType}/${id}" after reviewing this report.`,
         'INFO',
     )
 }
@@ -315,7 +315,7 @@ async function searchableValidations(
             validation(
                 `GET ${url} failed with status ${response.status}. A written ${resourceType} must be findable by ${paramDescription} alone.`,
                 'ERROR',
-                { hl7: hl7Refs.fhirHttpSearch },
+                [hl7Refs.fhirHttpSearch],
             ),
         )
         return validations
@@ -324,7 +324,7 @@ async function searchableValidations(
     const bundle = asTyped<Bundle>(response.body, 'Bundle')
     if (bundle == null) {
         validations.push(
-            validation(`GET ${url} did not return a FHIR Bundle`, 'ERROR', { hl7: hl7Refs.fhirHttpSearch }),
+            validation(`GET ${url} did not return a FHIR Bundle`, 'ERROR', [hl7Refs.fhirHttpSearch]),
         )
         return validations
     }
@@ -334,7 +334,7 @@ async function searchableValidations(
             validation(
                 `GET ${url} returned a Bundle of type "${bundle.type}", expected "searchset"`,
                 'ERROR',
-                { hl7: hl7Refs.search },
+                [hl7Refs.search],
             ),
         )
     }
@@ -351,7 +351,7 @@ async function searchableValidations(
             validation(
                 `The created ${resourceType} ("${resourceType}/${createdId}") was NOT found via GET ${url}. It must be discoverable by ${paramDescription} alone so it can be located without a server-assigned id.`,
                 'ERROR',
-                { hl7: hl7Refs.documentReference },
+                [hl7Refs.documentReference],
             ),
         )
     }
@@ -382,7 +382,7 @@ async function binaryMechanismValidations(
             validation(
                 `Could not determine the id of the Binary created via the ${mechanismLabel} mechanism from the response body or Location header, so round-trip could not be verified.`,
                 'ERROR',
-                { hl7: hl7Refs.binary },
+                [hl7Refs.binary],
             ),
         )
         return { validations, succeeded: false }
@@ -402,7 +402,7 @@ async function binaryMechanismValidations(
             validation(
                 `GET ${readBack.exchange.request.url} (round-trip read-back for the ${mechanismLabel} upload) failed with status ${readBack.status}.`,
                 'ERROR',
-                { hl7: hl7Refs.binary },
+                [hl7Refs.binary],
             ),
         )
         return { validations, succeeded: false }
@@ -606,7 +606,7 @@ export const documentReferenceInlineWriteProbe: ResourceProbe = {
                 validation(
                     `GET ${readBack.exchange.request.url} (round-trip read-back) failed with status ${readBack.status}. The server accepted the write but the resource cannot be read back.`,
                     'ERROR',
-                    { hl7: hl7Refs.documentReference },
+                    [hl7Refs.documentReference],
                 ),
             )
         } else {
@@ -692,7 +692,7 @@ export const documentReferenceBinaryWriteProbe: ResourceProbe = {
                 validation(
                     'Could not determine the id of the created Binary, so the Binary-reference DocumentReference mechanism could not be tested.',
                     'ERROR',
-                    { hl7: hl7Refs.binary },
+                    [hl7Refs.binary],
                 ),
             )
             return {
@@ -738,7 +738,7 @@ export const documentReferenceBinaryWriteProbe: ResourceProbe = {
                 validation(
                     `GET ${readBack.exchange.request.url} (round-trip read-back) failed with status ${readBack.status}.`,
                     'ERROR',
-                    { hl7: hl7Refs.documentReference },
+                    [hl7Refs.documentReference],
                 ),
             )
         } else {
@@ -756,7 +756,7 @@ export const documentReferenceBinaryWriteProbe: ResourceProbe = {
                     validation(
                         `Round-trip read-back did not preserve the Binary reference; content[0].attachment.url was "${url ?? 'missing'}", expected it to contain "${binaryId}". The server may have inlined or dropped the reference.`,
                         'ERROR',
-                        { hl7: hl7Refs.documentReference },
+                        [hl7Refs.documentReference],
                     ),
                 )
             }
@@ -802,7 +802,7 @@ export const binaryWriteProbe: ResourceProbe = {
                 validation(
                     'Both Binary upload mechanisms (FHIR-JSON POST and raw-body POST) succeeded. Nav can write a Binary using either mechanism.',
                     'OK',
-                    { nav: navRefs.binary },
+                    [navRefs.binary],
                 ),
             )
         } else if (jsonOutcome.succeeded || rawOutcome.succeeded) {
@@ -810,9 +810,9 @@ export const binaryWriteProbe: ResourceProbe = {
             const failing = jsonOutcome.succeeded ? 'raw-body POST' : 'FHIR-JSON POST'
             validations.push(
                 validation(
-                    `Only the ${working} Binary upload mechanism succeeded; the ${failing} mechanism failed. Nav requires Binary write support (nav-requirements.md, "Må") but does not mandate a specific upload mechanism, so this alone is not fatal — the vendor should confirm their integration with Nav will use ${working}.`,
+                    `Only the ${working} Binary upload mechanism succeeded; the ${failing} mechanism failed. Nav requires Binary write support (nav-requirements.md, "Må") but does not mandate a specific upload mechanism, so this alone is not fatal. The vendor should confirm their integration with Nav will use ${working}.`,
                     'WARNING',
-                    { nav: navRefs.binary },
+                    [navRefs.binary],
                 ),
             )
         } else {
@@ -820,7 +820,7 @@ export const binaryWriteProbe: ResourceProbe = {
                 validation(
                     'Both Binary upload mechanisms (FHIR-JSON POST and raw-body POST) failed. Nav requires Binary write support (nav-requirements.md, "Må"); a server supporting neither mechanism cannot receive the sykmelding PDF via Binary at all.',
                     'ERROR',
-                    { nav: navRefs.binary },
+                    [navRefs.binary],
                 ),
             )
         }
@@ -959,7 +959,7 @@ export const bundleBatchWriteProbe: ResourceProbe = {
                 validation(
                     `POST ${url} (batch Bundle) failed with status ${response.status}. ${outcomeSummary ? `Server returned: ${outcomeSummary}` : 'No OperationOutcome was returned.'}`,
                     'ERROR',
-                    { hl7: hl7Refs.bundleTransaction },
+                    [hl7Refs.bundleTransaction],
                 ),
             )
             return {

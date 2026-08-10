@@ -1,22 +1,34 @@
 /**
  * Validation of SMART "Capabilities" and "Capability Sets".
  *
- * @see https://build.fhir.org/ig/HL7/smart-app-launch/conformance.html#capabilities
- * @see https://build.fhir.org/ig/HL7/smart-app-launch/conformance.html#capability-sets
+ * @see https://hl7.org/fhir/smart-app-launch/STU2.2/conformance.html#capabilities
+ * @see https://hl7.org/fhir/smart-app-launch/STU2.2/conformance.html#capability-sets
  */
 
 import type { SmartCapability, SmartConfiguration } from '#core/smart/types'
-import type { RefTypes } from '#validation/common-refs'
+import type { RefTypes, SpecRef } from '#validation/common-refs'
 import { Validator } from '#validation/Validator'
 import { validation, type Validation } from '#validation/validation'
 
-const conformanceUrl = 'https://build.fhir.org/ig/HL7/smart-app-launch/conformance.html'
+const conformanceUrl = 'https://hl7.org/fhir/smart-app-launch/STU2.2/conformance.html'
 
 const refs = {
-    capabilities: { hl7: `${conformanceUrl}#capabilities` },
-    permissions: { hl7: `${conformanceUrl}#permissions` },
-    clientTypes: { hl7: `${conformanceUrl}#client-types` },
-} satisfies Record<string, RefTypes>
+    capabilities: {
+        authority: 'smart',
+        cite: 'SMART App Launch 2.2 §Capabilities',
+        href: `${conformanceUrl}#capabilities`,
+    },
+    permissions: {
+        authority: 'smart',
+        cite: 'SMART App Launch 2.2 §Permissions',
+        href: `${conformanceUrl}#permissions`,
+    },
+    clientTypes: {
+        authority: 'smart',
+        cite: 'SMART App Launch 2.2 §Client Types',
+        href: `${conformanceUrl}#client-types`,
+    },
+} satisfies Record<string, SpecRef>
 
 /** The finite set of strings the SMART App Launch spec defines itself. */
 const KNOWN_CAPABILITIES: readonly SmartCapability[] = [
@@ -136,19 +148,21 @@ export function validateCapabilitySets(config: SmartConfiguration): Validation[]
             validation(
                 'Server supports at least one required client type (`client-public` or `client-confidential-symmetric`)',
                 'OK',
-                refs.clientTypes,
+                [refs.clientTypes],
             ),
         )
     } else {
         validator.error(
             'Server does not advertise `client-public` or `client-confidential-symmetric`; every SMART capability set requires at least one',
-            refs.clientTypes,
+            [refs.clientTypes],
         )
     }
 
     for (const set of CAPABILITY_SETS) {
         const missing = set.required.filter((capability) => !known.includes(capability))
-        const setRef = { hl7: set.anchor }
+        const setRef: RefTypes = [
+            { authority: 'smart', cite: `SMART App Launch 2.2 §${set.name}`, href: set.anchor },
+        ]
 
         if (missing.length === 0 && hasClientType) {
             ok.push(
@@ -176,29 +190,31 @@ export function validateCapabilitySets(config: SmartConfiguration): Validation[]
             validation(
                 'Server supports `permission-v2` (SMARTv2 granular scope syntax), as Nav requires',
                 'OK',
-                refs.permissions,
+                [refs.permissions],
             ),
         )
     } else {
         validator.warn(
             'Server does not advertise `permission-v2`; Nav requires support for SMARTv2 granular scope syntax',
-            refs.permissions,
+            [refs.permissions],
         )
     }
 
     if (known.includes('permission-v1')) {
-        ok.push(validation('Server supports `permission-v1` (SMARTv1 scope syntax)', 'OK', refs.permissions))
+        ok.push(
+            validation('Server supports `permission-v1` (SMARTv1 scope syntax)', 'OK', [refs.permissions]),
+        )
     } else {
-        validator.info('Server does not advertise `permission-v1` (SMARTv1 scope syntax)', refs.permissions)
+        validator.info('Server does not advertise `permission-v1` (SMARTv1 scope syntax)', [refs.permissions])
     }
 
     const nonUriUnknown = unknown.filter((capability) => !isAbsoluteUri(capability))
     if (nonUriUnknown.length > 0) {
         validator.warn(
             `Server advertises unrecognized capabilities as simple strings (${nonUriUnknown.join(', ')}); ` +
-                'the SMART spec reserves simple, non-URI strings for capabilities it defines itself — ' +
-                'third-party implementation guides SHALL use full URIs',
-            refs.capabilities,
+                'the SMART spec reserves simple, non-URI strings for capabilities it defines itself. ' +
+                'Third-party implementation guides SHALL use full URIs',
+            [refs.capabilities],
         )
     }
 
@@ -206,7 +222,7 @@ export function validateCapabilitySets(config: SmartConfiguration): Validation[]
     if (uriUnknown.length > 0) {
         validator.info(
             `Server advertises additional capabilities via URIs, presumably from a third-party implementation guide: ${uriUnknown.join(', ')}`,
-            refs.capabilities,
+            [refs.capabilities],
         )
     }
 

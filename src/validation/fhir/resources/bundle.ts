@@ -32,7 +32,7 @@ export function validateBatchBundleRequest(bundle: Bundle): Validation[] {
     if (bundle.type !== REQUIRED_BATCH_BUNDLE_TYPE) {
         validator.error(
             `Bundle.type must be "${REQUIRED_BATCH_BUNDLE_TYPE}", was "${bundle.type}". Nav requires "batch" rather than "transaction" so the legally-required DocumentReference is still persisted if the QuestionnaireResponse entry fails (ADR01, journalføringsplikten).`,
-            { nav: navRefs.adr01, hl7: hl7Refs.bundle },
+            [hl7Refs.bundle, navRefs.adr01],
         )
     } else {
         ok.push(validation(`Bundle.type is correctly "${REQUIRED_BATCH_BUNDLE_TYPE}"`, 'OK'))
@@ -47,23 +47,23 @@ export function validateBatchBundleRequest(bundle: Bundle): Validation[] {
         const label = `entry[${index}]`
 
         if (!entry.request) {
-            validator.error(`Bundle.${label} does not contain a request object with a method and url`, {
-                hl7: hl7Refs.bundleBatchRules,
-            })
+            validator.error(`Bundle.${label} does not contain a request object with a method and url`, [
+                hl7Refs.bundleBatchRules,
+            ])
             return
         }
 
         if (entry.request.method !== 'PUT') {
             validator.error(
                 `Bundle.${label}.request.method should be "PUT", was "${entry.request.method}". Nav sets the resource id itself (the sykmelding id) so each entry is an idempotent upsert rather than a server-assigned create.`,
-                { nav: navRefs.adr01, hl7: hl7Refs.bundleBatchRules },
+                [hl7Refs.bundleBatchRules, navRefs.adr01],
             )
         } else {
             ok.push(validation(`Bundle.${label}.request.method is correctly "PUT"`, 'OK'))
         }
 
         if (!entry.request.url) {
-            validator.error(`Bundle.${label}.request.url is missing`, { hl7: hl7Refs.bundleBatchRules })
+            validator.error(`Bundle.${label}.request.url is missing`, [hl7Refs.bundleBatchRules])
         } else {
             ok.push(validation(`Bundle.${label}.request.url is "${entry.request.url}"`, 'OK'))
         }
@@ -101,7 +101,7 @@ function validateInternalReferences(bundle: Bundle, validator: Validator, ok: Va
     if (unresolved.length > 0) {
         validator.error(
             `Bundle contains references that do not resolve to any entry.fullUrl: ${unresolved.join(', ')}`,
-            { hl7: hl7Refs.bundleBatchRules },
+            [hl7Refs.bundleBatchRules],
         )
     } else if (referencedIds.length > 0) {
         ok.push(
@@ -156,16 +156,16 @@ export function validateBatchBundleResponse(
     const ok: Validation[] = []
 
     if (responseBundle == null) {
-        validator.error('The batch submission did not return a Bundle to validate', {
-            hl7: hl7Refs.bundleTransaction,
-        })
+        validator.error('The batch submission did not return a Bundle to validate', [
+            hl7Refs.bundleTransaction,
+        ])
         return validator.build()
     }
 
     if (responseBundle.resourceType !== 'Bundle') {
         validator.error(
             `The response to a batch submission was not a Bundle, was "${responseBundle.resourceType}"`,
-            { hl7: hl7Refs.bundleTransaction },
+            [hl7Refs.bundleTransaction],
         )
         return validator.build()
     }
@@ -173,7 +173,7 @@ export function validateBatchBundleResponse(
     if (responseBundle.type !== REQUIRED_BATCH_RESPONSE_TYPE) {
         validator.error(
             `The response Bundle had type "${responseBundle.type}"; a POST of a "batch" Bundle must return a Bundle of type "${REQUIRED_BATCH_RESPONSE_TYPE}" (FHIR R4 http.html#transaction)`,
-            { hl7: hl7Refs.bundleTransaction },
+            [hl7Refs.bundleTransaction],
         )
     } else {
         ok.push(validation(`Response Bundle.type is correctly "${REQUIRED_BATCH_RESPONSE_TYPE}"`, 'OK'))
@@ -184,7 +184,7 @@ export function validateBatchBundleResponse(
     if (entries.length !== expectedEntryCount) {
         validator.error(
             `The response Bundle contains ${entries.length} entries, expected exactly ${expectedEntryCount} (one per request entry, in the same order)`,
-            { hl7: hl7Refs.bundleTransaction },
+            [hl7Refs.bundleTransaction],
         )
     } else {
         ok.push(
@@ -198,9 +198,9 @@ export function validateBatchBundleResponse(
     entries.forEach((entry, index) => {
         const label = `entry[${index}]`
         if (!entry.response?.status) {
-            validator.error(`Response Bundle.${label} does not contain a response.status`, {
-                hl7: hl7Refs.bundleTransaction,
-            })
+            validator.error(`Response Bundle.${label} does not contain a response.status`, [
+                hl7Refs.bundleTransaction,
+            ])
             return
         }
 
@@ -213,7 +213,7 @@ export function validateBatchBundleResponse(
                     .join('; ') ?? 'no OperationOutcome was included'
             validator.warn(
                 `Response Bundle.${label} failed with status "${entry.response.status}": ${issueSummary}. In a "batch", this failure does not affect the other entries.`,
-                { hl7: hl7Refs.bundleTransaction },
+                [hl7Refs.bundleTransaction],
             )
         } else {
             ok.push(

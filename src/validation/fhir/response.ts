@@ -66,7 +66,7 @@ function transportFailureFinding(response: RecordedResponse, url: string): Valid
         `${callLabel(url, response.exchange.id)} failed at the transport level${detail}; the endpoint ` +
             'could not be reached at all, so Nav cannot pre-fill from it.',
         'ERROR',
-        { hl7: hl7Refs.httpApi },
+        [hl7Refs.httpApi],
     )
 }
 
@@ -89,7 +89,7 @@ function checkStatusCode(
             `${label} ${call} returned 401 Unauthorized; the access token was not accepted at all. ` +
                 'Verify the Bearer token is present, unexpired, and sent on every FHIR request.',
             'ERROR',
-            { hl7: hl7Refs.httpApi },
+            [hl7Refs.httpApi],
         )
     }
 
@@ -98,7 +98,7 @@ function checkStatusCode(
         const grantedList = grantedScopes.length > 0 ? grantedScopes.join(' ') : '(none)'
 
         return validation(
-            `${label} ${call} returned 403 Forbidden — ${
+            `${label} ${call} returned 403 Forbidden: ${
                 hasAccess
                     ? `the granted scopes (${grantedList}) do appear to cover ${interaction} access to ` +
                       `${resourceType}, so the server is refusing the request for another reason`
@@ -107,7 +107,7 @@ function checkStatusCode(
                       `or the SMART v1 \`patient/${resourceType}.read\`)`
             }.`,
             'ERROR',
-            { hl7: hl7Refs.httpApi },
+            [hl7Refs.httpApi],
         )
     }
 
@@ -116,13 +116,13 @@ function checkStatusCode(
             `${label} ${call} returned ${response.status}; FHIR R4 requires ${expectedStatus} for a ` +
                 `successful ${interaction} interaction.`,
             'ERROR',
-            { hl7: hl7Refs.httpApi },
+            [hl7Refs.httpApi],
         )
     }
 
-    return validation(`${label} ${call} returned ${expectedStatus} as FHIR R4 requires.`, 'OK', {
-        hl7: hl7Refs.httpApi,
-    })
+    return validation(`${label} ${call} returned ${expectedStatus} as FHIR R4 requires.`, 'OK', [
+        hl7Refs.httpApi,
+    ])
 }
 
 function checkContentType(response: RecordedResponse, url: string, label: string): Validation {
@@ -134,7 +134,7 @@ function checkContentType(response: RecordedResponse, url: string, label: string
         return validation(
             `${label} ${call} returned \`Content-Type: application/fhir+json\` as FHIR R4 requires.`,
             'OK',
-            { hl7: hl7Refs.httpApi },
+            [hl7Refs.httpApi],
         )
     }
 
@@ -143,7 +143,7 @@ function checkContentType(response: RecordedResponse, url: string, label: string
             `${label} ${call} returned \`Content-Type: application/json\` instead of the FHIR-specific ` +
                 '`application/fhir+json`; FHIR R4 requires the latter.',
             'WARNING',
-            { hl7: hl7Refs.httpApi },
+            [hl7Refs.httpApi],
         )
     }
 
@@ -151,7 +151,7 @@ function checkContentType(response: RecordedResponse, url: string, label: string
         `${label} ${call} returned \`Content-Type: ${raw ?? '(missing)'}\` instead of ` +
             '`application/fhir+json` as FHIR R4 requires.',
         'ERROR',
-        { hl7: hl7Refs.httpApi },
+        [hl7Refs.httpApi],
     )
 }
 
@@ -179,7 +179,7 @@ export function operationOutcomeFindings(outcome: OperationOutcome, url: string)
                 `\`GET ${url}\` returned an OperationOutcome with no issues, which is itself malformed ` +
                     '(OperationOutcome.issue has a minimum cardinality of 1).',
                 'ERROR',
-                { hl7: hl7Refs.httpApi },
+                [hl7Refs.httpApi],
             ),
         ]
     }
@@ -190,7 +190,7 @@ export function operationOutcomeFindings(outcome: OperationOutcome, url: string)
         return validation(
             `\`GET ${url}\` returned an OperationOutcome (${issue.severity}/${issue.code})${diagnostics}`,
             issueSeverity(issue.severity),
-            { hl7: hl7Refs.httpApi },
+            [hl7Refs.httpApi],
         )
     })
 }
@@ -255,7 +255,7 @@ export function interpretRead<T extends FhirResource>(
             validation(
                 `\`GET ${url}\` did not return a ${resourceType} resource (got ${describeUnexpectedBody(response.body)}).`,
                 'ERROR',
-                { hl7: hl7Refs.httpApi },
+                [hl7Refs.httpApi],
             ),
         )
         return { validations, resource: null }
@@ -333,7 +333,7 @@ export function interpretSearch<T extends FhirResource>(
                 `\`GET ${url}\` did not return a searchset Bundle (got ${describeUnexpectedBody(body)}); ` +
                     'FHIR R4 requires a Bundle of type `searchset` in response to a search interaction.',
                 'ERROR',
-                { hl7: hl7Refs.search },
+                [hl7Refs.search],
             ),
         )
         return { validations, entries: [], total: null }
@@ -344,9 +344,7 @@ export function interpretSearch<T extends FhirResource>(
     const total = typeof bundle.total === 'number' ? bundle.total : entries.length
 
     validations.push(
-        validation(`\`GET ${url}\` returned a searchset Bundle with total ${total}.`, 'OK', {
-            hl7: hl7Refs.search,
-        }),
+        validation(`\`GET ${url}\` returned a searchset Bundle with total ${total}.`, 'OK', [hl7Refs.search]),
     )
 
     if (expectUnique && total > 1) {
@@ -355,7 +353,7 @@ export function interpretSearch<T extends FhirResource>(
                 `\`GET ${url}\` returned ${total} matches, but this search is expected to identify a single ` +
                     'resource from launch context.',
                 'WARNING',
-                { hl7: hl7Refs.search },
+                [hl7Refs.search],
             ),
         )
     }

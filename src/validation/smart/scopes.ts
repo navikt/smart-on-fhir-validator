@@ -3,27 +3,47 @@
  * granular clinical scopes (CRUDS letters, optionally with a `?` query), context/identity/refresh
  * scopes, and the v1<->v2 permission equivalence the spec defines between them.
  *
- * @see https://build.fhir.org/ig/HL7/smart-app-launch/scopes-and-launch-context.html
+ * @see https://hl7.org/fhir/smart-app-launch/STU2.2/scopes-and-launch-context.html
  */
 
 import type { SmartConfiguration } from '#core/smart/types'
 import { parseCapabilities } from '#validation/smart/capabilities'
-import type { RefTypes } from '#validation/common-refs'
+import type { RefTypes, SpecRef } from '#validation/common-refs'
 import { navRefs } from '#validation/common-refs'
 import { validation, type Validation } from '#validation/validation'
 
-const scopesUrl = 'https://build.fhir.org/ig/HL7/smart-app-launch/scopes-and-launch-context.html'
+const scopesUrl = 'https://hl7.org/fhir/smart-app-launch/STU2.2/scopes-and-launch-context.html'
 
 const refs = {
-    clinicalScopes: { hl7: `${scopesUrl}#clinical-scope-syntax` },
-    v1v2: { hl7: `${scopesUrl}#scopes-for-smart-v1-and-v2-compatibility` },
-    contextScopes: { hl7: `${scopesUrl}#context-scopes` },
-    identityScopes: { hl7: `${scopesUrl}#scopes-for-requesting-identity-data` },
-    refreshScopes: { hl7: `${scopesUrl}#scopes-for-obtaining-refresh-tokens` },
+    clinicalScopes: {
+        authority: 'smart',
+        cite: 'SMART App Launch 2.2 §FHIR Resource Scope Syntax',
+        href: `${scopesUrl}#fhir-resource-scope-syntax`,
+    },
+    v1v2: {
+        authority: 'smart',
+        cite: 'SMART App Launch 2.2 §Scope Equivalence',
+        href: `${scopesUrl}#scope-equivalence`,
+    },
+    contextScopes: {
+        authority: 'smart',
+        cite: 'SMART App Launch 2.2 §Scopes for requesting context data',
+        href: `${scopesUrl}#scopes-for-requesting-context-data`,
+    },
+    identityScopes: {
+        authority: 'smart',
+        cite: 'SMART App Launch 2.2 §Scopes for requesting identity data',
+        href: `${scopesUrl}#scopes-for-requesting-identity-data`,
+    },
+    refreshScopes: {
+        authority: 'smart',
+        cite: 'SMART App Launch 2.2 §Scopes for requesting a refresh token',
+        href: `${scopesUrl}#scopes-for-requesting-a-refresh-token`,
+    },
     /** https://hl7.org/fhir/security.html — "least privilege" / servers should not over-grant. */
-    security: { hl7: 'https://hl7.org/fhir/security.html' },
-    navScopes: { nav: navRefs.smartGettingStarted },
-} satisfies Record<string, RefTypes>
+    security: { authority: 'fhir', cite: 'FHIR §Security', href: 'https://hl7.org/fhir/security.html' },
+    navScopes: navRefs.smartGettingStarted,
+} satisfies Record<string, SpecRef>
 
 export type ScopeCompartment = 'patient' | 'user' | 'system'
 export type ContextScopeValue = 'launch' | 'launch/patient' | 'launch/encounter'
@@ -291,15 +311,15 @@ function describeScope(scope: ParsedScope): string {
 function refsFor(scope: ParsedScope): RefTypes {
     switch (scope.kind) {
         case 'clinical':
-            return refs.clinicalScopes
+            return [refs.clinicalScopes]
         case 'context':
-            return refs.contextScopes
+            return [refs.contextScopes]
         case 'identity':
-            return refs.identityScopes
+            return [refs.identityScopes]
         case 'refresh':
-            return refs.refreshScopes
+            return [refs.refreshScopes]
         default:
-            return refs.clinicalScopes
+            return [refs.clinicalScopes]
     }
 }
 
@@ -331,7 +351,7 @@ export function validateScopes(options: ValidateScopesOptions): Validation[] {
                 validation(
                     `The requested scope ${describeScope(scope)} is malformed: ${scope.reason}.`,
                     'ERROR',
-                    refs.clinicalScopes,
+                    [refs.clinicalScopes],
                 ),
             )
             continue
@@ -352,7 +372,7 @@ export function validateScopes(options: ValidateScopesOptions): Validation[] {
                     `The scope ${describeScope(scope)} lists CRUDS letters out of canonical order or ` +
                         `with duplicates; SMART v2 requires the order c, r, u, d, s (got \`${scope.permission}\`).`,
                     'WARNING',
-                    refs.v1v2,
+                    [refs.v1v2],
                 ),
             )
         }
@@ -381,7 +401,7 @@ export function validateScopes(options: ValidateScopesOptions): Validation[] {
                     validation(
                         `${message} Nav requires this scope to be granted for its sykmelding pre-fill flow.`,
                         'ERROR',
-                        { ...refsFor(entry.requested), nav: navRefs.smartGettingStarted },
+                        [...refsFor(entry.requested), navRefs.smartGettingStarted],
                     ),
                 )
             } else {
@@ -406,11 +426,11 @@ export function validateScopes(options: ValidateScopesOptions): Validation[] {
                     validation(
                         `${message} Nav depends on this access for its sykmelding pre-fill flow.`,
                         'ERROR',
-                        { ...refs.v1v2, nav: navRefs.smartGettingStarted },
+                        [refs.v1v2, navRefs.smartGettingStarted],
                     ),
                 )
             } else {
-                results.push(validation(message, 'WARNING', refs.v1v2))
+                results.push(validation(message, 'WARNING', [refs.v1v2]))
             }
         }
 
@@ -425,7 +445,7 @@ export function validateScopes(options: ValidateScopesOptions): Validation[] {
                                 `\`${granted.permission}\` (v1 syntax); this is a legitimate v1-only server, but the ` +
                                 'app should treat the granted permission as v1.',
                             'INFO',
-                            refs.v1v2,
+                            [refs.v1v2],
                         ),
                     )
                 } else {
@@ -453,9 +473,9 @@ export function validateScopes(options: ValidateScopesOptions): Validation[] {
                 validation(
                     `Scope ${describeScope(entry.granted)} was granted with extra permissions ` +
                         `(\`${entry.extraCruds}\`) beyond what was requested; a server granting more than asked ` +
-                        'is a security smell — least privilege should be preferred.',
+                        'is a security smell. Least privilege should be preferred.',
                     'WARNING',
-                    refs.security,
+                    [refs.security],
                 ),
             )
         }
@@ -464,9 +484,9 @@ export function validateScopes(options: ValidateScopesOptions): Validation[] {
             results.push(
                 validation(
                     `Scope ${describeScope(entry.granted)} was granted but never requested; a server granting ` +
-                        'more than asked is a security smell — least privilege should be preferred.',
+                        'more than asked is a security smell. Least privilege should be preferred.',
                     'WARNING',
-                    refs.security,
+                    [refs.security],
                 ),
             )
         }
@@ -478,7 +498,7 @@ export function validateScopes(options: ValidateScopesOptions): Validation[] {
                 'The server granted scopes using SMART v1 syntax (`read`/`write`/`*`) without advertising ' +
                     'the `permission-v1` capability in its SMART configuration.',
                 'WARNING',
-                refs.v1v2,
+                [refs.v1v2],
             ),
         )
     }
@@ -488,7 +508,7 @@ export function validateScopes(options: ValidateScopesOptions): Validation[] {
                 'The server granted scopes using SMART v2 granular syntax (CRUDS letters) without ' +
                     'advertising the `permission-v2` capability in its SMART configuration.',
                 'WARNING',
-                refs.v1v2,
+                [refs.v1v2],
             ),
         )
     }

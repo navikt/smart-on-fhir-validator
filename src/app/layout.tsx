@@ -12,8 +12,8 @@ export const metadata: Metadata = {
 
 export default function RootLayout({ children }: LayoutProps<'/'>): ReactElement {
     return (
-        <html lang="en" className="h-full antialiased">
-            <body className="flex min-h-full flex-col bg-neutral-50 text-neutral-900">
+        <html lang="en" className="antialiased">
+            <body className="bg-ax-bg-default text-ax-text-neutral">
                 <SiteHeader />
                 {children}
             </body>

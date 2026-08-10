@@ -8,24 +8,32 @@ const VERDICT_LABEL: Record<Verdict, string> = {
     'pass-with-warnings': 'Pass, with warnings',
     fail: 'Fail',
     // Deliberately not worded as any kind of pass: some checks could not run at all, so general
-    // conformance was never fully demonstrated. See `summarize` in `#core/run/report`.
-    skipped: 'Incomplete — some checks could not run',
+    // conformance was never fully demonstrated. Which checks, and how many, is stated by
+    // `verdictSentence` directly beneath. See `summarize` in `#core/run/report`.
+    skipped: 'Incomplete',
 }
 
+/**
+ * `skipped` gets a dashed neutral border and no status hue at all — never green, never any
+ * colour that could read as a soft pass. Dashed is the same "we don't know" language used by
+ * `SectionStatusBadge`'s `skipped` state, kept visually distinct from every state that does
+ * carry a verdict.
+ */
 const VERDICT_CLASSES: Record<Verdict, string> = {
-    pass: 'border-green-400 bg-green-50 text-green-900',
-    'pass-with-warnings': 'border-amber-400 bg-amber-50 text-amber-900',
-    fail: 'border-red-400 bg-red-50 text-red-900',
-    skipped: 'border-dashed border-neutral-400 bg-neutral-50 text-neutral-800',
+    pass: 'border-ax-border-success bg-ax-bg-success-soft text-ax-text-success',
+    'pass-with-warnings': 'border-ax-border-warning bg-ax-bg-warning-soft text-ax-text-warning',
+    fail: 'border-ax-border-danger bg-ax-bg-danger-soft text-ax-text-danger',
+    skipped: 'border-dashed border-ax-border-neutral bg-ax-bg-neutral-soft text-ax-text-neutral',
 }
 
-export function VerdictBanner({ verdict }: { verdict: Verdict }): ReactElement {
+export function VerdictBanner({ verdict, sentence }: { verdict: Verdict; sentence: string }): ReactElement {
     return (
-        <div
-            role="status"
-            className={clsx('rounded-lg border-2 px-5 py-4 text-lg font-semibold', VERDICT_CLASSES[verdict])}
-        >
-            {VERDICT_LABEL[verdict]}
+        <div role="status" className={clsx('rounded border border-l-8 px-6 py-5', VERDICT_CLASSES[verdict])}>
+            <p className="text-13 font-bold tracking-eyebrow text-ax-text-neutral-subtle uppercase">
+                Verdict
+            </p>
+            <h1 className="text-34 mt-1 font-bold">{VERDICT_LABEL[verdict]}</h1>
+            <p className="text-17 mt-2 max-w-[70ch]">{sentence}</p>
         </div>
     )
 }

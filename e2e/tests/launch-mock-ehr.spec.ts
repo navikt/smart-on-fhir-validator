@@ -109,7 +109,9 @@ test.describe('landing → launch against the mock EHR → report', () => {
     test('the landing page explains the tool and offers a mock-EHR launch', async ({ page }) => {
         await page.goto('/')
 
-        await expect(page.getByRole('heading', { name: 'What this tool does' })).toBeVisible()
+        await expect(
+            page.getByRole('heading', { name: 'Check your SMART on FHIR implementation' }),
+        ).toBeVisible()
         await expect(page.getByRole('link', { name: 'Launch the mock EHR' })).toBeVisible()
     })
 
@@ -140,14 +142,29 @@ test.describe('landing → launch against the mock EHR → report', () => {
         // exhaustively, across every exchange, by the JSON download's recursive check further
         // down — not by this rendered-HTML sample. Expanding one is enough to prove the browser
         // affordance itself (collapsed → visible) is real.
-        const requestSection = page.locator('section[aria-label="Request"]').first()
-        const responseSection = page.locator('section[aria-label="Response"]').first()
+        //
+        // A non-`failed` `SectionCard` collapses its findings behind its own `<details>` (see
+        // "Default expansion" in the report page's design), so an evidence panel may itself sit
+        // inside an already-collapsed section disclosure. Those section-level disclosures are
+        // the *direct* `<details>` children of a `SectionCard`'s body (one level up from the
+        // `<li>`/finding an evidence panel's own `<details>` sits inside), so opening every one
+        // of them first makes every evidence panel on the page reachable, regardless of which
+        // section happens to render first.
+        for (const sectionDisclosure of await page.locator('article > div > details').all()) {
+            await sectionDisclosure.locator('> summary').click()
+        }
+
+        const firstEvidence = page
+            .locator('details:has(> summary:has-text("Evidence, HTTP request and response"))')
+            .first()
+        const requestSection = firstEvidence.locator('section[aria-label="Request"]')
+        const responseSection = firstEvidence.locator('section[aria-label="Response"]')
         await expect(requestSection).toBeHidden()
         await expect(responseSection).toBeHidden()
 
-        const summaries = page.locator('details > summary')
-        expect(await summaries.count()).toBeGreaterThan(0)
-        await summaries.first().click()
+        const evidenceSummaries = page.getByText('Evidence, HTTP request and response')
+        expect(await evidenceSummaries.count()).toBeGreaterThan(0)
+        await firstEvidence.locator('> summary').click()
 
         await expect(requestSection).toBeVisible()
         await expect(requestSection.getByText(/GET|POST|PUT/).first()).toBeVisible()

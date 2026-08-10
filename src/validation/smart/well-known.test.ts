@@ -69,9 +69,12 @@ describe('validateSmartConfiguration — fully conformant document', () => {
 
         expect(findings.length).toBeGreaterThan(0)
         for (const finding of findings) {
-            expect(finding.refs?.hl7).toMatch(
-                /^https:\/\/build\.fhir\.org\/ig\/HL7\/smart-app-launch\/conformance\.html#/,
-            )
+            expect(finding.refs?.length).toBeGreaterThan(0)
+            expect(
+                finding.refs?.every((r) =>
+                    r.href.startsWith('https://hl7.org/fhir/smart-app-launch/STU2.2/conformance.html#'),
+                ),
+            ).toBe(true)
         }
     })
 })

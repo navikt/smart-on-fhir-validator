@@ -14,28 +14,28 @@ function tryParseJson(text: string): unknown {
     }
 }
 
+const RAW_PRE_CLASSES =
+    'text-13 overflow-x-auto rounded-[3px] border border-ax-border-neutral-subtleA bg-ax-bg-neutral-soft p-3 leading-[1.6] whitespace-pre'
+
 function RequestBody({ body }: { body: string }): ReactElement {
     const parsed = tryParseJson(body)
     if (parsed !== undefined) return <JsonBlock value={parsed} />
 
-    return (
-        <pre className="overflow-x-auto rounded bg-neutral-50 p-2 text-xs break-all whitespace-pre-wrap">
-            {body}
-        </pre>
-    )
+    return <pre className={RAW_PRE_CLASSES}>{body}</pre>
 }
 
 function ResponseBody({ body }: { body: unknown }): ReactElement {
-    if (body === null) return <p className="text-xs text-neutral-500 italic">Empty body</p>
-    if (typeof body === 'string') {
-        return (
-            <pre className="overflow-x-auto rounded bg-neutral-50 p-2 text-xs break-all whitespace-pre-wrap">
-                {body}
-            </pre>
-        )
-    }
+    if (body === null) return <p className="text-13 text-ax-text-neutral-subtle italic">Empty body</p>
+    if (typeof body === 'string') return <pre className={RAW_PRE_CLASSES}>{body}</pre>
 
     return <JsonBlock value={body} />
+}
+
+function statusColorClass(status: number): string {
+    if (status >= 200 && status < 300) return 'text-ax-text-success'
+    if (status >= 400) return 'text-ax-text-danger'
+
+    return 'text-ax-text-neutral'
 }
 
 /**
@@ -47,16 +47,16 @@ function ResponseBody({ body }: { body: unknown }): ReactElement {
  */
 export function ExchangePanel({ exchange }: { exchange: HttpExchange }): ReactElement {
     return (
-        <details className="rounded border border-neutral-300">
-            <summary className="cursor-pointer bg-neutral-50 px-3 py-2 text-sm font-medium select-none">
-                Evidence: <span className="font-mono">{exchange.request.method}</span>{' '}
-                <span className="font-mono break-all">{exchange.request.url}</span>
-                {exchange.response && <> → HTTP {exchange.response.status}</>}
-                {exchange.error && <> → transport error</>}
+        <details className="rounded border border-ax-border-neutral-subtle bg-ax-bg-neutral-soft">
+            <summary className="text-15 flex min-h-11 cursor-pointer list-none items-center justify-between gap-3 px-3.5 py-2.5 font-semibold [&::-webkit-details-marker]:hidden">
+                <span>Evidence, HTTP request and response</span>
+                <span className="text-13 font-mono font-normal whitespace-nowrap">
+                    {exchange.durationMs} ms
+                </span>
             </summary>
-            <div className="space-y-4 border-t border-neutral-200 p-3">
+            <div className="flex flex-col gap-3.5 border-t border-ax-border-neutral-subtle bg-white p-3.5">
                 <section aria-label="Request">
-                    <h4 className="mb-1 text-xs font-semibold tracking-wide text-neutral-500 uppercase">
+                    <h4 className="text-12 tracking-eyebrow text-ax-text-neutral-subtle mb-1 font-bold uppercase">
                         Request
                     </h4>
                     <p className="mb-2 font-mono text-xs break-all">
@@ -71,29 +71,29 @@ export function ExchangePanel({ exchange }: { exchange: HttpExchange }): ReactEl
                 </section>
 
                 <section aria-label="Response">
-                    <h4 className="mb-1 text-xs font-semibold tracking-wide text-neutral-500 uppercase">
+                    <h4 className="text-12 tracking-eyebrow text-ax-text-neutral-subtle mb-1 font-bold uppercase">
                         Response
+                        {exchange.response && (
+                            <span
+                                className={`ml-2 normal-case ${statusColorClass(exchange.response.status)}`}
+                            >
+                                HTTP {exchange.response.status} {exchange.response.statusText}
+                            </span>
+                        )}
                     </h4>
                     {exchange.response ? (
                         <>
-                            <p className="mb-2 font-mono text-xs">
-                                HTTP {exchange.response.status} {exchange.response.statusText}
-                            </p>
                             <HeadersTable headers={exchange.response.headers} />
                             <div className="mt-2">
                                 <ResponseBody body={exchange.response.body} />
                             </div>
                         </>
                     ) : (
-                        <p className="text-xs text-red-800">
+                        <p className="text-14 text-ax-text-danger">
                             No response was received: <span className="font-mono">{exchange.error}</span>
                         </p>
                     )}
                 </section>
-
-                <p className="text-xs text-neutral-500">
-                    Started {exchange.startedAt} · took {exchange.durationMs}ms
-                </p>
             </div>
         </details>
     )

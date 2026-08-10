@@ -5,13 +5,13 @@
 
 ## 1. What this is
 
-This is a web app that your EHR launches using a standard [SMART App Launch](https://build.fhir.org/ig/HL7/smart-app-launch/app-launch.html)
-EHR launch — the same way it would launch any other SMART app. Instead of showing a clinician a
+This is a web app that your EHR launches using a standard [SMART App Launch](https://hl7.org/fhir/smart-app-launch/STU2.2/app-launch.html)
+EHR launch, the same way it would launch any other SMART app. Instead of showing a clinician a
 UI, it exercises your SMART and FHIR implementation (discovery, authorization, tokens, and a set
 of FHIR reads and writes) and produces a **validation report**: what conforms, what does not, and
 the exact HTTP request/response evidence behind every finding. It checks both the
-[SMART App Launch](https://build.fhir.org/ig/HL7/smart-app-launch/) / [FHIR R4](https://hl7.org/fhir/R4/)
-specifications and Nav's own requirements for the electronic sick-leave flow ("sykmelding") — Nav
+[SMART App Launch](https://hl7.org/fhir/smart-app-launch/STU2.2/) / [FHIR R4](https://hl7.org/fhir/R4/)
+specifications and Nav's own requirements for the electronic sick-leave flow ("sykmelding"). Nav
 is the Norwegian Labour and Welfare Administration (Arbeids- og velferdsetaten).
 
 It validates against **SMART App Launch 2.2.0** and **FHIR R4**, the versions Nav requires (see
@@ -25,13 +25,13 @@ Every row below is a section in the generated report. "Nav requires" follows Nav
 
 | Report section                                          | Checks                                                                                                                                                                        | Spec                                                                                                                                                                                                                 | Nav requires |
 |---------------------------------------------------------|-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|--------------|
-| SMART Discovery (`.well-known/smart-configuration`)     | Required/conditional/recommended metadata fields present, endpoints are absolute URLs, PKCE `S256` supported and `plain` rejected                                             | [SMART conformance §metadata](https://build.fhir.org/ig/HL7/smart-app-launch/conformance.html#metadata)                                                                                                              | Må           |
-| SMART Capabilities                                      | Advertised `capabilities` satisfy the "Clinician Access for EHR Launch" capability set, `permission-v2` supported                                                             | [SMART conformance §capabilities](https://build.fhir.org/ig/HL7/smart-app-launch/conformance.html#capabilities)                                                                                                      | Må           |
+| SMART Discovery (`.well-known/smart-configuration`)     | Required/conditional/recommended metadata fields present, endpoints are absolute URLs, PKCE `S256` supported and `plain` rejected                                             | [SMART conformance §metadata](https://hl7.org/fhir/smart-app-launch/STU2.2/conformance.html#metadata)                                                                                                              | Må           |
+| SMART Capabilities                                      | Advertised `capabilities` satisfy the "Clinician Access for EHR Launch" capability set, `permission-v2` supported                                                             | [SMART conformance §capabilities](https://hl7.org/fhir/smart-app-launch/STU2.2/conformance.html#capabilities)                                                                                                      | Må           |
 | FHIR Capability Statement (`GET /metadata`)             | Server declares FHIR version R4                                                                                                                                               | [FHIR directory](https://hl7.org/fhir/directory.html)                                                                                                                                                                | Må           |
-| Authorization server `aud` enforcement                  | Server rejects an authorization request whose `aud` does not match the FHIR base URL                                                                                          | [SMART app launch](https://build.fhir.org/ig/HL7/smart-app-launch/app-launch.html)                                                                                                                                   | Må           |
-| Token Response                                          | `scope`, `patient`, `encounter`, `fhirUser`, `refresh_token` present as the granted scopes require                                                                            | [Scopes and launch context](https://build.fhir.org/ig/HL7/smart-app-launch/scopes-and-launch-context.html)                                                                                                           | Må / Bør     |
-| ID Token                                                | Signature verifies against the issuer's `jwks_uri`; `fhirUser`/`profile` claim present when requested                                                                         | [Scopes and launch context §identity](https://build.fhir.org/ig/HL7/smart-app-launch/scopes-and-launch-context.html#scopes-for-requesting-identity-data)                                                             | Må           |
-| Scopes                                                  | Granted scopes cover Nav's required set (`openid fhirUser launch patient/Patient.read patient/Encounter.read patient/DocumentReference.read patient/DocumentReference.write`) | [Scope syntax](https://build.fhir.org/ig/HL7/smart-app-launch/scopes-and-launch-context.html#fhir-resource-scope-syntax)                                                                                             | Må           |
+| Authorization server `aud` enforcement                  | Server rejects an authorization request whose `aud` does not match the FHIR base URL                                                                                          | [SMART app launch](https://hl7.org/fhir/smart-app-launch/STU2.2/app-launch.html)                                                                                                                                   | Må           |
+| Token Response                                          | `scope`, `patient`, `encounter`, `fhirUser`, `refresh_token` present as the granted scopes require                                                                            | [Scopes and launch context](https://hl7.org/fhir/smart-app-launch/STU2.2/scopes-and-launch-context.html)                                                                                                           | Må / Bør     |
+| ID Token                                                | Signature verifies against the issuer's `jwks_uri`; `fhirUser`/`profile` claim present when requested                                                                         | [Scopes and launch context §identity](https://hl7.org/fhir/smart-app-launch/STU2.2/scopes-and-launch-context.html#scopes-for-requesting-identity-data)                                                             | Må           |
+| Scopes                                                  | Granted scopes cover Nav's required set (`openid fhirUser launch patient/Patient.read patient/Encounter.read patient/DocumentReference.read patient/DocumentReference.write`) | [Scope syntax](https://hl7.org/fhir/smart-app-launch/STU2.2/scopes-and-launch-context.html#fhir-resource-scope-syntax)                                                                                             | Må           |
 | Launch Context                                          | `patient`/`encounter` ids and a Practitioner-typed `fhirUser` are usable                                                                                                      | —                                                                                                                                                                                                                    | Må           |
 | Patient                                                 | Readable by launch-context id; `no-basis-Patient` profile; fødselsnummer or D-nummer identifier                                                                               | [patient.md](https://github.com/navikt/syk-inn/blob/main/docs/fhir/patient.md)                                                                                                                                       | Må           |
 | Practitioner                                            | Readable by the id in `fhirUser`; `no-basis-Practitioner` profile; HPR-nummer identifier                                                                                      | [practitioner.md](https://github.com/navikt/syk-inn/blob/main/docs/fhir/practitioner.md)                                                                                                                             | Må           |
@@ -39,19 +39,20 @@ Every row below is a section in the generated report. "Nav requires" follows Nav
 | Organization                                            | Readable via the reference discovered from `PractitionerRole.organization`; `no-basis-Organization` profile; organisasjonsnummer, phone                                       | [organization.md](https://github.com/navikt/syk-inn/blob/main/docs/fhir/organization.md)                                                                                                                             | Må           |
 | Encounter                                               | Readable by launch-context id and searchable by `subject=`; `serviceProvider`, `participant` references                                                                       | [encounter.md](https://github.com/navikt/syk-inn/blob/main/docs/fhir/encounter.md)                                                                                                                                   | Må           |
 | Condition                                               | Searchable by `subject=`; code from ICD-10, ICPC-2 or ICPC-2B                                                                                                                 | [condition.md](https://github.com/navikt/syk-inn/blob/main/docs/fhir/condition.md)                                                                                                                                   | Bør          |
-| Write DocumentReference (inline PDF / Binary reference) | Idempotent `PUT` upsert, round-trip read-back, searchable by `subject=` and `encounter=`                                                                                      | [document-reference.md](https://github.com/navikt/syk-inn/blob/main/docs/fhir/document-reference.md)                                                                                                                 | Må           |
+| Write DocumentReference with inline base64 PDF (mechanism 1) | Idempotent `PUT` upsert, round-trip read-back, searchable by `subject=` and `encounter=`                                                                                      | [document-reference.md](https://github.com/navikt/syk-inn/blob/main/docs/fhir/document-reference.md)                                                                                                                 | Må           |
+| Write Binary, then DocumentReference referencing it (mechanism 2) | Idempotent `PUT` upsert, round-trip read-back, searchable by `subject=` and `encounter=`                                                                                      | [document-reference.md](https://github.com/navikt/syk-inn/blob/main/docs/fhir/document-reference.md)                                                                                                                 | Må           |
 | Write Binary                                            | `POST` accepted both as a FHIR-JSON resource and as a raw-body upload                                                                                                         | [nav-requirements.md](https://github.com/navikt/syk-inn/blob/main/docs/fhir/nav-requirements.md)                                                                                                                     | Må           |
 | Write QuestionnaireResponse                             | Idempotent `PUT` upsert against Nav's canonical Questionnaire, searchable by `subject=`/`encounter=`                                                                          | [questionnaire-response.md](https://github.com/navikt/syk-inn/blob/main/docs/fhir/questionnaire-response.md)                                                                                                         | Bør          |
 | Submit batch Bundle                                     | `POST` of a `batch` (not `transaction`) Bundle containing both resources above                                                                                                | [bundle.md](https://github.com/navikt/syk-inn/blob/main/docs/fhir/bundle.md), [ADR01](https://github.com/navikt/syk-inn/blob/main/docs/adr/ADR01%20-%20FHIR%20resources%20for%20writing%20data%20back%20to%20EHR.md) | Bør          |
 
-## 3. Get your EHR validated — 4 steps
+## 3. Get your EHR validated, in 4 steps
 
 1. **Register the app** with your authorization server (see [§4](#4-registering-the-app)), or expose a
    `registration_endpoint` in your `.well-known/smart-configuration` so this app can register itself.
-2. **Tell us your endpoints** — your FHIR base URL (the `iss` a launch will supply) and, if you use
+2. **Tell us your endpoints.** Your FHIR base URL (the `iss` a launch will supply) and, if you use
    static registration instead of dynamic registration, your issuer/client id.
 3. **Launch from your EHR** by configuring its SMART launch URL to point at this app's `/launch`.
-4. **Read the report** — the browser is redirected to `/report` automatically once the launch and
+4. **Read the report.** The browser is redirected to `/report` automatically once the launch and
    every check complete.
 
 ## 4. Registering the app
@@ -67,7 +68,7 @@ In Nav's dev environment, `{this app's origin}` is `https://nav-on-fhir.ekstern.
 it is `http://localhost:3000`.
 
 A vendor whose authorization server grants a narrower set of scopes than requested is not
-penalised for it — the report's Scopes and Launch Context sections check what was actually
+penalised for it: the report's Scopes and Launch Context sections check what was actually
 granted, not what was asked for.
 
 ### Client authentication
@@ -75,16 +76,16 @@ granted, not what was asked for.
 This app supports all three SMART client-authentication types. Configure your issuer under
 `SMART_ISSUERS` (a JSON array environment variable, see `src/core/config/issuers.ts`):
 
-**Public (PKCE)** — `authType: "public"`. No client secret. `client_id` travels in the token
+**Public (PKCE)**: `authType: "public"`. No client secret. `client_id` travels in the token
 request body; PKCE (`S256`) is the only replay protection.
 
-**Symmetric** (`client_secret_basic` or `client_secret_post`) — `authType: "symmetric"`, with a
+**Symmetric** (`client_secret_basic` or `client_secret_post`): `authType: "symmetric"`, with a
 `clientSecretEnv` naming the environment variable that holds the secret. The secret itself is
 never written into configuration, only referenced by variable name.
 
-**Asymmetric** (`private_key_jwt`) — `authType: "asymmetric"`, with a `privateKeyJwkEnv` naming the
+**Asymmetric** (`private_key_jwt`): `authType: "asymmetric"`, with a `privateKeyJwkEnv` naming the
 environment variable holding this app's own private key (`RS384` or `ES384`). Register this app's
-JWKS URL — `/.well-known/jwks.json` — rather than a static key, so a key rotation does not require
+JWKS URL (`/.well-known/jwks.json`) rather than a static key, so a key rotation does not require
 you to re-register anything.
 
 ### Dynamic Client Registration (zero-config)
@@ -108,13 +109,13 @@ Every finding has a severity:
 
 Sections roll findings up into a status: **Passed**, **Passed with warnings**, **Failed**, or
 **Not tested**. "Not tested" (`skipped`) is its own status, never folded into a pass: it means a
-check could not run at all — for example, the FHIR read probes need a `patient` id from launch
+check could not run at all. For example, the FHIR read probes need a `patient` id from launch
 context, so if your token response omits one, every probe that depends on it is reported as "Not
 tested", not "Passed". A report is never a plain pass while anything in it is "Not tested".
 
 Every finding cites the exact spec paragraph it checks (HL7, the Norwegian `no-basis` profiles on
 Simplifier, and/or Nav's own docs) and can be expanded to show the raw HTTP request and response
-that produced it — real evidence, not just a claim. The mock EHR ([§8](#8-running-it-locally)) is
+that produced it, so every finding can be reproduced independently. The mock EHR ([§8](#8-running-it-locally)) is
 conformant by default, but it can also simulate a specific non-conformance (see
 `src/mocks/defects.ts`) so you can see what a failure looks like before you ever touch a real
 server:
@@ -129,7 +130,7 @@ Launching against that mock and re-running the report produces:
 ERROR  Organization/organization-magnar-legekontor has no identifier from the organisasjonsnummer/ENH
        system `urn:oid:2.16.578.1.12.4.1.4.101`; Nav uses this to identify the sykmelder's organisation.
    ↳ GET http://localhost:3000/api/mocks/fhir/Organization/organization-magnar-legekontor
-     200 OK — Organization
+     200 OK  Organization
      {
        "resourceType": "Organization",
        "id": "organization-magnar-legekontor",
@@ -139,17 +140,17 @@ ERROR  Organization/organization-magnar-legekontor has no identifier from the or
      }
 ```
 
-The request/response pair above is the actual `HttpExchange` this app recorded — the same JSON you
+The request/response pair above is the actual `HttpExchange` this app recorded: the same JSON you
 would see by expanding this finding in the browser or in the downloaded report.
 
 The full report is also downloadable as JSON (a "Download full report as JSON" link on the report
-page, or `GET /report/download`) — useful to attach verbatim to a support ticket.
+page, or `GET /report/download`), which can be attached verbatim to a support ticket.
 
 ## 6. Requirements checklist
 
 ### Read (pre-filling a sykmelding from your EHR)
 
-Every resource below must be reachable using **only** the ids the launch itself hands over — the
+Every resource below must be reachable using **only** the ids the launch itself hands over: the
 `patient`/`encounter` token-response parameters and the `fhirUser` id_token claim. If a resource
 can only be found some other way (a hardcoded id, a separate lookup UI), Nav cannot pre-fill from
 it.
@@ -163,7 +164,7 @@ it.
 | Encounter        | `GET [base]/Encounter/{encounter-id-from-launch}` and `GET [base]/Encounter?subject=Patient/{id}` | —                                                                                             |
 | Condition (Bør)  | `GET [base]/Condition?subject=Patient/{id}`                                                       | ICD-10 (`.7110`), ICPC-2 (`.7170`) or ICPC-2B (`.7171`)                                       |
 
-Diagnosis and document-type codes use OIDs under Helsedirektoratet's `2.16.578.1.12.4.1` arc — see
+Diagnosis and document-type codes use OIDs under Helsedirektoratet's `2.16.578.1.12.4.1` arc. See
 [nav-requirements.md §Kodeverk](https://github.com/navikt/syk-inn/blob/main/docs/fhir/nav-requirements.md#kodeverk)
 for the full table.
 
@@ -171,16 +172,16 @@ for the full table.
 
 | Resource                                | Mechanism                                                                                                                                                                                                                                                                                                                                                                                       | Nav requires |
 |-----------------------------------------|-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|--------------|
-| DocumentReference (the PDF)             | `PUT [base]/DocumentReference/{sykmelding-id}` — client-assigned id, idempotent upsert. Content either inline base64 (`content[0].attachment.data`) or by reference to a `Binary` (`content[0].attachment.url`). Must declare `type.coding` with system `urn:oid:2.16.578.1.12.4.1.1.9602` code `J01-2` ("Sykmeldinger og trygdesaker"), and must be searchable by `subject=` and `encounter=`. | Må           |
+| DocumentReference (the PDF)             | `PUT [base]/DocumentReference/{sykmelding-id}` with a client-assigned id, idempotent upsert. Content either inline base64 (`content[0].attachment.data`) or by reference to a `Binary` (`content[0].attachment.url`). Must declare `type.coding` with system `urn:oid:2.16.578.1.12.4.1.1.9602` code `J01-2` ("Sykmeldinger og trygdesaker"), and must be searchable by `subject=` and `encounter=`. | Må           |
 | Binary (the PDF bytes)                  | `POST [base]/Binary`, accepted either as a FHIR-JSON resource or as a raw upload with the PDF's own `Content-Type`.                                                                                                                                                                                                                                                                             | Må           |
 | QuestionnaireResponse (structured data) | `PUT [base]/QuestionnaireResponse/{sykmelding-id}` (same id as the DocumentReference), referencing Nav's canonical Questionnaire (`https://www.nav.no/samarbeidspartner/sykmelding/fhir/R4/Questionnaire/V1`).                                                                                                                                                                                  | Bør          |
 | Bundle (both together)                  | `POST [base]/` (the FHIR base URL) with `Bundle.type = "batch"`, each entry a `PUT` to its own client-assigned id.                                                                                                                                                                                                                                                                              | Bør          |
 
-**Why `batch`, not `transaction`:** a `transaction` Bundle is atomic — if any entry fails, the FHIR
+**Why `batch`, not `transaction`:** a `transaction` Bundle is atomic: if any entry fails, the FHIR
 server rolls back everything, including entries that succeeded. Norwegian health institutions are
 under a legal duty to file the sykmelding PDF in the patient's journal
 ("journalføringsplikten"). If the structured `QuestionnaireResponse` entry failed inside an atomic
-`transaction`, that duty-bound `DocumentReference` would be rolled back too and never get filed —
+`transaction`, that duty-bound `DocumentReference` would be rolled back too and never get filed,
 even though the PDF write itself succeeded. A `batch` Bundle processes each entry independently:
 the DocumentReference is stored regardless of what happens to the QuestionnaireResponse. See
 [ADR01](https://github.com/navikt/syk-inn/blob/main/docs/adr/ADR01%20-%20FHIR%20resources%20for%20writing%20data%20back%20to%20EHR.md)
@@ -191,23 +192,23 @@ either resource exists on the server.
 
 ## 7. Troubleshooting
 
-These are real, checked failures — every row below is a validator this app actually runs (see
+These are real, checked failures. Every row below is a validator this app actually runs (see
 `src/mocks/defects.ts`, the catalogue of deliberate non-conformances this app's own test suite
 proves each validator detects).
 
 | Symptom                                                  | What the report says                                                                                                                                                | Fix                                                                          |
 |----------------------------------------------------------|---------------------------------------------------------------------------------------------------------------------------------------------------------------------|------------------------------------------------------------------------------|
 | `.well-known/smart-configuration` returns 404            | The launch fails before any report exists (`/launch/error`)                                                                                                         | Expose the well-known document at your FHIR base URL.                        |
-| `code_challenge_methods_supported` missing               | Discovery: `ERROR` — "`code_challenge_methods_supported` is missing"                                                                                                | Advertise it, including `S256`.                                              |
-| `code_challenge_methods_supported` includes `plain`      | Discovery: `ERROR` — "...includes `plain`, which SHALL NOT be supported"                                                                                            | Remove `plain`; only `S256` may be offered.                                  |
-| Authorization server does not enforce `aud`              | Authorization server `aud` enforcement: `ERROR` — "did NOT reject an authorization request whose `aud` parameter deliberately did not match"                        | Reject an authorize request whose `aud` does not equal your FHIR base URL.   |
-| `launch`/`launch/patient` scope not honoured             | Token Response: `ERROR` — "`patient` is missing from the token response, even though a `launch` or `launch/patient` scope was requested"; Launch Context: `WARNING` | Return `patient` in the token response when that scope was granted.          |
-| `fhirUser` (or `profile`) absent from the id_token       | ID Token: `ERROR` — "The id_token has neither a `fhirUser` nor a `profile` claim"                                                                                   | Add a `fhirUser` claim referencing the authenticated Practitioner.           |
-| id_token signed for the wrong audience or expired        | ID Token: `ERROR` — "...ERR_JWT_CLAIM_VALIDATION_FAILED" / "...ERR_JWT_EXPIRED"                                                                                     | Set `aud` to this app's `client_id` and a sane `exp`.                        |
-| A write-back resource isn't searchable by launch context | Write DocumentReference: `ERROR` — "A written DocumentReference must be findable by \"subject\""                                                                    | Implement `subject=`/`encounter=` search for the written resource type.      |
-| Server only accepts `transaction`, not `batch`           | Submit batch Bundle: `ERROR` — "This server only accepts transaction Bundles, not batch"                                                                            | Support `Bundle.type = "batch"` (see [§6](#6-requirements-checklist)).       |
-| `offline_access` requested but no `refresh_token` issued | Token Response: `WARNING` — "`refresh_token` is missing...even though `offline_access`"                                                                             | Issue a refresh token when `offline_access` is granted.                      |
-| Patient has no fødselsnummer/D-nummer identifier         | Patient: `ERROR` — no recognised identifier system                                                                                                                  | Add an `identifier` with system `urn:oid:2.16.578.1.12.4.1.4.1` (or `.4.2`). |
+| `code_challenge_methods_supported` missing               | Discovery: `ERROR`, "`code_challenge_methods_supported` is missing"                                                                                                | Advertise it, including `S256`.                                              |
+| `code_challenge_methods_supported` includes `plain`      | Discovery: `ERROR`, "...includes `plain`, which SHALL NOT be supported"                                                                                            | Remove `plain`; only `S256` may be offered.                                  |
+| Authorization server does not enforce `aud`              | Authorization server `aud` enforcement: `ERROR`, "did NOT reject an authorization request whose `aud` parameter deliberately did not match"                        | Reject an authorize request whose `aud` does not equal your FHIR base URL.   |
+| `launch`/`launch/patient` scope not honoured             | Token Response: `ERROR`, "`patient` is missing from the token response, even though a `launch` or `launch/patient` scope was requested"; Launch Context: `WARNING` | Return `patient` in the token response when that scope was granted.          |
+| `fhirUser` (or `profile`) absent from the id_token       | ID Token: `ERROR`, "The id_token has neither a `fhirUser` nor a `profile` claim"                                                                                   | Add a `fhirUser` claim referencing the authenticated Practitioner.           |
+| id_token signed for the wrong audience or expired        | ID Token: `ERROR`, "...ERR_JWT_CLAIM_VALIDATION_FAILED" / "...ERR_JWT_EXPIRED"                                                                                     | Set `aud` to this app's `client_id` and a sane `exp`.                        |
+| A write-back resource isn't searchable by launch context | Write DocumentReference: `ERROR`, "A written DocumentReference must be findable by \"subject\""                                                                    | Implement `subject=`/`encounter=` search for the written resource type.      |
+| Server only accepts `transaction`, not `batch`           | Submit batch Bundle: `ERROR`, "This server only accepts transaction Bundles, not batch"                                                                            | Support `Bundle.type = "batch"` (see [§6](#6-requirements-checklist)).       |
+| `offline_access` requested but no `refresh_token` issued | Token Response: `WARNING`, "`refresh_token` is missing...even though `offline_access`"                                                                             | Issue a refresh token when `offline_access` is granted.                      |
+| Patient has no fødselsnummer/D-nummer identifier         | Patient: `ERROR`, no recognised identifier system                                                                                                                  | Add an `identifier` with system `urn:oid:2.16.578.1.12.4.1.4.1` (or `.4.2`). |
 
 ## 8. Running it locally
 
@@ -218,7 +219,7 @@ yarn dev
 
 Open <http://localhost:3000>. In any non-production build, this app runs an in-repo mock EHR (see
 `src/app/mock-ehr-enabled.ts` and `src/app/api/mocks/fhir/[[...path]]/route.ts`), so the landing
-page shows a **"Try it against the built-in mock EHR"** button — click it to see a real, complete
+page shows a **"Try it against the built-in mock EHR"** button. Click it to see a real, complete
 report in under a minute with no registration at all. It launches the same code path as a real
 EHR would, against `iss=http://localhost:3000/api/mocks/fhir`:
 
@@ -227,7 +228,7 @@ GET /launch?iss=http%3A%2F%2Flocalhost%3A3000%2Fapi%2Fmocks%2Ffhir&launch=demo
 ```
 
 That mock is fully conformant by default: a clean run against it produces zero `ERROR` findings
-(only a few `WARNING`/`INFO` findings on optional/recommended checks) — this is asserted by the
+(only a few `WARNING`/`INFO` findings on optional/recommended checks). This is asserted by the
 `baseline: the fully conformant mock` test in `src/validation/defects.integration.ts`. It is a good
 first thing to check: if your own server produces errors this app's own mock doesn't, the problem
 is in your server, not in these validators. The mock can also simulate specific non-conformances on
@@ -251,13 +252,13 @@ This app is deployed on [nais](https://doc.nais.io/) (see `.nais/nais-dev.yaml`)
 visible from either replica.
 
 The core architectural idea: every outbound HTTP call this app makes is recorded as a redacted
-`HttpExchange` (`src/core/http/exchange.ts`, `src/core/http/redact.ts`) — credentials stripped at
-the moment of recording, never at render time — and every validator (`src/validation/**`) is a
+`HttpExchange` (`src/core/http/exchange.ts`, `src/core/http/redact.ts`), with credentials stripped at
+the moment of recording, never at render time, and every validator (`src/validation/**`) is a
 pure function over that recorded evidence. That is why every finding in the report can show its
 own proof: the finding and the exchange it came from are two views of the same data.
 
 Tokens never reach the browser. The session cookie carries only an opaque, `HttpOnly` session id
 (`src/core/session/session-cookie.ts`); the access token, refresh token, and id_token live only in
 server-side session storage, and the callback handler (`src/app/callback/route.ts`) runs the
-entire validation run — including every write probe — exactly once, server-side, before the
+entire validation run, including every write probe, exactly once, server-side, before the
 browser is ever redirected to `/report`.
