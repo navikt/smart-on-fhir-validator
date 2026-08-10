@@ -65,7 +65,7 @@ Every row below is a section in the generated report. "Nav requires" follows Nav
 | JWKS URL (for `private_key_jwt`) | `{this app's origin}/.well-known/jwks.json`               |
 
 In Nav's dev environment, `{this app's origin}` is `https://nav-on-fhir.ekstern.dev.nav.no`; locally
-it is `http://localhost:3000`.
+it is `http://localhost:3001`.
 
 A vendor whose authorization server grants a narrower set of scopes than requested is not
 penalised for it: the report's Scopes and Launch Context sections check what was actually
@@ -129,7 +129,7 @@ Launching against that mock and re-running the report produces:
 ```
 ERROR  Organization/organization-magnar-legekontor has no identifier from the organisasjonsnummer/ENH
        system `urn:oid:2.16.578.1.12.4.1.4.101`; Nav uses this to identify the sykmelder's organisation.
-   ↳ GET http://localhost:3000/api/mocks/fhir/Organization/organization-magnar-legekontor
+   ↳ GET http://localhost:3001/api/mocks/fhir/Organization/organization-magnar-legekontor
      200 OK  Organization
      {
        "resourceType": "Organization",
@@ -217,11 +217,11 @@ yarn install
 yarn dev
 ```
 
-Open <http://localhost:3000>. In any non-production build, this app runs an in-repo mock EHR (see
+Open <http://localhost:3001>. In any non-production build, this app runs an in-repo mock EHR (see
 `src/app/mock-ehr-enabled.ts` and `src/app/api/mocks/fhir/[[...path]]/route.ts`), so the landing
 page shows a **"Try it against the built-in mock EHR"** button. Click it to see a real, complete
 report in under a minute with no registration at all. It launches the same code path as a real
-EHR would, against `iss=http://localhost:3000/api/mocks/fhir`:
+EHR would, against `iss=http://localhost:3001/api/mocks/fhir`:
 
 ```
 GET /launch?iss=http%3A%2F%2Flocalhost%3A3000%2Fapi%2Fmocks%2Ffhir&launch=demo
