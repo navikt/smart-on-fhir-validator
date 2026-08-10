@@ -319,9 +319,8 @@ describe('createSessionStore', () => {
     it('returns the same store to every caller, so a session written by one request is readable by the next', async () => {
         delete process.env.VALKEY_URI_SESSIONS
 
-        // A launch and its callback are separate requests that each ask for a store. When this
-        // returned a fresh Map per call, the callback always saw an empty store and no launch
-        // could ever complete without Valkey configured.
+        // A launch and its callback are separate requests that each ask for a store; a fresh
+        // store per call would leave the callback unable to find the pending session.
         const duringLaunch = await createSessionStore()
         const session = pendingSession()
         await duringLaunch.set(session.sessionId, session, 600)

@@ -56,11 +56,10 @@ const KNOWN_CAPABILITIES: readonly SmartCapability[] = [
 const KNOWN_CAPABILITY_SET: ReadonlySet<string> = new Set(KNOWN_CAPABILITIES)
 
 /**
- * Splits a server's advertised `capabilities` into ones this app recognizes from the SMART App
- * Launch spec and everything else. Non-string entries (a hostile/malformed array) and a
- * `capabilities` value that isn't an array at all are silently dropped here — that shape
- * problem is reported by `validateSmartConfiguration` in `well-known.ts`, which owns the
- * REQUIRED-field checks; this function only classifies whatever it can read.
+ * Splits a server's advertised `capabilities` into ones defined by the SMART App Launch spec and
+ * everything else. A malformed `capabilities` value is not reported here — that shape problem
+ * belongs to the REQUIRED-field checks in `well-known.ts`; this function only classifies what it
+ * can read.
  */
 export function parseCapabilities(config: SmartConfiguration): {
     known: SmartCapability[]
@@ -130,8 +129,7 @@ const CAPABILITY_SETS: CapabilitySet[] = [
 
 /**
  * Every Capability Set additionally requires at least one of `client-public` or
- * `client-confidential-symmetric` (with `client-confidential-asymmetric` allowed in addition).
- * This is evaluated once rather than per set.
+ * `client-confidential-symmetric` (`client-confidential-asymmetric` is allowed in addition).
  */
 function hasRequiredClientType(known: readonly SmartCapability[]): boolean {
     return known.includes('client-public') || known.includes('client-confidential-symmetric')

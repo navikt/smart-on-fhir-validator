@@ -12,10 +12,7 @@ import type {
 } from '#core/smart/types'
 import { isSmartError } from '#core/smart/types'
 
-/**
- * The launch step persists a `PendingSession` for ten minutes: long enough to cover a slow login
- * at the EHR's authorization server, short enough that an abandoned launch does not linger.
- */
+/** Long enough to cover a slow login at the EHR, short enough not to linger when abandoned. */
 export const PENDING_SESSION_TTL_SECONDS = 600
 
 export type LaunchRequest = {
@@ -25,11 +22,6 @@ export type LaunchRequest = {
     launch: string
 }
 
-/**
- * Collaborator signatures mirror `#core/smart/discovery`, `#core/smart/pkce`,
- * `#core/smart/registration` and `#core/config/issuers`, injected rather than imported directly
- * so this module can be built, and tested with fakes, independently of those modules.
- */
 export type FetchSmartConfiguration = (
     httpClient: SmartHttpClient,
     fhirBaseUrl: string,
@@ -86,13 +78,9 @@ export type LaunchResult = {
 
 /**
  * Security-critical: an attacker-supplied `iss` must never be usable to redirect this app's
- * credentials. SMART requires `https`, and this app enforces it against every real host.
- *
- * The single exception is a loopback address, which is not reachable from the network and so
- * cannot be used to exfiltrate anything — it is how the built-in mock EHR and the e2e suite are
- * launched. The rule deliberately does not depend on `NODE_ENV`: a check that behaves one way in
- * development and another in production is only ever exercised in one of them, and the e2e suite
- * runs against a production build precisely so it tests what is deployed.
+ * credentials, so SMART's https requirement is enforced against every real host. Loopback is the
+ * one exception — unreachable from the network, and how the mock EHR and e2e suite launch. The
+ * rule deliberately ignores `NODE_ENV` so the e2e suite exercises the deployed behaviour.
  */
 export function validateFhirBaseUrl(iss: string): URL | SmartError {
     let url: URL
@@ -171,9 +159,8 @@ export async function handleLaunch(
         redirect_uri: deps.redirectUri,
         scope: deps.scope,
         state: oauthState,
-        // REQUIRED by SMART App Launch: the FHIR server's base URL, so the authorization server
-        // can validate that this client requested a token scoped to that specific server. A very
-        // common vendor bug is to omit it or to send the wrong value.
+        // REQUIRED by SMART App Launch so the authorization server can check the token is
+        // scoped to this FHIR server. Commonly omitted or wrong in vendor implementations.
         aud: fhirBaseUrl,
         launch: request.launch,
         code_challenge: pkce.codeChallenge,
@@ -185,15 +172,12 @@ export async function handleLaunch(
 }
 
 /**
- * Static configuration takes priority (an operator can pin a known-good client), then Dynamic
- * Client Registration when the EHR advertises it, then a single shared public client as a last
- * resort so an otherwise-unconfigured, registration-less EHR can still be exercised.
+ * Static configuration first (an operator can pin a known-good client), then Dynamic Client
+ * Registration when advertised, then a shared public client so an unconfigured EHR can still be
+ * exercised.
  *
- * Dynamic registration is always requested as a public client (`tokenEndpointAuthMethod: 'none'`):
- * `PendingSession`/`ActiveSession` only carry `clientId`, not a full `ClientAuthMode`, so nothing
- * a confidential DCR client is granted (a secret, a key reference) could survive from the launch
- * step to the callback step. Requesting 'none' keeps that fixed data shape sound — the callback
- * step re-derives `{ type: 'public' }` for any issuer it does not find in static configuration.
+ * Dynamic registration always requests a public client: sessions carry only `clientId`, so no
+ * confidential credential could survive from the launch step to the callback step.
  */
 async function resolveIssuerConfig(
     issuer: string,

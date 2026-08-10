@@ -1,7 +1,6 @@
 /**
- * Phase 6: builds the `LaunchContext` every FHIR probe is allowed to use, from the token
- * response and id_token claims already on the session. Purely a re-interpretation of
- * already-collected evidence — no new HTTP call.
+ * Phase 6: builds the `LaunchContext` the FHIR probes are allowed to use, from the token response
+ * and id_token claims already on the session. No new HTTP call.
  */
 
 import type { ActiveSession } from '#core/smart/types'

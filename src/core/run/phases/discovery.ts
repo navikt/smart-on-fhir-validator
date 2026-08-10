@@ -1,7 +1,7 @@
 /**
- * Phase 1: re-fetches and validates the `.well-known/smart-configuration` document, and derives
- * the "SMART Capabilities" section from the same document. Re-fetched rather than reusing the
- * copy stored on the session, so the report reflects the server's *current* configuration.
+ * Phase 1: re-fetches and validates `.well-known/smart-configuration`, and derives the SMART
+ * Capabilities section from it. Re-fetched rather than reusing the session's copy, so the report
+ * reflects the server's current configuration.
  */
 
 import type { SmartHttpClient } from '#core/http/smart-http-client'

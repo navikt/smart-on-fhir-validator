@@ -1,13 +1,11 @@
 /**
  * Shared integration-test harness: drives a complete SMART App Launch — discovery, authorize,
  * PKCE-protected code exchange, token — through this app's own `#core/smart` modules against the
- * in-repo mock EHR (`#mocks/server`), entirely in-process via `app.fetch`. No network, no port.
+ * in-repo mock EHR (`#mocks/server`), entirely in-process. No network, no port.
  *
- * This exists so every integration test exercises the *real* client code path (the same
- * `handleLaunch`/`handleCallback`/`selectClientAuthentication` functions the app itself calls),
- * rather than re-implementing the OAuth dance by hand the way `src/mocks/server.test.ts` does to
- * test the mock itself. A regression in this app's own SMART client — e.g. a dependency bump to
- * `jose` silently breaking JWT signing, or a refactor that stops sending PKCE — should fail here.
+ * Every integration test therefore exercises the real client code path rather than
+ * re-implementing the OAuth dance by hand the way `src/mocks/server.test.ts` does to test the
+ * mock itself.
  */
 
 import { randomUUID } from 'node:crypto'
@@ -42,10 +40,9 @@ export const APP_REDIRECT_URI = 'https://validator.nav.no/callback'
 export const APP_CLIENT_NAME = 'Nav SMART on FHIR Validator (integration test)'
 
 /**
- * Broad enough to exercise every phase this suite cares about: identity (`openid`/`fhirUser`),
- * both launch-context forms (`launch` for EHR launch, `launch/patient` for standalone), refresh
- * (`offline_access`), and v2 granular clinical scopes covering every resource the read/write
- * probes touch.
+ * Covers every phase this suite cares about: identity (`openid`/`fhirUser`), both launch-context
+ * forms (`launch` for EHR launch, `launch/patient` for standalone), refresh (`offline_access`),
+ * and v2 granular clinical scopes for every resource the read/write probes touch.
  */
 export const DEFAULT_SCOPE = [
     'openid',
@@ -75,7 +72,7 @@ export type ClientAuthFixture = {
  * Builds matching mock-EHR registration config and this app's own `ClientAuthMode` for a given
  * client authentication method, so both sides of the handshake agree on the same credentials.
  * `private_key_jwt` uses RS384 — one of SMART's two required baseline algorithms for asymmetric
- * client authentication (`#core/smart/client-auth/asymmetric.ts` only accepts RS384/ES384).
+ * client authentication.
  */
 export async function createClientAuthFixture(clientAuth: MockClientAuthMethod): Promise<ClientAuthFixture> {
     switch (clientAuth) {
@@ -112,7 +109,6 @@ export async function createClientAuthFixture(clientAuth: MockClientAuthMethod):
     }
 }
 
-/** Routes `fetch` calls straight into the mock EHR's own `app.fetch` — no network, no port. */
 function createInProcessFetch(app: Hono): typeof fetch {
     return (async (input, init) => {
         const request = input instanceof Request ? input : new Request(input as string | URL, init)
@@ -145,23 +141,18 @@ export type LaunchOptions = {
     launchParam?: string
     clientId?: string
     /**
-     * When true, `findIssuerConfig` returns `null` instead of a pre-built `IssuerConfig`, forcing
-     * `handleLaunch` down the real RFC 7591 Dynamic Client Registration path (`registerClient`
-     * actually calls the mock's `/register` endpoint) — exactly what this app's own `/launch`
-     * route does for any issuer that is not statically configured in `#core/config/issuers`,
-     * which includes the in-repo mock EHR itself. Every other test in this suite instead supplies
-     * a ready-made `issuerConfig`, which is faster and fine for exercising the callback/token/FHIR
-     * layers, but silently never exercises dynamic registration at all. Use this option for any
-     * test that specifically needs to prove the registration round trip itself.
+     * When true, `findIssuerConfig` returns `null`, forcing `handleLaunch` down the real RFC
+     * 7591 Dynamic Client Registration path — what this app does for any issuer not statically
+     * configured in `#core/config/issuers`. Other tests supply a ready-made `issuerConfig` and
+     * so never exercise registration at all.
      */
     dynamicClientRegistration?: boolean
 }
 
 /**
  * Drives one full launch -> authorize -> code exchange -> token flow against a fresh mock EHR
- * instance, through this app's real `handleLaunch`/`handleCallback`. The "browser" step (the
- * mock EHR's `/authorize` endpoint auto-approving and redirecting back) is simulated with a
- * direct `app.fetch` call, since the mock never presents an interactive login of its own.
+ * instance, through this app's real `handleLaunch`/`handleCallback`. The "browser" step is
+ * simulated directly, since the mock never presents an interactive login.
  */
 export async function launchAgainstMockEhr(options: LaunchOptions = {}): Promise<LaunchOutcome> {
     const clientAuth = options.clientAuth ?? 'public'
@@ -210,8 +201,8 @@ export async function launchAgainstMockEhr(options: LaunchOptions = {}): Promise
 
     if (isSmartError(launchResult)) return { ok: false, stage: 'launch', error: launchResult }
 
-    // The "browser": follows the redirect this app produced to the EHR's own /authorize, which
-    // (having no real user to prompt) immediately redirects back to this app's /callback.
+    // The "browser": follows the redirect to the EHR's /authorize, which (having no real user to
+    // prompt) immediately redirects back to this app's /callback.
     const authorizeResponse = await app.fetch(new Request(launchResult.redirectUrl))
     if (authorizeResponse.status !== 302) {
         return {
@@ -270,7 +261,6 @@ export async function launchAgainstMockEhr(options: LaunchOptions = {}): Promise
     }
 }
 
-/** For tests that expect the full flow to succeed — fails fast with a useful message otherwise. */
 export async function requireSuccessfulLaunch(options: LaunchOptions = {}): Promise<LaunchedSmartSession> {
     const outcome = await launchAgainstMockEhr(options)
     if (!outcome.ok) {

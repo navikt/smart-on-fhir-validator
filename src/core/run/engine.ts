@@ -1,13 +1,11 @@
 /**
- * The run engine: takes a completed SMART launch (`ActiveSession`) and produces a complete,
- * serialisable `ValidationReport` by running every validator this repository has against real
- * evidence collected from the EHR.
+ * Turns a completed SMART launch (`ActiveSession`) into a serialisable `ValidationReport`.
  *
  * Phases run in a fixed order — discovery, capability statement, `aud` enforcement, token
- * response, id_token, scopes, launch context, read probes, write probes — mirroring the order a
- * vendor would naturally want to read a report in: earliest-lifecycle evidence first. A failing phase never
- * stops the run; every error path is captured as a finding or an `errorSection`/`skippedSection`,
- * so the worst an EHR's misbehaviour can do is fill the report with ERROR findings, never crash it.
+ * response, id_token, scopes, launch context, read probes, write probes — so the report reads
+ * earliest-lifecycle evidence first. A failing phase never stops the run: every error path
+ * becomes a finding or an `errorSection`/`skippedSection`, so EHR misbehaviour can only fill the
+ * report with ERROR findings, never crash it.
  */
 
 import { FhirClient } from '#core/fhir/client'
@@ -29,8 +27,8 @@ import { buildSection, summarize, type ReportSection, type ValidationReport } fr
 export type RunValidationDependencies = {
     httpClient: SmartHttpClient
     /**
-     * The exact recorder wired into `httpClient`, seeded with the session's own launch/callback
-     * exchanges so the final report's evidence trail covers the whole lifecycle, not just this run.
+     * The exact recorder wired into `httpClient`, seeded with the session's launch/callback
+     * exchanges so the evidence trail covers the whole lifecycle, not just this run.
      */
     recorder: ExchangeRecorder
     now?: () => Date
@@ -69,7 +67,6 @@ async function runPhases(session: ActiveSession, deps: RunValidationDependencies
     return sections
 }
 
-/** A single section reporting that the run engine itself failed unexpectedly (see `runValidation`). */
 function fatalSection(cause: unknown): ReportSection {
     const message = cause instanceof Error ? cause.message : String(cause)
 
@@ -89,13 +86,9 @@ function fatalSection(cause: unknown): ReportSection {
 }
 
 /**
- * Runs every validation phase against `session` and returns a complete `ValidationReport`.
- *
- * Every individual phase is already designed not to throw (HTTP failures and non-conformant
- * responses become findings). The top-level `try`/`catch` here is a last-resort safety net for
- * a genuinely unexpected bug in the run engine itself, so that even *that* still produces a
- * report — with everything collected so far — rather than an unhandled exception reaching the
- * caller.
+ * Phases never throw on their own (HTTP failures and non-conformance become findings); the
+ * top-level catch is a safety net for a bug in the engine itself, so even that still yields a
+ * report rather than an unhandled exception.
  */
 export async function runValidation(
     session: ActiveSession,

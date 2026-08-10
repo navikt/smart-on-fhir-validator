@@ -34,8 +34,8 @@ export type MockEhrConfig = {
     /** Required when `clientAuth` is a shared-secret method. */
     clientSecret?: string
     /**
-     * The client's own public JWKS, required to verify `private_key_jwt` assertions in-process
-     * without a network round trip. A client may also register one dynamically via `POST /register`.
+     * The client's own public JWKS, required to verify `private_key_jwt` assertions. A client
+     * may also register one dynamically via `POST /register`.
      */
     clientJwks?: JSONWebKeySet
 }

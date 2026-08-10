@@ -4,8 +4,8 @@ import type { ReactElement } from 'react'
 import type { Severity } from '#validation/validation'
 
 /**
- * Monospace and the literal enum value (not a friendlier label): a developer cross-referencing
- * the JSON download should see the exact same token here as in the report they downloaded.
+ * Monospace and the literal enum value: a developer cross-referencing the JSON download should
+ * see the exact same token here as in the report they downloaded.
  */
 const SEVERITY_CLASSES: Record<Severity, string> = {
     ERROR: 'border border-ax-bg-danger-strong bg-ax-bg-danger-strong text-white',

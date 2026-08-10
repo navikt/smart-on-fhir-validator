@@ -1,11 +1,10 @@
 /**
  * Static, per-issuer client configuration — the primary way this app authenticates to an EHR's
- * token endpoint. Dynamic client registration (`registration.ts`) is only the fallback for
- * vendors that support RFC 7591 and for whom no entry exists here.
+ * token endpoint. Dynamic client registration (`registration.ts`) is the fallback for vendors
+ * that support RFC 7591 and have no entry here.
  *
- * Configuration comes from the `SMART_ISSUERS` environment variable, a JSON array. This is our
- * own configuration (not EHR-supplied input), so a malformed value is a deployment error and is
- * allowed — and expected — to crash the process at startup rather than degrade silently.
+ * Read from the `SMART_ISSUERS` environment variable (a JSON array). This is our own
+ * configuration, not EHR-supplied input, so a malformed value crashes at startup by design.
  */
 
 import * as z from 'zod'

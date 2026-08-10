@@ -101,8 +101,8 @@ describe('validateFhirBaseUrl', () => {
     })
 
     it('rejects an http host that merely looks like loopback', () => {
-        // `localhost.evil.example` and `127.0.0.1.evil.example` resolve to whatever an attacker
-        // wants; only an exact loopback host is safe to exempt from https.
+        // Only an exact loopback host is safe to exempt from https: `localhost.evil.example`
+        // resolves to whatever an attacker wants.
         expect(isSmartError(validateFhirBaseUrl('http://localhost.evil.example/fhir') as SmartError)).toBe(
             true,
         )

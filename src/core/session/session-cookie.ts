@@ -1,9 +1,8 @@
 import { randomBytes } from 'node:crypto'
 
 /**
- * Pure cookie logic, kept free of `next/headers` so it can be unit tested with plain strings.
- * `readSessionIdFromCookies`, `isRequestSecure` and `writeSessionCookie` below are the only
- * functions that touch Next.js.
+ * `next/headers` is only ever imported dynamically, inside the functions that need it, so the
+ * pure cookie logic above it stays unit-testable with plain strings.
  */
 
 export const SESSION_COOKIE_NAME = 'smart-validator-session'
@@ -19,10 +18,8 @@ export type SessionCookieAttributes = {
     value: string
     httpOnly: true
     /**
-     * Whether the browser is told to withhold this cookie from plain-HTTP requests. Must be
-     * `true` whenever the app is actually served over HTTPS (always true once deployed on nais)
-     * and `false` for genuine plain-HTTP local development — a `Secure` cookie set over `http://`
-     * is silently dropped by the browser, so getting this wrong breaks every launch.
+     * Must be `true` whenever the app is served over HTTPS and `false` for plain-HTTP local
+     * development — a `Secure` cookie set over `http://` is silently dropped, breaking every launch.
      */
     secure: boolean
     /**
@@ -51,7 +48,6 @@ export function buildSessionCookie(
     }
 }
 
-/** Parses a raw `Cookie` request header. Returns `null` when the session cookie is absent. */
 export function parseSessionCookie(cookieHeader: string | null | undefined): string | null {
     if (!cookieHeader) return null
 
@@ -73,7 +69,6 @@ export function parseSessionCookie(cookieHeader: string | null | undefined): str
     return null
 }
 
-/** Serialises a `Set-Cookie` header value. Framework-agnostic counterpart to `buildSessionCookie`. */
 export function serializeSessionCookie(sessionId: string, secure: boolean, maxAgeSeconds?: number): string {
     const attributes = buildSessionCookie(sessionId, secure, maxAgeSeconds)
     const parts = [
@@ -95,11 +90,9 @@ export async function readSessionIdFromCookies(): Promise<string | null> {
 }
 
 /**
- * Whether the current request arrived over HTTPS. Mirrors `getAppOrigin`'s derivation
- * (`src/app/app-origin.ts`): trust `x-forwarded-proto` first, since nais's ingress terminates TLS
- * and forwards plain HTTP to the app, then fall back to treating `localhost` as the only genuine
- * plain-HTTP case. Never keyed off `NODE_ENV` — an env var can be wrong in production, and this
- * attribute is a real security boundary, not a convenience.
+ * Whether the current request arrived over HTTPS. Trusts `x-forwarded-proto` first (nais's
+ * ingress terminates TLS), then treats `localhost` as the only genuine plain-HTTP case. Never
+ * keyed off `NODE_ENV` — this attribute is a real security boundary, not a convenience.
  */
 async function isRequestSecure(): Promise<boolean> {
     const { headers } = await import('next/headers')

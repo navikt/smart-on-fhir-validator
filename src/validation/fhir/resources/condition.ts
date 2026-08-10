@@ -1,10 +1,7 @@
 /**
- * Condition: optional for Nav ("Bør", not "Må"), searchable by `subject=Patient/{patientId}`
- * and, where an encounter is in context, additionally by `encounter=Encounter/{encounterId}`.
- *
- * Nav's own docs (condition.md) do not require filtering by `clinical-status` or `category`, so
- * this probe does not exercise those R4-defined parameters — see the module summary for the
- * reasoning.
+ * Condition: optional for Nav ("Bør", not "Må"), searched by `subject=Patient/{patientId}` and,
+ * when an encounter is in context, by `encounter=Encounter/{encounterId}`. `clinical-status` and
+ * `category` filtering is not exercised, since condition.md does not require it.
  *
  * @see https://hl7.org/fhir/R4/condition.html
  * @see https://github.com/navikt/syk-inn/blob/main/docs/fhir/condition.md

@@ -8,7 +8,7 @@ import type { MockClientAuthMethod, MockState } from '#mocks/state'
 /**
  * RFC 7591 spells a public client `"none"` on the wire; this mock calls it `'public'`
  * internally. The two vocabularies are kept apart deliberately: a mock that echoed its own
- * internal label back to a client would be testing itself rather than the protocol.
+ * internal label back to a client would test itself rather than the protocol.
  */
 const WIRE_TO_INTERNAL: Readonly<Record<string, MockClientAuthMethod>> = {
     none: 'public',
@@ -34,8 +34,7 @@ function isJwks(value: unknown): value is JSONWebKeySet {
 
 /**
  * RFC 7591 Dynamic Client Registration. Only inline `jwks` is accepted for `private_key_jwt`
- * clients (not `jwks_uri`) so the mock never needs a network round trip to verify a client
- * assertion — every test stays in-process.
+ * clients (not `jwks_uri`), so verifying a client assertion never needs a network round trip.
  */
 export function registerHandler(state: MockState) {
     return async (c: Context): Promise<Response> => {

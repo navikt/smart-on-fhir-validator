@@ -23,10 +23,8 @@ export type ResourceRouterConfig<T extends FhirResource> = {
     onCreate?: (body: unknown) => WriteOutcome<T>
     onUpdate?: (id: string, body: unknown) => WriteOutcome<T>
     /**
-     * How to read the POST/PUT request body before handing it to `onCreate`/`onUpdate`.
-     * Defaults to parsing it as FHIR JSON; a resource that also accepts a raw (non-FHIR-JSON)
-     * body per its own spec — e.g. Binary, https://hl7.org/fhir/R4/binary.html#rest — supplies
-     * its own to interpret the `Content-Type` header instead.
+     * Defaults to parsing the body as FHIR JSON. A resource that also accepts a raw body per its
+     * own spec — e.g. Binary, https://hl7.org/fhir/R4/binary.html#rest — supplies its own parser.
      */
     parseBody?: (c: Context) => Promise<unknown>
     /** Bearer + scope enforcement, shared across every resource via `fhir/auth-middleware.ts`. */
@@ -37,9 +35,9 @@ export type ResourceRouterConfig<T extends FhirResource> = {
  * A generic FHIR resource endpoint: `GET /:id` (read), `GET /` (search), and optionally
  * `POST /` (create) and `PUT /:id` (update) when the resource supports writes.
  *
- * Kept generic so every resource behaves identically for the parts of the FHIR REST contract
- * that don't vary by resource type (searchset shape, unknown-parameter/unknown-id handling,
- * status codes) — resource-specific behaviour is only the search matchers and write validation.
+ * Generic so every resource behaves identically for the parts of the FHIR REST contract that
+ * don't vary by resource type (searchset shape, unknown-parameter/unknown-id handling, status
+ * codes); resource-specific behaviour is only the search matchers and write validation.
  */
 export function createResourceRouter<T extends FhirResource>(config: ResourceRouterConfig<T>): Hono {
     const {

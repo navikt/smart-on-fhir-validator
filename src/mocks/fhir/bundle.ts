@@ -47,8 +47,8 @@ function restoreOne<K, V>(target: Map<K, V>, snapshot: Map<K, V>): void {
 
 /**
  * Restores every store *in place* (clear + refill) rather than replacing the `Map` objects:
- * every resource router closed over the original `Map` reference at startup, so a transaction
- * rollback must mutate those same instances, not swap in new ones the routers would never see.
+ * every resource router closed over the original `Map` reference at startup, so a rollback must
+ * mutate those same instances.
  */
 function restoreResources(resources: ResourceStores, snapshot: ResourceStores): void {
     restoreOne(resources.Patient, snapshot.Patient)
@@ -65,9 +65,9 @@ function restoreResources(resources: ResourceStores, snapshot: ResourceStores): 
 type DispatchResult = { status: number; body: unknown; location?: string }
 
 /**
- * Dispatches a single Bundle entry back through the mock's own routing (`app.fetch`) rather than
- * duplicating resource logic here — a batch/transaction entry behaves exactly like the
- * equivalent standalone HTTP request, including defects and scope enforcement.
+ * Dispatches a single Bundle entry back through the mock's own routing rather than duplicating
+ * resource logic here — a batch/transaction entry behaves exactly like the equivalent standalone
+ * HTTP request, including defects and scope enforcement.
  */
 async function dispatchEntry(
     entry: unknown,

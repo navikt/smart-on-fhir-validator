@@ -17,12 +17,9 @@ import { APP_CLIENT_NAME, APP_SCOPE, STANDALONE_LAUNCH_PLACEHOLDER } from './con
 export const runtime = 'nodejs'
 
 /**
- * `request.nextUrl.origin` is not usable here: the standalone/production server derives it from
- * the process's own bind address (`HOSTNAME`/`PORT`), not from the request the browser actually
- * sent, so it silently ignores `x-forwarded-host` behind nais's ingress. `getAppOrigin` reads the
- * proxy headers directly (mirroring `isRequestSecure` in `#core/session/session-cookie`) and is
- * the one thing here that must agree with where the session cookie itself was scoped, or the
- * redirect back from the authorization server lands on a host the cookie was never sent to.
+ * Must agree with wherever the session cookie was scoped, or the redirect back from the
+ * authorization server lands on a host the cookie was never sent to. See `getAppOrigin` for why
+ * `request.nextUrl.origin` cannot be used.
  */
 async function callbackUrl(): Promise<string> {
     return new URL('/callback', await getAppOrigin()).toString()
@@ -40,8 +37,7 @@ async function errorRedirect(error: string, detail?: string): Promise<NextRespon
  * The SMART EHR launch endpoint: an EHR (or the standalone-launch form on `/`) navigates the
  * browser here with `?iss=<FHIR base URL>&launch=<opaque launch id>`. Discovers the issuer,
  * resolves or dynamically registers a client, persists a `PendingSession`, and redirects the
- * browser on to the authorization server. All the actual work lives in `#core/smart/launch`;
- * this handler only wires it to Next.js request/response and the session cookie.
+ * browser on to the authorization server.
  */
 export async function GET(request: NextRequest): Promise<NextResponse> {
     const iss = request.nextUrl.searchParams.get('iss')

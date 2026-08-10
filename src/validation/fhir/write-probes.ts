@@ -32,20 +32,15 @@ import {
 } from './resources/questionnaire-response'
 
 /**
- * Write probes are the only probes in this app that mutate the vendor's EHR: every successful
- * run leaves a test resource behind. Each probe's findings say exactly what was created and with
- * which id, so the vendor can find and delete it afterwards.
+ * Write probes are the only probes that mutate the vendor's EHR: every successful run leaves a
+ * test resource behind, and each probe's findings name the resource and id so the vendor can
+ * delete it afterwards.
  *
- * Nav's real write-back (see `bundle.md` / ADR01) performs a `PUT /<type>/<sykmelding-id>` upsert
- * with a client-assigned id, which lets `DocumentReference.context.related` point at a
- * `QuestionnaireResponse` id that is known before either resource is written, and — critically —
- * makes a retried write idempotent: resending the same PUT after a network blip updates the same
- * resource instead of filing the sykmelding twice in the patient's journal. `documentReference*`
- * and `questionnaireResponseWriteProbe` below exercise this PUT-upsert path directly, issuing the
- * same PUT twice with the same id and asserting the second call does not produce a different
- * resource id. `binaryWriteProbe` still uses `FhirClient.create` (`POST`, server-assigned id) for
- * both of its mechanisms, because a `Binary` is an attachment blob rather than a
- * sykmelding-identified resource — Nav does not need it to be reachable by a client-chosen id.
+ * Nav's real write-back (`bundle.md` / ADR01) uses `PUT /<type>/<sykmelding-id>` with a
+ * client-assigned id so a retried write is idempotent — resending the same PUT must not file the
+ * sykmelding twice in the patient's journal. The DocumentReference and QuestionnaireResponse
+ * probes therefore issue the same PUT twice and assert the id does not change. Binary is written
+ * with `POST` (server-assigned id) instead, since Nav never needs it reachable by a chosen id.
  */
 
 const TEST_PDF_CONTENT =
@@ -62,10 +57,9 @@ function grantedScopesText(launch: LaunchContext): string {
 }
 
 /**
- * A granted scope permits writing `resourceType` when it is a clinical scope for the resource
- * itself or `*`, whose normalized CRUDS permission includes create, update or delete. Uses the
- * shared SMART scope parser so v1 (`write`) and v2 (`cud...`/`cruds`) forms are both understood
- * consistently with the rest of the app.
+ * A granted scope permits writing `resourceType` when it is a clinical scope for that resource
+ * (or `*`) whose CRUDS permission includes create, update or delete. Both SMART v1 (`write`) and
+ * v2 (`cud`/`cruds`) forms are accepted, since EHRs may grant either.
  */
 function grantsWriteScope(launch: LaunchContext, resourceType: string): boolean {
     return launch.grantedScopes.some((raw) => {
@@ -105,7 +99,6 @@ function extractCreatedId(response: RecordedResponse): string | null {
     return match?.[1] ?? null
 }
 
-/** Validates the plain HTTP shape of a create response: status code and Location header. */
 function createOutcomeValidations(response: RecordedResponse, resourceType: string): Validation[] {
     const validations: Validation[] = []
     const url = response.exchange.request.url
@@ -151,11 +144,10 @@ function createOutcomeValidations(response: RecordedResponse, resourceType: stri
 }
 
 /**
- * Validates the plain HTTP shape of a `PUT` update-as-create ("upsert") response. Unlike a plain
- * `POST` create, FHIR R4 permits either 201 (no resource existed yet under this id) or 200 (a
- * resource already existed) — see https://hl7.org/fhir/R4/http.html#upsert — so neither status is
- * itself a WARNING. A `Location` header is not required for an update, since the resource already
- * lives at a URL the client chose.
+ * FHIR R4 permits either 201 or 200 for a `PUT` update-as-create, so neither is a WARNING, and no
+ * `Location` header is required since the client chose the URL.
+ *
+ * @see https://hl7.org/fhir/R4/http.html#upsert
  */
 function upsertOutcomeValidations(
     response: RecordedResponse,
@@ -208,10 +200,8 @@ function upsertOutcomeValidations(
 }
 
 /**
- * Nav's write-back relies on the second PUT of the same client-assigned id being a no-op update
- * rather than a second create, so that retrying a write after a network blip cannot double-file a
- * sykmelding in the patient's journal. This compares the id each response actually reports (when
- * present) against the id used in both PUT requests.
+ * Nav's write-back relies on a second PUT of the same client-assigned id being an update rather
+ * than a second create, so a retry cannot double-file a sykmelding in the patient's journal.
  */
 function idempotencyValidation(
     first: RecordedResponse,
@@ -240,9 +230,8 @@ function idempotencyValidation(
 }
 
 /**
- * Treats a 403 as the correct outcome when the write scope was never granted, per the task's
- * scope-enforcement rule: a vendor that rejects an unauthorised write is behaving correctly, not
- * failing the check.
+ * A 403 is the correct outcome when the write scope was never granted: an EHR that rejects an
+ * unauthorised write is conformant, not failing.
  */
 function scopeEnforcementOutcome(
     probe: ResourceProbe,
@@ -298,7 +287,7 @@ function containsResource(bundle: Bundle | null, resourceType: string, id: strin
     })
 }
 
-/** Verifies `resourceType` can be found from launch context alone, per the task's core requirement. */
+/** Verifies `resourceType` can be found from launch context alone, without configured ids. */
 async function searchableValidations(
     context: ProbeContext,
     resourceType: string,
@@ -360,10 +349,9 @@ async function searchableValidations(
 }
 
 /**
- * Runs one Binary upload mechanism (either FHIR-JSON `create` or the raw-body `createBinaryRaw`)
- * through the same create-then-read-back checks, so the two mechanisms in `binaryWriteProbe` stay
- * DRY. Returns `succeeded: false` whenever the mechanism cannot be verified end-to-end, so the
- * caller can decide whether the *other* mechanism covers Nav's "Må" requirement for Binary.
+ * Runs one Binary upload mechanism (FHIR-JSON or raw body) through the same create-then-read-back
+ * checks. Reports `succeeded: false` when the mechanism cannot be verified end-to-end, so the
+ * caller can decide whether the other mechanism covers Nav's "Må" requirement for Binary.
  */
 async function binaryMechanismValidations(
     fhir: FhirClient,
@@ -1000,7 +988,6 @@ export function runWriteProbes(context: ProbeContext): Promise<ProbeOutcome[]> {
     return runProbes(writeProbes, context)
 }
 
-/** Exported for unit testing without going through the full probe pipeline. */
 export const testHelpers = {
     buildInlineDocumentReference,
     buildBinary,

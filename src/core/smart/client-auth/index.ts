@@ -1,10 +1,6 @@
 /**
- * Client authentication to the token endpoint. https://build.fhir.org/ig/HL7/smart-app-launch/client-authentication.html
- *
- * `ClientAuthMode` (in `#core/smart/types`) is the persisted *configuration* for a given issuer;
- * this module turns it into the concrete form fields/headers a token request needs. Kept as a
- * strategy per auth type (public / symmetric / asymmetric) so each can be developed and tested
- * in isolation, and so a new method never risks touching the others.
+ * Client authentication to the token endpoint, one strategy per SMART client type.
+ * https://build.fhir.org/ig/HL7/smart-app-launch/client-authentication.html
  */
 
 import type { ClientAuthMode, TokenEndpointAuthMethod } from '#core/smart/types'
@@ -15,16 +11,10 @@ import { createSymmetricClientAuthentication } from './symmetric'
 
 export type ClientAuthentication = {
     readonly method: TokenEndpointAuthMethod | 'none'
-    /** Extra form fields to merge into the token request body. */
     formFields: () => Promise<Record<string, string>>
-    /** Extra headers to merge into the token request. */
     headers: () => Promise<Record<string, string>>
 }
 
-/**
- * `clientId` is passed separately from `mode` because `ClientAuthMode` (fixed by `#core/smart/types`)
- * does not carry it — it is a property of the issuer registration, not of the auth method.
- */
 export function selectClientAuthentication(
     clientId: string,
     mode: ClientAuthMode,
@@ -61,9 +51,8 @@ export type AuthNegotiationResult = {
 }
 
 /**
- * Compares the auth method this app is configured to use against what the EHR's own discovery
- * document advertises, so a mismatch is surfaced as a finding rather than only failing opaquely
- * at the token endpoint.
+ * Compares the configured auth method against what the EHR advertises, so a mismatch becomes a
+ * finding rather than an opaque failure at the token endpoint.
  */
 export function negotiateAuthMethod(
     configured: ClientAuthMode,

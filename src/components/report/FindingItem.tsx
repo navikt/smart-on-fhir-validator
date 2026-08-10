@@ -7,7 +7,6 @@ import { SeverityBadge } from '#components/status/SeverityBadge'
 import { SpecRefs } from '#components/spec-refs/SpecRefs'
 import { ExchangePanel } from '#components/exchange/ExchangePanel'
 
-/** Severity earns emphasis: ERROR and WARNING messages are semibold, INFO and OK stay regular. */
 const EMPHASISED: ReportFinding['severity'][] = ['ERROR', 'WARNING']
 
 export function FindingItem({

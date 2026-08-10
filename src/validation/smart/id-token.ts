@@ -2,12 +2,10 @@
  * Validation of the SMART `id_token` — an OpenID Connect ID Token carrying the SMART-specific
  * `fhirUser` claim that identifies the logged-in clinician.
  *
- * Signature/issuer/audience/expiry verification is `#core/smart/id-token`'s job — it owns the
- * `jose` `jwtVerify` call and routes the JWKS fetch through the shared `SmartHttpClient` recorder
- * so a broken `jwks_uri` still leaves an `HttpExchange` to look at. This module takes the
- * already-computed `IdTokenVerificationResult` (evidence) and turns it, plus the SMART-specific
- * claims, into findings — a pure function with no IO of its own, consistent with the other
- * validators in this directory (they all take already-fetched data, never fetch it themselves).
+ * Signature/issuer/audience/expiry verification happens in `#core/smart/id-token`, so a broken
+ * `jwks_uri` still leaves an `HttpExchange` as evidence. This module takes the already-computed
+ * `IdTokenVerificationResult` plus the SMART-specific claims and turns them into findings; like
+ * every validator here it is pure and never fetches anything itself.
  *
  * @see https://hl7.org/fhir/smart-app-launch/STU2.2/scopes-and-launch-context.html#scopes-for-requesting-identity-data
  * @see https://openid.net/specs/openid-connect-core-1_0.html#IDToken
@@ -65,9 +63,8 @@ function isFhirUserResourceType(resourceType: string): resourceType is FhirUserR
 export type ValidateIdTokenOptions = {
     idToken: string | undefined
     /**
-     * The result of `verifyIdToken` (`#core/smart/id-token`), or `null` when verification could
-     * not even be attempted — e.g. the SMART configuration had no `issuer`/`jwks_uri`. Claim
-     * checks below still run against a best-effort decode in that case.
+     * `null` when verification could not be attempted — e.g. the SMART configuration had no
+     * `issuer`/`jwks_uri`. Claim checks still run against a best-effort decode in that case.
      */
     verification: IdTokenVerificationResult | null
     /** Required when `verification` is `null`, to explain why in the finding. */
@@ -170,9 +167,8 @@ function validateNonce(
 }
 
 /**
- * Turns an already-computed `IdTokenVerificationResult` plus the SMART/OIDC claim requirements
- * into findings. Returns `[]` when there is no id_token to validate — its presence (or required
- * absence) is `token-response.ts`'s concern, not this module's.
+ * Returns `[]` when there is no id_token to validate — its presence (or required absence) is
+ * `token-response.ts`'s concern.
  */
 export function validateIdToken(options: ValidateIdTokenOptions): Validation[] {
     const { idToken, verification, verificationSkippedReason, identityClaimRequested, sentNonce } = options

@@ -1,13 +1,11 @@
 /**
  * This app's own signing identity, published as a JWKS for EHRs to fetch during dynamic client
- * registration (`registration.ts`) and used by `client-auth/asymmetric.ts` when authenticating
- * as a `private_key_jwt` client.
+ * registration and used for `private_key_jwt` client authentication.
  *
- * The key is read once from `SMART_PRIVATE_JWK` (a JWK JSON string) and cached for the process
- * lifetime; if unset, an ephemeral ES384 key pair is generated so local development keeps
- * working without any configuration. An ephemeral key does not survive a restart, so any EHR
- * that has this app's public key pinned (e.g. via registration) will need to re-register — this
- * is only acceptable outside production, hence the warning.
+ * Read once from `SMART_PRIVATE_JWK`, or an ephemeral ES384 key pair when unset so local
+ * development needs no configuration. An ephemeral key does not survive a restart, forcing any
+ * EHR that pinned this app's public key to re-register — hence the warning, and hence not
+ * acceptable outside local development.
  */
 
 import { exportJWK, generateKeyPair, importJWK, type JWK } from 'jose'
@@ -85,7 +83,7 @@ export async function getSigningKey(): Promise<{ key: CryptoKey; kid: string; al
     return { key, kid, alg }
 }
 
-/** Public key material only — see the `PRIVATE_JWK_MEMBERS` filter above and its test. */
+/** Public key material only — see the `PRIVATE_JWK_MEMBERS` filter and its test. */
 export async function getPublicJwks(): Promise<{ keys: JWK[] }> {
     const { publicJwk } = await getIdentity()
     return { keys: [publicJwk] }

@@ -1,19 +1,13 @@
 import { expect, test, type Page } from '@playwright/test'
 
 /**
- * A thin browser smoke gate, not a test suite: everything that does not need a real browser,
- * real cookie round-trip and real rendered HTML already lives in the integration suite
- * (`*.integration.ts`, ~2s for 71 tests) and must not be duplicated here. Playwright is the
- * slowest thing in the pipeline, so this file stays to a landing-page check plus exactly one
- * consolidated happy-path journey — one launch, reused across every assertion — rather than
- * re-running the full SMART launch once per thing being checked.
+ * A thin browser smoke gate: one landing-page check plus a single consolidated SMART launch
+ * journey, reused across every assertion. Anything not needing a real browser belongs in the
+ * integration suite (`*.integration.ts`).
  *
- * This suite is the safety gate that makes Renovate dependency automerge safe. It previously
- * reported "4 passed" while every launch actually ended at
- * `/callback/error?error=session_not_found` — most of its tests were marked `test.fail()`, so
- * their expected failure read as a pass. `launchAgainstMockEhr` now asserts the terminal URL
- * directly, with a message naming the exact error, instead of tolerating an error page as an
- * acceptable outcome: a gate that passes while the happy path is broken is worse than no gate.
+ * This suite is the safety gate that makes Renovate dependency automerge safe, so it must fail
+ * loudly rather than tolerate an error page: `launchAgainstMockEhr` asserts the terminal URL
+ * directly.
  */
 
 const TERMINAL_URL_PATTERN = /\/(report|launch\/error|callback\/error)(\?|$)/
@@ -21,8 +15,7 @@ const TERMINAL_URL_PATTERN = /\/(report|launch\/error|callback\/error)(\?|$)/
 /**
  * Navigates through the mock-EHR launch link and waits for the flow to reach a terminal page.
  * Fails loudly — naming the exact upstream `error`/`detail` — if that page is either error page
- * instead of `/report`. This is precisely the guard that let a broken happy path slip through
- * before: `test.fail()` treated `/callback/error` as an acceptable outcome.
+ * instead of `/report`.
  */
 async function launchAgainstMockEhr(page: Page): Promise<void> {
     await page.goto('/')
@@ -40,9 +33,8 @@ async function launchAgainstMockEhr(page: Page): Promise<void> {
 }
 
 /**
- * Keys `src/core/http/redact.ts` strips from a recorded `HttpExchange` at recording time. Kept
- * here rather than imported: this suite drives the app only over HTTP, exactly as a real browser
- * would, and never reaches into its source tree.
+ * Keys `src/core/http/redact.ts` strips from a recorded `HttpExchange`. Duplicated rather than
+ * imported: this suite drives the app only over HTTP, as a real browser would.
  */
 const SENSITIVE_KEYS = new Set([
     'access_token',
@@ -55,8 +47,8 @@ const SENSITIVE_KEYS = new Set([
     'registration_access_token',
 ])
 
-/** Exchange request bodies are recorded as raw strings (JSON or form-encoded), not nested
- * objects, so a value worth checking may itself be a string that decodes to more structure. */
+/** Exchange request bodies are recorded as raw strings (JSON or form-encoded), so a value worth
+ * checking may itself decode to more structure. */
 function decodeNested(value: string): unknown {
     try {
         return JSON.parse(value)
@@ -78,9 +70,7 @@ function decodeNested(value: string): unknown {
 /**
  * Recursively verifies that every sensitive key anywhere in a serialised `ValidationReport` —
  * including inside recorded exchange bodies, which are strings, not objects — is either absent
- * or exactly the `[REDACTED]` marker. Mirrors the property `report-security.integration.ts`
- * proves for the run engine directly, re-checked here against the literal bytes a browser
- * downloads.
+ * or exactly the `[REDACTED]` marker.
  */
 function assertCredentialsRedacted(value: unknown, path: string): void {
     if (typeof value === 'string') {
@@ -120,11 +110,9 @@ test.describe('landing → launch against the mock EHR → report', () => {
     }) => {
         await launchAgainstMockEhr(page)
 
-        // A real verdict and real sections — not a placeholder page. `role="status"` is set
-        // unconditionally by `VerdictBanner` for every possible verdict (this assertion is
-        // deliberately verdict-agnostic: the mock EHR's exact defect-free behaviour is validated
-        // in depth by the integration suite, not here). `SectionCard` renders one <article> per
-        // report section (SMART launch, FHIR reads, FHIR write-back all produce one).
+        // A real verdict and real sections — not a placeholder page. Deliberately
+        // verdict-agnostic: the mock EHR's exact defect-free behaviour is validated in depth by
+        // the integration suite.
         const verdict = page.getByRole('status')
         await expect(verdict).toBeVisible()
         await expect(verdict).toHaveText(/Pass|Fail|Incomplete/)
@@ -134,22 +122,10 @@ test.describe('landing → launch against the mock EHR → report', () => {
         await expect(sections.first()).toBeVisible()
         expect(await sections.count()).toBeGreaterThan(1)
 
-        // Evidence expands: `ExchangePanel` renders a native <details>/<summary> per finding,
-        // collapsed by default (present in the DOM, hidden until expanded). A real launch
-        // produces dozens of these, each holding a syntax-highlighted JSON block, so expanding
-        // every one just to prove the affordance works would make this "thin" smoke gate the
-        // slowest thing in CI for no extra safety: the credential-leak property below is proven
-        // exhaustively, across every exchange, by the JSON download's recursive check further
-        // down — not by this rendered-HTML sample. Expanding one is enough to prove the browser
-        // affordance itself (collapsed → visible) is real.
-        //
-        // A non-`failed` `SectionCard` collapses its findings behind its own `<details>` (see
-        // "Default expansion" in the report page's design), so an evidence panel may itself sit
-        // inside an already-collapsed section disclosure. Those section-level disclosures are
-        // the *direct* `<details>` children of a `SectionCard`'s body (one level up from the
-        // `<li>`/finding an evidence panel's own `<details>` sits inside), so opening every one
-        // of them first makes every evidence panel on the page reachable, regardless of which
-        // section happens to render first.
+        // Evidence panels are collapsed by default. Expanding one is enough to prove the
+        // affordance is real; the exhaustive credential-leak check runs against the JSON
+        // download below. Findings in a non-failed section sit behind that section's own
+        // disclosure, so open those first to make every evidence panel reachable.
         for (const sectionDisclosure of await page.locator('article > div > details').all()) {
             await sectionDisclosure.locator('> summary').click()
         }
@@ -172,11 +148,8 @@ test.describe('landing → launch against the mock EHR → report', () => {
         await expect(responseSection.getByText(/HTTP \d{3}/).first()).toBeVisible()
 
         // This is a validator handling real patient data; a leaked bearer token, refresh token or
-        // client secret is the single worst failure mode. Checked against the rendered page text
-        // (including the one expanded exchange above) — `JsonBlock`
-        // (`#components/json/JsonBlock`) pretty-prints exchange bodies, so a real leak there would
-        // render as ordinary `"key": "value"` text. The exhaustive, every-exchange version of this
-        // property is proved below against the JSON download, not by expanding all of these.
+        // client secret is the single worst failure mode. Sampled against the rendered page here;
+        // proved exhaustively against the JSON download below.
         const bodyText = await page.locator('body').innerText()
         expect(bodyText).not.toMatch(/"access_token"\s*:\s*"(?!\[REDACTED\])[^"]+"/)
         expect(bodyText).not.toMatch(/"refresh_token"\s*:\s*"(?!\[REDACTED\])[^"]+"/)
@@ -187,14 +160,12 @@ test.describe('landing → launch against the mock EHR → report', () => {
         expect(bodyText).not.toMatch(/refresh_token=(?!%5BREDACTED%5D)[^&\s]+/)
         expect(bodyText).not.toMatch(/client_secret=(?!%5BREDACTED%5D)[^&\s]+/)
         expect(bodyText).not.toMatch(/client_assertion=(?!%5BREDACTED%5D)[^&\s]+/)
-        // The literal Authorization header value used for every FHIR call in this run: redacted
-        // headers render as exactly `[REDACTED]`, never the `Bearer <token>` they replaced.
+        // Redacted headers render as exactly `[REDACTED]`, never the token they replaced.
         expect(bodyText).not.toMatch(/Bearer\s+(?!\[REDACTED\])[A-Za-z0-9\-_.]+/)
         expect(bodyText).not.toContain('PRIVATE KEY')
 
-        // The JSON download: same session, no second launch. Must be well-formed, contain real
-        // findings (not an empty/broken report), and — walked recursively, since exchange bodies
-        // are raw strings, not just structured JSON — never a real credential either.
+        // The JSON download: same session, no second launch. Walked recursively, since exchange
+        // bodies are raw strings rather than structured JSON.
         const downloadPromise = page.waitForEvent('download')
         await page.getByRole('link', { name: 'Download full report as JSON' }).click()
         const download = await downloadPromise

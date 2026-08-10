@@ -1,16 +1,9 @@
 /**
- * The ordered list of FHIR read probes: Patient, Practitioner, PractitionerRole, Organization,
- * Encounter, Condition.
- *
- * The order matters for exactly one cross-probe dependency: the Organization probe can only
- * reach an Organization via the `Organization/{id}` reference discovered from the
- * PractitionerRole search's response — never from configuration — so PractitionerRole must run
- * immediately before Organization. `ProbeContext` (owned by `probe.ts`) only carries `fhir` and
- * `launch`, so that discovery is threaded through a private, per-run `PractitionerRoleDiscovery`
- * object captured in closures here rather than by widening `ProbeContext`.
- *
- * Every other probe (Patient, Practitioner, Encounter, Condition) derives its query entirely
- * from `launch` and needs nothing discovered by a probe that ran before it.
+ * The ordered list of FHIR read probes. Order matters for one dependency: the Organization probe
+ * may only reach an Organization via the `Organization/{id}` reference discovered from the
+ * PractitionerRole response — never from configuration — so PractitionerRole must run immediately
+ * before Organization. That reference is threaded through a private, per-run discovery object.
+ * Every other probe derives its query entirely from launch context.
  */
 
 import type { ProbeContext, ProbeOutcome, ResourceProbe } from '#validation/fhir/probe'
@@ -25,7 +18,7 @@ import {
 } from '#validation/fhir/resources/practitioner-role'
 import { practitionerProbe } from '#validation/fhir/resources/practitioner'
 
-/** Builds a fresh set of read probes, so no discovered reference leaks between report runs. */
+/** Fresh probes per call, so a discovered reference never leaks between report runs. */
 export function createReadProbes(): ResourceProbe[] {
     const discovery: PractitionerRoleDiscovery = { organizationReference: null }
 
@@ -39,7 +32,6 @@ export function createReadProbes(): ResourceProbe[] {
     ]
 }
 
-/** Runs a fresh set of read probes against `context` in the required order. */
 export function runReadProbes(context: ProbeContext): Promise<ProbeOutcome[]> {
     return runProbes(createReadProbes(), context)
 }

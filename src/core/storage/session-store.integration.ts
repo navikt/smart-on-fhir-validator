@@ -7,24 +7,10 @@ import { capExchanges, MAX_STORED_EXCHANGES } from './session-store'
 import { createValkeySessionStore, type ValkeyLike } from './valkey'
 
 /**
- * `session-store.test.ts` (owned by another agent, not touched here) exercises
- * `createValkeySessionStore` against `createFakeValkeyClient`, but that fake is a bare
- * `Map` — it records the `EX` argument passed to `set` without ever honouring it, so it
- * cannot prove a session actually disappears once its TTL elapses, and it never runs
- * concurrent operations. Both are exactly the failure modes that matter for a session
- * store: an unenforced TTL means expired vendor credentials could be resurrected from
- * storage, and a concurrency bug could corrupt or leak one launch's session into another's.
- *
- * This file plugs that gap with a faithful fake: real expiry bookkeeping keyed off an
- * injectable clock (`vi.setSystemTime`, never a real sleep), so the Valkey-backed path's
- * TTL semantics are proven end-to-end rather than merely "the right arguments were passed".
- *
- * We do not stand up a real Valkey/Redis server. `ValkeyLike` is a 3-method structural
- * interface (`get`/`set`/`del`) chosen specifically so it can be faithfully faked; running
- * an actual server would trade a fast, deterministic CI check for a flaky, environment
- * -dependent one without covering anything this fake does not already cover (this app never
- * uses Valkey transactions, pub/sub, or any command beyond these three). That trade is
- * called out explicitly here rather than silently claimed as "real Valkey" coverage.
+ * Proves TTL and concurrency behaviour of the Valkey-backed session store against a fake that
+ * actually honours expiry. Both matter for security: an unenforced TTL means expired vendor
+ * credentials could be resurrected from storage, and a concurrency bug could leak one launch's
+ * session into another's.
  */
 
 class FaithfulFakeValkey implements ValkeyLike {
@@ -35,9 +21,7 @@ class FaithfulFakeValkey implements ValkeyLike {
         if (!entry) return Promise.resolve(null)
 
         if (entry.expiresAtMs <= Date.now()) {
-            // Real Valkey/Redis drops a key lazily-or-actively once its EX elapses; a get
-            // afterwards never sees it. Mirror that instead of only checking wall-clock time
-            // in a helper method, so the store-under-test observes exactly what production does.
+            // Real Valkey/Redis drops a key once its EX elapses; a get afterwards never sees it.
             this.entries.delete(key)
             return Promise.resolve(null)
         }
@@ -212,9 +196,8 @@ describe('Valkey-backed session store: concurrent access', () => {
         await Promise.all(writes.map((session) => store.set(sessionId, session, 600)))
         const stored = await store.get(sessionId)
 
-        // JS's single-threaded event loop means these "concurrent" writes still resolve in a
-        // well-defined order; the property under test is that the store never merges two
-        // writes into a Frankenstein record, only ever a complete, valid one of them.
+        // The store must never merge two writes into a Frankenstein record, only ever store a
+        // complete, valid one of them.
         expect(stored).not.toBeNull()
         expect(stored?.state).toBe('pending')
         expect(writes.some((w) => stored?.state === 'pending' && w.oauthState === stored.oauthState)).toBe(
@@ -232,8 +215,7 @@ describe('Valkey-backed session store: concurrent access', () => {
             store.delete(session.sessionId),
         ])
 
-        // Whichever operation the fake's microtask ordering resolves first, the read must
-        // return either the whole session or nothing — never a thrown error or a partial value.
+        // The read must return either the whole session or nothing — never a partial value.
         expect(readResult === null || readResult?.sessionId === session.sessionId).toBe(true)
         expect(await store.get(session.sessionId)).toBeNull()
     })

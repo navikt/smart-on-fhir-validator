@@ -1,11 +1,7 @@
 /**
- * The mock EHR is conformant by default. Every deliberate way it can misbehave is named here,
- * so a test enables exactly the misbehaviour it wants to assert on and the mock stays a single
- * source of truth for what "non-conformant" means in this test suite.
- *
- * Each defect is checked at exactly one place in the mock (see the call sites below) — adding a
- * new defect is a one-line addition to this union plus one `defects.has(...)` branch where it
- * applies.
+ * The mock EHR is conformant by default. Every deliberate way it can misbehave is named here, so
+ * this union is the single source of truth for what "non-conformant" means in this test suite.
+ * Each defect is checked at exactly one place in the mock (noted per group below).
  */
 export type Defect =
     // .well-known/smart-configuration (see auth/well-known.ts)

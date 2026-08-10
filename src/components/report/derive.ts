@@ -1,8 +1,7 @@
 /**
  * Pure derivations the report page needs but the model does not carry directly: a plain-language
- * verdict sentence, a one-line collapsed section summary, and the severity filter (predicate plus
- * pill counts). Kept separate from any component so they can be unit-tested without rendering
- * anything. See `#core/run/report` for the model these read from.
+ * verdict sentence, a one-line collapsed section summary, and the severity filter. See
+ * `#core/run/report` for the model these read from.
  */
 
 import type { ReportSection, ReportSummary } from '#core/run'
@@ -13,10 +12,9 @@ function plural(count: number, word: string): string {
 }
 
 /**
- * One plain sentence stating the real counts behind a verdict. The `skipped` verdict is worded
- * to state both what could not run and that conformance was not demonstrated either way — it must
- * never read as any kind of pass. See `summarize` in `#core/run/report` for how `verdict` and
- * `sectionsSkipped` are derived from the same sections this sentence describes.
+ * One plain sentence stating the real counts behind a verdict. The `skipped` verdict states both
+ * what could not run and that conformance was not demonstrated either way — it must never read
+ * as any kind of pass.
  */
 export function verdictSentence(summary: ReportSummary, sectionsTotal: number): string {
     const { counts, sectionsSkipped, verdict } = summary
@@ -37,10 +35,9 @@ export function verdictSentence(summary: ReportSummary, sectionsTotal: number): 
 }
 
 /**
- * The collapsed one-line summary for a non-failed, non-skipped section, e.g. "6 checks passed."
- * or "6 checks passed, 1 warning." Derived from the section's own findings, since `ReportSection`
- * carries no summary string of its own. A count is only stated when it is non-zero, so a section
- * with nothing to report does not claim "0 checks passed".
+ * The collapsed one-line summary for a non-failed, non-skipped section, e.g. "6 checks passed,
+ * 1 warning." A count is only stated when non-zero, so a section with nothing to report does not
+ * claim "0 checks passed".
  */
 export function sectionSummaryLine(section: ReportSection): string {
     const okCount = section.findings.filter((finding) => finding.severity === 'OK').length
@@ -92,9 +89,8 @@ const SEVERITIES_BY_FILTER: Record<Exclude<SeverityFilterValue, 'all' | 'nottest
 
 /**
  * Applies the active severity filter to one section: hides non-matching findings, then hides the
- * section entirely if it ends up with none — except that `nottested` matches a section's own
- * `skipped` status directly, not any finding severity, so a skipped section (which has no
- * findings at all) still passes that filter. Returns `null` when the section should not render.
+ * section entirely if none remain — except that `nottested` matches a section's own `skipped`
+ * status directly, so a skipped section (which has no findings) still passes that filter.
  */
 export function filterSection(section: ReportSection, filter: SeverityFilterValue): ReportSection | null {
     if (filter === 'all') return section

@@ -17,10 +17,9 @@ import { getReportStore } from '../report/report-store'
 export const runtime = 'nodejs'
 
 /**
- * `request.nextUrl.origin` is not usable here: see the matching comment in `../launch/route.ts`.
- * It must agree with `../launch/route.ts`'s `callbackUrl` and with wherever the session cookie
- * was scoped, or the redirect this callback issues (or the `redirect_uri` it re-derives for the
- * token exchange) lands on a different host than the one the cookie is valid for.
+ * Must agree with `../launch/route.ts`'s `callbackUrl` and with wherever the session cookie was
+ * scoped, or this redirect (or the `redirect_uri` re-derived for the token exchange) lands on a
+ * different host than the one the cookie is valid for.
  */
 async function errorRedirect(error: string, detail?: string): Promise<NextResponse> {
     const url = new URL('/callback/error', await getAppOrigin())

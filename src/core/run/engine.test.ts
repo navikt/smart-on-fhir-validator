@@ -1,9 +1,7 @@
 /**
- * The highest-value test in this repository: it drives a real SMART launch against the
- * in-process mock EHR (`#mocks/server`), builds the `ActiveSession` that would result, and then
- * runs the full engine against it. A clean EHR must produce zero ERROR findings; specific
- * injected defects must produce specific expected ERROR findings. This is what proves the
- * validator actually validates, rather than merely parsing without crashing.
+ * Drives a real SMART launch against the in-process mock EHR and runs the full engine over the
+ * resulting session: a clean EHR must produce zero ERROR findings, and each injected defect must
+ * produce its expected ERROR. This is what proves the validator actually validates.
  */
 
 import { randomUUID } from 'node:crypto'
@@ -28,12 +26,9 @@ const REDIRECT_URI = 'https://app.example.com/callback'
 const CLIENT_ID = 'validator-client'
 
 /**
- * `patient/*.*` alone (rather than also spelling out the individual `NAV_REQUIRED_SCOPES`
- * strings) is deliberate: `#validation/smart/scopes`'s `diffScopes` keys a clinical scope by
- * `compartment/resource` only, not by its permission — requesting both `patient/X.read` and
- * `patient/X.write` for the same resource collapses to a single map entry, so the narrower of
- * the two would spuriously read as "granted less than requested". A single wildcard scope
- * authorizes every read/write probe this app runs without hitting that collision.
+ * `patient/*.*` rather than the individual `NAV_REQUIRED_SCOPES`: `diffScopes` keys a clinical
+ * scope by `compartment/resource` only, so `patient/X.read` and `patient/X.write` collapse into
+ * one entry and the narrower would spuriously read as "granted less than requested".
  */
 const SCOPE = 'openid fhirUser launch launch/patient offline_access patient/*.*'
 
@@ -43,10 +38,9 @@ function fetchImplFor(app: Hono): typeof fetch {
 }
 
 /**
- * Drives the authorization_code + PKCE flow directly against the mock's fixed routes (mirroring
- * `#mocks/server.test.ts`), and assembles the `ActiveSession` `handleCallback` would have
- * persisted. The `/authorize` redirect itself is not recorded — in production that request is
- * made by the vendor's browser, never by this app's own server.
+ * Drives the authorization_code + PKCE flow against the mock's fixed routes and assembles the
+ * `ActiveSession` `handleCallback` would have persisted. The `/authorize` redirect is not
+ * recorded: in production the vendor's browser makes that request, never this app's server.
  */
 async function buildActiveSession(
     app: Hono,
@@ -132,20 +126,14 @@ function findingsFor(report: ValidationReport, sectionId: string) {
 }
 
 /**
- * Three pre-existing gaps in `#mocks/**` — out of this task's ownership (`src/mocks/**` is
- * read-only) — currently keep an otherwise-conformant mock run from being literally free of
- * ERROR findings. Documented here rather than silently worked around, so fixing any one of them
- * immediately shrinks this list and tightens the assertion below:
+ * Known gaps in `#mocks/**` that produce false ERRORs against an otherwise conformant mock run.
+ * Fixing any one of them shrinks this list and tightens the assertion below:
  *
- *  1. `#mocks/data/practitioner-role.ts`: `createPractitionerRole` never sets `meta.profile`
- *     (Patient/Practitioner/Organization's seed functions all do) -> a false PractitionerRole ERROR.
- *  2. `#mocks/fhir/resource-router.ts`: the generic `POST`/`PUT` handlers always call
- *     `c.req.json()` regardless of `Content-Type`, so `binaryWriteProbe`'s raw-body (non-JSON)
- *     Binary upload mechanism always 422s -> a false Binary ERROR.
- *  3. `#mocks/fhir/questionnaire-response.ts`: its `searchParams` never included `encounter`
- *     (unlike `#mocks/fhir/document-reference.ts`'s, which does), so the `encounter=`
- *     searchability check the QuestionnaireResponse write probe performs always 400s -> a false
- *     QuestionnaireResponse ERROR.
+ *  1. `#mocks/data/practitioner-role.ts`: `createPractitionerRole` never sets `meta.profile`.
+ *  2. `#mocks/fhir/resource-router.ts`: `POST`/`PUT` always call `c.req.json()` regardless of
+ *     `Content-Type`, so the raw-body Binary upload mechanism always 422s.
+ *  3. `#mocks/fhir/questionnaire-response.ts`: `searchParams` omits `encounter`, so the write
+ *     probe's searchability check always 400s.
  */
 const KNOWN_MOCK_GAPS: RegExp[] = [
     /PractitionerRole\/.*does not declare `meta\.profile`/,
@@ -191,8 +179,8 @@ describe('runValidation: against a conformant mock EHR', () => {
             'bundle-batch-write',
         ])
 
-        // Every section but the two pure re-interpretations of already-collected session data
-        // (scopes, launch-context piggyback on the token exchange) must cite real evidence.
+        // Every finding must cite real evidence; scopes and launch-context piggyback on the
+        // token exchange.
         for (const section of report.sections) {
             for (const finding of section.findings) {
                 expect(finding.exchangeId).not.toBeNull()

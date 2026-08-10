@@ -16,10 +16,9 @@ const STAGE_LABEL: Record<FlowErrorProps['stage'], string> = {
 }
 
 /**
- * Rendered when `handleLaunch`/`handleCallback` (`#core/smart`) return a `SmartError` instead of
- * succeeding. This is not itself a validation finding: no report exists yet at this point, so it
- * is shown as a plain error page rather than folded into `/report`. It is deliberately neutral,
- * not the danger-coloured verdict treatment, since this is a launch failure, not a fail verdict.
+ * Rendered when `handleLaunch`/`handleCallback` return a `SmartError`. Not a validation finding:
+ * no report exists yet at this point, so it is shown as a plain, deliberately neutral error page
+ * rather than the danger-coloured verdict treatment.
  */
 export function FlowError({ stage, error, detail }: FlowErrorProps): ReactElement {
     return (

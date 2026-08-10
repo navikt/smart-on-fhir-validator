@@ -1,10 +1,6 @@
 /**
- * The report data model produced by the run engine (`engine.ts`).
- *
- * A `ValidationReport` is the single serialisable artefact the UI renders: every finding a
- * validator produced, grouped into sections, paired with the raw `HttpExchange` that produced
- * it (via `exchangeId`) and a spec citation (`refs`), plus a summary the UI can render without
- * re-deriving anything from the sections.
+ * The report data model produced by the run engine: findings grouped into sections, each paired
+ * with the raw `HttpExchange` that produced it (`exchangeId`) and a spec citation (`refs`).
  */
 
 import type { HttpExchange } from '#core/http/exchange'
@@ -13,19 +9,17 @@ import type { RefTypes } from '#validation/common-refs'
 import type { SmartError } from '#core/smart/types'
 import type { Severity, Validation } from '#validation/validation'
 
-/** Groups sections for the UI without encoding an opinion about SMART vs FHIR vs Nav — that
- * distinction lives per-finding in `refs`, since a single section can mix all three. */
+/** A section can mix SMART, FHIR and Nav findings; that distinction lives per-finding in `refs`. */
 export type SectionCategory = 'smart' | 'fhir-conformance' | 'fhir-read' | 'fhir-write'
 
 /**
- * `skipped` is deliberately its own status, never folded into `passed`: a probe that could not
- * run (e.g. no `patient` in launch context) proves nothing either way, so it must never read as
- * a pass in the UI or in the overall verdict.
+ * `skipped` is never folded into `passed`: a probe that could not run (e.g. no `patient` in
+ * launch context) proves nothing, so it must not read as a pass.
  */
 export type SectionStatus = 'passed' | 'warned' | 'failed' | 'skipped'
 
 export type ReportFinding = {
-    /** Stable within a report, used as a React list key. Not meaningful across report runs. */
+    /** Stable within a report, not meaningful across runs. */
     id: string
     message: string
     severity: Severity
@@ -90,7 +84,6 @@ export type BuildSectionInput = {
     validations: readonly Validation[]
 }
 
-/** The normal case: a phase ran to completion and produced zero or more findings. */
 export function buildSection(input: BuildSectionInput): ReportSection {
     const findings = toFindings(input.id, input.exchangeId, input.validations)
 
@@ -150,7 +143,6 @@ export function errorSection(input: ErrorSectionInput): ReportSection {
     }
 }
 
-/** Turns a `ProbeOutcome` (from `#validation/fhir/probe`) into a `ReportSection`. */
 export function sectionFromProbeOutcome(outcome: ProbeOutcome, category: SectionCategory): ReportSection {
     if (outcome.skipped) {
         return skippedSection({
@@ -171,10 +163,8 @@ export function sectionFromProbeOutcome(outcome: ProbeOutcome, category: Section
 }
 
 /**
- * A run with any skipped section is never reported as a plain pass: a probe that could not run
- * proves nothing about the resource it targets, so treating it as a pass would overstate what
- * was actually verified. Precedence is fail > skipped > warnings > pass — a run that both failed
- * and skipped something is reported as a failure, since that is the more actionable signal.
+ * A run with any skipped section is never a plain pass — that would overstate what was verified.
+ * Precedence is fail > skipped > warnings > pass, since a failure is the more actionable signal.
  */
 export function summarize(sections: readonly ReportSection[]): ReportSummary {
     const counts: Record<Severity, number> = { OK: 0, INFO: 0, WARNING: 0, ERROR: 0 }

@@ -91,7 +91,6 @@ function notFound(resourceType: string, id: string): Response {
     )
 }
 
-/** A minimal in-memory router mirroring the mock EHR's supported search parameters. */
 function conformantFhirClient(requestedUrls: string[]): FhirClient {
     const recorder = createExchangeRecorder()
     const http = new SmartHttpClient({

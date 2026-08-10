@@ -13,7 +13,7 @@ export type RefreshDependencies = {
     httpClient: SmartHttpClient
     recorder: ExchangeRecorder
     sessionStore: SessionStore
-    /** Resolved for the session's stored `clientId`/auth mode by the caller, as at callback time. */
+    /** Resolved for the session's stored `clientId`/auth mode, as at callback time. */
     clientAuth: ClientAuthentication
     now?: () => Date
 }
@@ -88,8 +88,7 @@ export async function refreshSession(
         ...session,
         tokenResponse: {
             ...parsed.data,
-            // A refresh response is not required to repeat the refresh token; keep the existing
-            // one when omitted, per RFC 6749 section 6.
+            // RFC 6749 §6: a refresh response need not repeat the refresh token.
             refresh_token: parsed.data.refresh_token ?? refreshToken,
         },
         expiresAt: computeExpiresAt(parsed.data.expires_in, now),

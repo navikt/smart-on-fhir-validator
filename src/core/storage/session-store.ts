@@ -6,12 +6,7 @@ import { processSingleton, resetProcessSingleton } from '#core/storage/process-s
 
 const SESSION_STORE_KEY = 'session-store'
 
-/**
- * Storage for `SmartSession`s, keyed by the opaque session id carried in the session cookie.
- * The launch and callback flows depend on this interface only (never a concrete backend), so
- * they can be tested against an in-memory fake and swapped to Valkey in production without
- * changing any calling code.
- */
+/** Storage for `SmartSession`s, keyed by the opaque session id carried in the session cookie. */
 export interface SessionStore {
     get(sessionId: string): Promise<SmartSession | null>
     set(sessionId: string, session: SmartSession, ttlSeconds: number): Promise<void>
@@ -19,10 +14,8 @@ export interface SessionStore {
 }
 
 /**
- * A session's evidence trail grows with every discovery, registration, authorization and token
- * call it makes. Without a cap a long-lived or repeatedly-refreshed session would grow the
- * stored record without bound. Only the most recent exchanges are kept — they are the most
- * relevant when reproducing the last thing that happened.
+ * Caps the stored evidence trail, which grows with every discovery, registration, authorization
+ * and token call. Only the most recent exchanges are kept.
  */
 export const MAX_STORED_EXCHANGES = 200
 
@@ -133,11 +126,8 @@ const activeSessionSchema = z.object({
 })
 
 /**
- * The wire format a `SessionStore` implementation may serialise to and deserialise from. Parsing
- * happens on every read: a record that predates a schema change, or one corrupted in storage,
- * fails validation and is treated as a cache miss rather than crashing the caller. A dropped
- * session merely sends the user through `/launch` again. Schema/type drift is covered by
- * round-trip tests in `session-store.test.ts` rather than a type-level assertion here.
+ * Wire format for stored sessions. Parsed on every read: a stale or corrupted record is treated
+ * as a cache miss, which merely sends the user through `/launch` again.
  */
 export const smartSessionSchema = z.discriminatedUnion('state', [pendingSessionSchema, activeSessionSchema])
 
@@ -178,18 +168,13 @@ export function createInMemorySessionStore(): SessionStore {
 }
 
 /**
- * Picks the backend from the environment: a nais-provided Valkey instance in deployed
- * environments, an in-memory store for local dev where no Valkey instance is configured. Kept
- * lazy (not evaluated at import time) so importing this module never requires network config to
- * be present, e.g. in tests that only need `createInMemorySessionStore` directly.
+ * Picks the backend from the environment: Valkey when `VALKEY_URI_SESSIONS` is set, an in-memory
+ * store otherwise. Lazy, so importing this module never requires network config.
  *
- * The result is memoised, and this is load-bearing in both directions. A launch and its callback
- * are two separate requests, so an in-memory store that were rebuilt per call would start empty
- * on the callback and lose every pending session — locally, that made the flow impossible to
- * complete at all. Against Valkey it is a resource leak instead: a fresh client per call opens a
- * new connection on every request.
- *
- * See `#core/storage/process-singleton` for why the memo cannot be a plain module-level variable.
+ * Memoisation is load-bearing: a launch and its callback are separate requests, so a store
+ * rebuilt per call would start empty on the callback and lose every pending session. Against
+ * Valkey it would also open a new connection per request. See `#core/storage/process-singleton`
+ * for why the memo cannot be a plain module-level variable.
  */
 export function createSessionStore(): Promise<SessionStore> {
     return processSingleton(SESSION_STORE_KEY, async (): Promise<SessionStore> => {
@@ -200,8 +185,7 @@ export function createSessionStore(): Promise<SessionStore> {
     })
 }
 
-/** Test-only: drops the memoised store so a test can change `VALKEY_URI_SESSIONS` and get a
- * store built from the new value, rather than one another test already built. */
+/** Test-only: drops the memoised store so a test can change `VALKEY_URI_SESSIONS`. */
 export function resetSessionStoreForTests(): void {
     resetProcessSingleton(SESSION_STORE_KEY)
 }

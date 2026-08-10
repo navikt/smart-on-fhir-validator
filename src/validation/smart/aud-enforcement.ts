@@ -1,15 +1,11 @@
 /**
  * Pure classification logic for the `aud` enforcement probe.
  *
- * SMART App Launch requires the authorization server to validate that the `aud` parameter on an
- * authorization request equals the FHIR server's base URL: "this parameter prevents leaking a
- * genuine bearer token to a counterfeit resource server" (confused-deputy defence — a malicious
- * FHIR server could otherwise replay a captured launch request against a real authorization
- * server to mint a token for a different, genuine resource server). This app's own launch
- * (`#core/smart/launch.ts`) always sends the correct `aud`, so nothing about the real launch can
- * ever observe whether a server actually enforces this. This module only classifies the
- * response to a *separate, deliberately wrong* `aud` request; the HTTP call itself is made by
- * `#core/run/phases/aud-enforcement`, which is the only place that IO happens.
+ * SMART App Launch requires the authorization server to validate that `aud` equals the FHIR
+ * server's base URL — a confused-deputy defence: a malicious FHIR server could otherwise replay a
+ * captured launch request to mint a token for a different, genuine resource server. This app's own
+ * launch always sends the correct `aud`, so enforcement can only be observed via a separate,
+ * deliberately wrong `aud` request; that HTTP call is made by `#core/run/phases/aud-enforcement`.
  *
  * @see https://hl7.org/fhir/smart-app-launch/STU2.2/app-launch.html#step-4-authorization-code
  */
@@ -39,7 +35,6 @@ export type AudEnforcementContext = {
     redirectUri: string
 }
 
-/** A verdict this module can turn directly into a report finding. */
 export type ConclusiveAudEnforcementVerdict = { kind: 'rejected' } | { kind: 'not-rejected' }
 
 export type AudEnforcementVerdict =
@@ -54,7 +49,6 @@ function inconclusive(reason: string): AudEnforcementVerdict {
     return { kind: 'inconclusive', reason }
 }
 
-/** True when `location` points at the same origin and path as this app's registered `redirect_uri`. */
 function isOwnCallback(location: URL, redirectUri: string): boolean {
     let expected: URL
     try {
@@ -98,11 +92,10 @@ function evaluateRedirect(status: number, location: string | null, context: AudE
 }
 
 /**
- * Classifies the response to a deliberately-wrong-`aud` authorization request. Only three
- * outcomes are possible, and they are never conflated: a redirect (or direct 4xx) that rejects
- * the request is `rejected` (the conformant, secure behaviour); a redirect carrying a `code`
- * despite the bad `aud` is `not-rejected` (a security finding); anything the probe cannot safely
- * interpret — a network failure, an interactive login page, an ambiguous redirect — is
+ * Classifies the response to a deliberately-wrong-`aud` authorization request. The three outcomes
+ * are never conflated: a redirect (or direct 4xx) rejecting the request is `rejected` (conformant);
+ * a redirect carrying a `code` despite the bad `aud` is `not-rejected` (a security finding);
+ * anything uninterpretable — network failure, interactive login page, ambiguous redirect — is
  * `inconclusive` and must never be read as either a pass or a fail.
  */
 export function evaluateAudEnforcementResponse(
@@ -135,9 +128,8 @@ export function evaluateAudEnforcementResponse(
     return inconclusive(`The authorization endpoint responded with an unexpected HTTP status ${status}.`)
 }
 
-/** Turns a conclusive verdict into the single finding it produces. `inconclusive` verdicts are
- * never passed here — callers turn those into a `skippedSection` instead (see
- * `#core/run/phases/aud-enforcement`), so a probe that could not run never reads as a pass. */
+/** `inconclusive` verdicts are never passed here — callers turn those into a `skippedSection`
+ * instead, so a probe that could not run never reads as a pass. */
 export function buildAudEnforcementFinding(verdict: ConclusiveAudEnforcementVerdict): Validation {
     switch (verdict.kind) {
         case 'rejected':

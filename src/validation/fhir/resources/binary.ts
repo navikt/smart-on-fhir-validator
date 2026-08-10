@@ -12,10 +12,8 @@ export type BinaryExpectations = {
 }
 
 /**
- * Validates a Binary resource against FHIR R4 (https://hl7.org/fhir/R4/binary.html).
- *
- * Nav's docs do not mandate `securityContext`; it is only checked when the probe itself sent
- * one, to confirm the EHR round-trips it rather than to require its presence.
+ * Validates a Binary against FHIR R4 (https://hl7.org/fhir/R4/binary.html). Nav does not mandate
+ * `securityContext`; it is checked only when the probe sent one, to confirm the EHR round-trips it.
  */
 export function validateBinary(binary: Binary | null, expectations: BinaryExpectations = {}): Validation[] {
     const validator = new Validator()

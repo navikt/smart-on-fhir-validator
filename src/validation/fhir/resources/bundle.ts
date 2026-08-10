@@ -20,7 +20,6 @@ import { validation, type Validation } from '#validation/validation'
 export const REQUIRED_BATCH_BUNDLE_TYPE = 'batch'
 export const REQUIRED_BATCH_RESPONSE_TYPE = 'batch-response'
 
-/** Validates the `batch` Bundle the probe is about to send, before it goes over the wire. */
 export function validateBatchBundleRequest(bundle: Bundle): Validation[] {
     const validator = new Validator()
     const ok: Validation[] = []
@@ -79,12 +78,10 @@ export function validateBatchBundleRequest(bundle: Bundle): Validation[] {
 }
 
 /**
- * Checks that references between entries resolve, per
- * https://hl7.org/fhir/R4/http.html#brules.
+ * Checks that references between entries resolve, per https://hl7.org/fhir/R4/http.html#brules.
  *
- * Nav's own batch (see bundle.md) does not use `urn:uuid:` fullUrls: because the sykmelding id is
- * known up front, `fullUrl` and inter-entry references use the plain `<Type>/<id>` form instead.
- * Both forms are legal per R4; this only checks whichever form is actually used.
+ * Nav's batch (bundle.md) uses plain `<Type>/<id>` fullUrls rather than `urn:uuid:`, since the
+ * sykmelding id is known up front. Both forms are legal in R4, so only the form in use is checked.
  */
 function validateInternalReferences(bundle: Bundle, validator: Validator, ok: Validation[]): void {
     const entries = bundle.entry ?? []
@@ -140,13 +137,9 @@ export type BatchEntryOutcome = {
 }
 
 /**
- * Validates the response Bundle to a `batch` submission.
- *
- * Per FHIR R4 (https://hl7.org/fhir/R4/http.html#transaction), a `batch` response must be a
- * `batch-response` Bundle with exactly one entry per request entry, in the same order, each
- * carrying its own `response.status`. Unlike a `transaction`, a failing entry does not fail the
- * whole batch, so each failure must be surfaced individually via its own OperationOutcome rather
- * than one blanket error for the response.
+ * Per https://hl7.org/fhir/R4/http.html#transaction a `batch` response must be a `batch-response`
+ * Bundle with one entry per request entry, in order, each with its own `response.status`. A failing
+ * entry does not fail the batch, so failures are reported per entry rather than as one error.
  */
 export function validateBatchBundleResponse(
     responseBundle: Bundle | null,

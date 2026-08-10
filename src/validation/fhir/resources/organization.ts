@@ -1,8 +1,7 @@
 /**
  * Organization: reached only by following the `Organization/{id}` reference discovered from
- * `PractitionerRole.organization` (see `practitioner-role.ts`) — never from configuration. When
- * that reference could not be discovered, this probe cannot legally reach an Organization at
- * all and must skip rather than fabricate an id.
+ * `PractitionerRole.organization` — never from configuration. Without that reference the probe
+ * skips rather than fabricating an id.
  *
  * @see https://hl7.org/fhir/R4/organization.html
  * @see https://github.com/navikt/syk-inn/blob/main/docs/fhir/organization.md

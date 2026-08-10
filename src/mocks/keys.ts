@@ -1,10 +1,8 @@
 /**
  * The mock EHR's own signing identity, used to sign `id_token`s and published at
  * `.well-known/jwks.json` so a client under test can verify them the same way it would verify a
- * real EHR's tokens.
- *
- * One key pair per mock instance (not a module-level singleton): each `createMockEhr()` call in
- * a test gets isolated key material, so concurrent tests never share signing state.
+ * real EHR's tokens. One key pair per mock instance, so concurrent tests never share signing
+ * state.
  */
 
 import { exportJWK, generateKeyPair, type JWK } from 'jose'

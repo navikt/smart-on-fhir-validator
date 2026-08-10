@@ -5,7 +5,6 @@ import { SmartHttpClient } from './smart-http-client'
 
 const REDACTED = '[REDACTED]'
 
-/** Builds an injectable `fetch` stub so tests never touch the network. */
 function stubFetch(handler: (url: string, init?: RequestInit) => Response | Promise<Response>): typeof fetch {
     return (async (input: RequestInfo | URL, init?: RequestInit) => {
         const url = typeof input === 'string' ? input : input.toString()

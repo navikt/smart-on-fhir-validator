@@ -8,11 +8,7 @@ function toDisplayText(value: unknown): string {
     return JSON.stringify(value, null, 2) ?? 'null'
 }
 
-/**
- * Pretty-prints a JSON-serialisable value (or a raw non-JSON string body) as plain monospace text.
- * A Server Component with no client JS: the value here is the exact evidence, not syntax colouring,
- * and the full report is already downloadable as JSON for anyone who needs to inspect it further.
- */
+/** The value is the evidence, not syntax colouring; the full report is downloadable as JSON. */
 export function JsonBlock({ value }: { value: unknown }): ReactElement {
     return (
         <pre

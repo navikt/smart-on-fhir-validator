@@ -1,9 +1,9 @@
 /**
- * Proves the mock EHR itself is correct: everything else in this repo's SMART/FHIR test suite
- * is built on top of it, so a broken fixture would silently invalidate those tests too. Covers
- * the full authorization-code + PKCE flow for every client authentication mode, the `aud` and
- * PKCE checks that make the mock a meaningful adversary rather than a rubber stamp, scope
- * enforcement, Bundle batch/transaction semantics, and a representative sample of defects.
+ * Proves the mock EHR itself is correct: the rest of this repo's SMART/FHIR test suite is built
+ * on top of it, so a broken fixture would silently invalidate those tests too. Covers the full
+ * authorization-code + PKCE flow for every client authentication mode, the `aud` and PKCE checks
+ * that make the mock a meaningful adversary, scope enforcement, Bundle batch/transaction
+ * semantics, and a representative sample of defects.
  */
 import { randomUUID } from 'node:crypto'
 
@@ -93,7 +93,6 @@ async function exchangeCode(
     )
 }
 
-/** Runs the full authorize -> token exchange and returns the parsed token response body. */
 async function performAuthorizationCodeFlow(
     app: Hono,
     clientId: string,

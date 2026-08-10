@@ -163,7 +163,7 @@ describe('validateIdToken — malformed tokens and skipped verification', () => 
         })
 
         expect(verification.status).toBe('failed')
-        // Claims can't even be best-effort decoded for a non-JWS string, so only the failed
+        // Claims cannot even be best-effort decoded for a non-JWS string, so only the failed
         // verification and missing-`sub` findings are reported — never a throw.
         expect(bySeverity(results, 'ERROR').length).toBeGreaterThanOrEqual(1)
         expect(bySeverity(results, 'ERROR').some((e) => e.message.match(/verification/i))).toBe(true)
@@ -181,7 +181,7 @@ describe('validateIdToken — malformed tokens and skipped verification', () => 
         })
 
         // The signature couldn't be checked, but claim-level analysis still runs against a
-        // best-effort decode of the (unverified) token — `sub` is present, so it reports OK.
+        // best-effort decode — `sub` is present, so it reports OK.
         const errors = bySeverity(results, 'ERROR')
         expect(errors).toHaveLength(1)
         expect(errors[0]?.message).toMatch(/issuer/)
@@ -324,8 +324,6 @@ describe('validateIdToken — RS256 key pair also works (algorithm-agnostic)', (
     })
 })
 
-// Sanity check that `importJWK`/`exportJWK` round-trip, in case a future test wants a JWKS-shaped
-// key resolver instead of a bare CryptoKey.
 describe('jose interop sanity check', () => {
     it('round-trips a public key through JWK export/import', async () => {
         const { publicKey, privateKey } = await generateKeys()
@@ -340,8 +338,6 @@ describe('jose interop sanity check', () => {
     })
 })
 
-// Exercises `IdTokenVerificationResult` being passed straight through with no re-derivation on the
-// validation side — the type import doubles as a compile-time check that the two modules stay wired.
 describe('validateIdToken — accepts a pre-computed IdTokenVerificationResult', () => {
     it('works with a manually constructed failed result', () => {
         const verification: IdTokenVerificationResult = {

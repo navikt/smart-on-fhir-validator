@@ -24,7 +24,7 @@ const NO_BASIS_PATIENT_PROFILE = 'http://hl7.no/fhir/StructureDefinition/no-basi
 
 const refs: RefTypes = [hl7Refs.patient, simplifierRefs.noBasisPasient, navRefs.patient]
 
-/** Pure conformance check against no-basis-Patient and Nav's identification requirements. */
+/** Conformance check against no-basis-Patient and Nav's identification requirements. */
 export function validatePatientResource(patient: Patient): Validation[] {
     const validator = new Validator()
 

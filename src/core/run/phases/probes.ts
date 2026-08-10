@@ -1,7 +1,4 @@
-/**
- * Phases 7 and 8: runs the FHIR read and write probes against the resources the launch context
- * makes reachable, and turns each probe outcome into its own report section.
- */
+/** Phases 7 and 8: FHIR read and write probes over the resources launch context makes reachable. */
 
 import type { FhirClient } from '#core/fhir/client'
 import type { LaunchContext } from '#core/smart/types'
