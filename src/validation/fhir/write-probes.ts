@@ -153,6 +153,7 @@ function upsertOutcomeValidations(
     response: RecordedResponse,
     resourceType: string,
     attempt: 'first' | 'second',
+    required = true,
 ): Validation[] {
     const url = response.exchange.request.url
     const attemptLabel = attempt === 'first' ? 'First' : 'Second'
@@ -190,10 +191,14 @@ function upsertOutcomeValidations(
     const outcomeSummary = operationOutcomeSummary(response.body)
     const transport =
         response.status === 0 ? ` (transport failure: ${response.exchange.error ?? 'unknown'})` : ''
+    const severity = required ? 'ERROR' : 'WARNING'
+    const requirementNote = required
+        ? ''
+        : ` ${resourceType} write support is optional per ADR01, so this alone does not indicate non-conformance with Nav's mandatory requirements.`
     return [
         validation(
-            `${attemptLabel} PUT ${url} failed to upsert the ${resourceType} with status ${response.status}${transport}. ${outcomeSummary ? `Server returned: ${outcomeSummary}` : 'No OperationOutcome was returned to explain the failure.'}`,
-            'ERROR',
+            `${attemptLabel} PUT ${url} failed to upsert the ${resourceType} with status ${response.status}${transport}. ${outcomeSummary ? `Server returned: ${outcomeSummary}` : 'No OperationOutcome was returned to explain the failure.'}${requirementNote}`,
+            severity,
             [hl7Refs.fhirHttpUpsert],
         ),
     ]
@@ -208,6 +213,7 @@ function idempotencyValidation(
     second: RecordedResponse,
     resourceType: string,
     id: string,
+    required = true,
 ): Validation {
     const firstId = asRecord(first.body)?.id
     const secondId = asRecord(second.body)?.id
@@ -224,7 +230,7 @@ function idempotencyValidation(
 
     return validation(
         `Repeating PUT ${second.exchange.request.url} with the same client-assigned id "${id}" produced a different resource id (first response id: "${String(firstId)}", second response id: "${String(secondId)}"). A compliant PUT-as-upsert must always operate on ${resourceType}/${id}; returning a different id risks the sykmelding being filed twice in the patient's journal.`,
-        'ERROR',
+        required ? 'ERROR' : 'WARNING',
         [hl7Refs.fhirHttpUpsert, navRefs.adr01],
     )
 }
@@ -849,7 +855,7 @@ export const questionnaireResponseWriteProbe: ResourceProbe = {
             )
         }
 
-        const validations = upsertOutcomeValidations(first, 'QuestionnaireResponse', 'first')
+        const validations = upsertOutcomeValidations(first, 'QuestionnaireResponse', 'first', false)
 
         if (!first.ok) {
             return {
@@ -874,9 +880,11 @@ export const questionnaireResponseWriteProbe: ResourceProbe = {
         )
 
         const second = await fhir.update('QuestionnaireResponse', sykmeldingId, payload)
-        validations.push(...upsertOutcomeValidations(second, 'QuestionnaireResponse', 'second'))
+        validations.push(...upsertOutcomeValidations(second, 'QuestionnaireResponse', 'second', false))
         if (second.ok) {
-            validations.push(idempotencyValidation(first, second, 'QuestionnaireResponse', sykmeldingId))
+            validations.push(
+                idempotencyValidation(first, second, 'QuestionnaireResponse', sykmeldingId, false),
+            )
         }
 
         validations.push(
@@ -945,8 +953,8 @@ export const bundleBatchWriteProbe: ResourceProbe = {
             const outcomeSummary = operationOutcomeSummary(response.body)
             validations.push(
                 validation(
-                    `POST ${url} (batch Bundle) failed with status ${response.status}. ${outcomeSummary ? `Server returned: ${outcomeSummary}` : 'No OperationOutcome was returned.'}`,
-                    'ERROR',
+                    `POST ${url} (batch Bundle) failed with status ${response.status}. ${outcomeSummary ? `Server returned: ${outcomeSummary}` : 'No OperationOutcome was returned.'} Batch Bundle write support is optional per ADR01 (separate PUT calls are an equally valid write-back option), so this alone does not indicate non-conformance with Nav's mandatory requirements.`,
+                    'WARNING',
                     [hl7Refs.bundleTransaction],
                 ),
             )

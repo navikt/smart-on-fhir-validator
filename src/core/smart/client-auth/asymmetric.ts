@@ -45,7 +45,7 @@ async function buildClientAssertion(
     const issuedAt = Math.floor(Date.now() / 1000)
 
     return await new SignJWT({})
-        .setProtectedHeader({ alg: algorithm, kid: keyId })
+        .setProtectedHeader({ alg: algorithm, kid: keyId, typ: 'JWT' })
         .setIssuer(clientId)
         .setSubject(clientId)
         .setAudience(tokenEndpoint)
