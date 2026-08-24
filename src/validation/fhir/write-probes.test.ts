@@ -583,7 +583,7 @@ describe('questionnaireResponseWriteProbe', () => {
         ).toBe(true)
     })
 
-    it('errors with OperationOutcome details on a 422 response', async () => {
+    it('warns with OperationOutcome details on a 422 response, since QuestionnaireResponse write support is optional per ADR01', async () => {
         const { fetchImpl } = stubFetch(() =>
             jsonResponse(
                 {
@@ -598,10 +598,11 @@ describe('questionnaireResponseWriteProbe', () => {
         const outcome = await questionnaireResponseWriteProbe.run(context)
 
         const failure = outcome.validations.find(
-            (v) => v.severity === 'ERROR' && v.message.includes('failed to upsert'),
+            (v) => v.severity === 'WARNING' && v.message.includes('failed to upsert'),
         )
         expect(failure?.message).toContain('422')
         expect(failure?.message).toContain('Unknown linkId')
+        expect(failure?.message).toContain('optional per ADR01')
     })
 
     it('skips when launch context is missing an encounter', async () => {
