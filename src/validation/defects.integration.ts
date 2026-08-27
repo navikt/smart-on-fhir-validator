@@ -349,21 +349,21 @@ describe('FHIR write-resource defects (src/mocks/fhir/*.ts)', () => {
         )
     })
 
-    it('questionnaire-response-unsupported: the QuestionnaireResponse write probe ERRORs on the rejected PUT', async () => {
+    it('questionnaire-response-unsupported: the QuestionnaireResponse write probe WARNs on the rejected PUT', async () => {
         const report = await runReportWithDefects(['questionnaire-response-unsupported'])
         expectFinding(
             report,
-            'ERROR',
+            'WARNING',
             'failed to upsert the QuestionnaireResponse with status 404',
             'questionnaire-response-write',
         )
     })
 
-    it('bundle-transaction-only: the batch Bundle write probe ERRORs when the server rejects "batch"', async () => {
+    it('bundle-transaction-only: the batch Bundle write probe WARNs when the server rejects "batch"', async () => {
         const report = await runReportWithDefects(['bundle-transaction-only'])
         expectFinding(
             report,
-            'ERROR',
+            'WARNING',
             'This server only accepts transaction Bundles, not batch',
             'bundle-batch-write',
         )

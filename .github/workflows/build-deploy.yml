@@ -44,7 +44,7 @@ jobs:
       - run: yarn build
 
       - name: Set deploy tag
-        run: echo "TAG=$(date +%Y.%m.%d.%H%M%S)-$(echo $GITHUB_SHA | cut -c1-7)" >> $GITHUB_ENV
+        run: echo "TAG=$(date +%Y.%m.%d.%H%M%S)-$(echo "$GITHUB_SHA" | cut -c1-7)" >> "$GITHUB_ENV"
 
       - uses: nais/docker-build-push@v0
         id: docker-build-push
@@ -66,6 +66,5 @@ jobs:
       - uses: nais/deploy/actions/deploy@v2
         env:
           CLUSTER: dev-gcp
-          RESOURCE: .nais/app.yaml
-          VARS: .nais/dev-gcp.json
+          RESOURCE: .nais/nais-dev.yaml
           IMAGE: ${{ needs.build.outputs.image }}
