@@ -1,0 +1,67 @@
+name: CI
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+  workflow_call:
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  verify:
+    name: Lint, typecheck and test
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - uses: raven-actions/actionlint@v2
+      # Before setup-node: its `cache: yarn` probe shells out to `yarn cache dir`, and the
+      # runner's global yarn refuses to run a project pinned to yarn 4 via `packageManager`.
+      - run: corepack enable
+      - uses: actions/setup-node@v6
+        with:
+          node-version-file: .nvmrc
+          cache: yarn
+      - run: yarn install --immutable
+      - run: yarn fmt:check
+      - run: yarn lint
+      - run: yarn tsc
+      - run: yarn workspace e2e run tsc
+      - run: yarn test:coverage
+      - run: yarn build
+
+  e2e:
+    name: End-to-end
+    # Gated behind verify so a PR that fails lint/typecheck/tests never pays for a Chromium
+    # download and browser-dependency install — the slowest part of this pipeline.
+    needs: [verify]
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - run: corepack enable
+      - uses: actions/setup-node@v6
+        with:
+          node-version-file: .nvmrc
+          cache: yarn
+      - run: yarn install --immutable
+      - uses: actions/cache@v4
+        with:
+          path: ~/.cache/ms-playwright
+          key: playwright-chromium-${{ runner.os }}-${{ hashFiles('yarn.lock') }}
+      - run: yarn e2e:install
+      # ENABLE_MOCK_EHR is read at build time, so it must be set here rather than only at runtime.
+      - run: yarn build
+        env:
+          ENABLE_MOCK_EHR: 'true'
+      - run: yarn e2e
+      - uses: actions/upload-artifact@v4
+        if: failure()
+        with:
+          name: playwright-report
+          path: e2e/playwright-report/
+          retention-days: 7

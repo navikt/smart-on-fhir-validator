@@ -49,6 +49,7 @@ spec:
     inbound:
       rules:
         - application: zara
+          namespace: tsm
     outbound:
       external:
         - host: "api.dips.no"
