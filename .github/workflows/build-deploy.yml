@@ -35,11 +35,11 @@ jobs:
       image: ${{ steps.docker-build-push.outputs.image }}
     steps:
       - uses: actions/checkout@v7
+      - run: corepack enable
       - uses: actions/setup-node@v6
         with:
           node-version-file: .nvmrc
           cache: yarn
-      - run: corepack enable
       - run: yarn install --immutable
       - run: yarn build
 

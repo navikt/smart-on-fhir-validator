@@ -20,11 +20,13 @@ jobs:
     steps:
       - uses: actions/checkout@v7
       - uses: raven-actions/actionlint@v2
+      # Before setup-node: its `cache: yarn` probe shells out to `yarn cache dir`, and the
+      # runner's global yarn refuses to run a project pinned to yarn 4 via `packageManager`.
+      - run: corepack enable
       - uses: actions/setup-node@v6
         with:
           node-version-file: .nvmrc
           cache: yarn
-      - run: corepack enable
       - run: yarn install --immutable
       - run: yarn fmt:check
       - run: yarn lint
@@ -41,11 +43,11 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v7
+      - run: corepack enable
       - uses: actions/setup-node@v6
         with:
           node-version-file: .nvmrc
           cache: yarn
-      - run: corepack enable
       - run: yarn install --immutable
       - uses: actions/cache@v4
         with:
