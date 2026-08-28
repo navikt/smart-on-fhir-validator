@@ -6,12 +6,15 @@
  * Read from the `SMART_ISSUERS` environment variable (a JSON array). This is our own
  * configuration, not EHR-supplied input, so a malformed value crashes at startup by design.
  *
- * `SMART_ISSUERS` is meant to be reviewable in a public pull request (see the manifest, not a
- * secret): every field here is a name or a public identifier, never a secret value. Two
+ * `SMART_ISSUERS` is meant to be reviewable in a public pull request (see `.nais/nais-dev.yaml`,
+ * not a secret): every field here is a name or a public identifier, never a secret value. Three
  * constraints keep that true even once entries are contributed by outside vendors:
  *
  * - `clientSecretEnv` must match `SMART_CLIENT_SECRET_<NAME>` — never an arbitrary variable name,
  *   so a PR-contributed entry cannot reference an unrelated secret such as `SMART_PRIVATE_JWK`.
+ * - Every `clientSecretEnv` value must be unique across the whole array (`assertNoDuplicateClientSecretEnv`)
+ *   — otherwise a new entry could deliberately name an existing vendor's already-provisioned secret
+ *   and have this app hand that vendor's client secret to the new entry's own token endpoint.
  * - `asymmetric` entries carry no env var at all: this app has exactly one signing identity,
  *   published as a whole at `.well-known/jwks.json` (`#core/smart/jwks`), so every `private_key_jwt`
  *   issuer necessarily uses that same key — there is no second private key to reference.
@@ -152,6 +155,29 @@ function assertNoDuplicateIssuers(entries: IssuerEntry[]): void {
     }
 }
 
+/**
+ * Rejects two entries that reference the same `clientSecretEnv`. Without this, a new PR-contributed
+ * entry could deliberately name an existing vendor's already-provisioned secret and this app would
+ * hand that vendor's client secret to the new entry's own (attacker-controlled) token endpoint.
+ */
+function assertNoDuplicateClientSecretEnv(entries: IssuerEntry[]): void {
+    const seen = new Map<string, string>()
+    for (const entry of entries) {
+        if (entry.authType !== 'symmetric') continue
+
+        const existingName = seen.get(entry.clientSecretEnv)
+        if (existingName) {
+            throw new Error(
+                `SMART_ISSUERS has two entries referencing the same clientSecretEnv ` +
+                    `('${entry.clientSecretEnv}'): '${existingName}' and '${entry.name}'. Each entry must ` +
+                    `reference its own secret, so one vendor's PR cannot claim another vendor's already-` +
+                    `provisioned client secret.`,
+            )
+        }
+        seen.set(entry.clientSecretEnv, entry.name)
+    }
+}
+
 function loadIssuers(): IssuerConfig[] {
     const raw = process.env.SMART_ISSUERS
     if (!raw) return []
@@ -172,6 +198,7 @@ function loadIssuers(): IssuerConfig[] {
     }
 
     assertNoDuplicateIssuers(parsed.data)
+    assertNoDuplicateClientSecretEnv(parsed.data)
 
     return parsed.data.map(toIssuerConfig)
 }

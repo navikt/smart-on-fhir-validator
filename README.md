@@ -74,8 +74,11 @@ asked for.
 
 ### Client authentication
 
-This app supports all three SMART client-authentication types. Configure your issuer under
-`SMART_ISSUERS` (a JSON array environment variable, see `src/core/config/issuers.ts`):
+This app supports all three SMART client-authentication types. Register your issuer by opening a
+pull request that adds one entry to the `SMART_ISSUERS` array in
+[`.nais/nais-dev.yaml`](.nais/nais-dev.yaml) (schema: `src/core/config/issuers.ts`). Every field in
+an entry is a name or public identifier, never a secret, so this is safe to edit directly in the
+GitHub web UI:
 
 **Public (PKCE)**: `authType: "public"`. No client secret. `client_id` travels in the token
 request body; PKCE (`S256`) is the only replay protection.
@@ -83,8 +86,9 @@ request body; PKCE (`S256`) is the only replay protection.
 **Symmetric** (`client_secret_basic` or `client_secret_post`): `authType: "symmetric"`, with a
 `clientSecretEnv` naming the environment variable that holds the secret. Must match
 `SMART_CLIENT_SECRET_<NAME>` — this keeps `SMART_ISSUERS` itself safe to put in a reviewable
-manifest, since no entry can name an unrelated variable. The secret value is never written into
-configuration, only referenced by name.
+manifest, since no entry can name an unrelated variable. The secret value itself is never written
+into the manifest, only referenced by name; ask us to set it in Nav's deployment secret once your
+PR is open.
 
 **Asymmetric** (`private_key_jwt`): `authType: "asymmetric"`. No further fields: this app has
 exactly one signing identity (`SMART_PRIVATE_JWK`, see [§9](#9-for-nav-developers--architecture)),

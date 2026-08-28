@@ -257,6 +257,32 @@ describe('config/issuers', () => {
         expect(findIssuerConfig('https://three.example.com/fhir')).toBeNull()
     })
 
+    it('throws at load time when two entries reference the same clientSecretEnv', async () => {
+        clearEnv()
+        process.env.SMART_CLIENT_SECRET_TEST = 'secret-1'
+        process.env.SMART_ISSUERS = JSON.stringify([
+            {
+                name: 'EHR One',
+                issuer: 'https://one.example.com/fhir',
+                clientId: 'client-1',
+                authType: 'symmetric',
+                clientSecretEnv: 'SMART_CLIENT_SECRET_TEST',
+            },
+            {
+                // A malicious or careless PR could otherwise claim EHR One's already-provisioned
+                // secret for a second, unrelated issuer and have it sent to that issuer's own
+                // token endpoint.
+                name: 'EHR Two',
+                issuer: 'https://two.example.com/fhir',
+                clientId: 'client-2',
+                authType: 'symmetric',
+                clientSecretEnv: 'SMART_CLIENT_SECRET_TEST',
+            },
+        ])
+
+        await expect(freshIssuersModule()).rejects.toThrow(/same clientSecretEnv/)
+    })
+
     it('throws at load time when two entries register the same issuer', async () => {
         clearEnv()
         process.env.SMART_ISSUERS = JSON.stringify([

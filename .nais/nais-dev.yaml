@@ -60,3 +60,18 @@ spec:
   env:
     - name: NEXT_PUBLIC_ENVIRONMENT
       value: dev
+    # One entry per vendor that authenticates with a static client (public/PKCE,
+    # client_secret_basic/post, or private_key_jwt). No entry needed if your authorization server
+    # supports dynamic client registration (RFC 7591) instead — see README §4. Every field here is
+    # a name or public identifier, never a secret; a symmetric entry's actual secret lives in the
+    # smart-on-fhir-validator-clients Kubernetes secret, referenced here only by env var name.
+    #
+    # To add your EHR: open a pull request that turns the empty array below into a one-element
+    # array containing your entry, for example:
+    #   [{ "name": "Acme EHR", "issuer": "https://acme.example.com", "clientId": "abc123",
+    #      "authType": "asymmetric" }]
+    # If entries already exist, add a comma and your object before the closing "]". Keep the
+    # result valid JSON — no comments inside the block below, since it becomes the literal value.
+    - name: SMART_ISSUERS
+      value: |
+        []
