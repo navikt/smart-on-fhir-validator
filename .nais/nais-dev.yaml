@@ -9,10 +9,14 @@ spec:
   image: {{ image }}
 
   port: 3000
+  # max == min: sessions and reports are in-memory only (see the README's "For Nav developers /
+  # architecture" section), so a second replica would
+  # split traffic across two stores with no shared state, and a user's session could vanish
+  # mid-flow depending on which pod handled the next request. min stays 1, not 0: nais only scales
+  # on CPU/Kafka triggers, not HTTP traffic, so min 0 would mean permanently down, not scale-to-zero.
   replicas:
-    max: 2
+    max: 1
     min: 1
-    cpuThresholdPercentage: 90
   resources:
     limits:
       memory: 1024Mi
@@ -37,9 +41,16 @@ spec:
   ingresses:
     - "https://nav-on-fhir.ekstern.dev.nav.no"
 
+  # Next.js writes its build cache to /app/.next/cache at runtime, but the container image's
+  # filesystem is otherwise read-only, so this mounts an empty, writable, per-pod scratch directory
+  # there. It is not backed by a PersistentVolumeClaim: the cache is fine to lose on every pod
+  # restart or redeploy, it just gets rebuilt.
+  #
+  # Deliberately disk-backed (the default), not `medium: Memory` (a tmpfs/RAM-backed emptyDir):
+  # a memory-backed emptyDir counts against the pod's memory limit above, so it would shrink the
+  # memory actually available to the Node.js process for no real benefit here.
   filesFrom:
-    - emptyDir:
-        medium: Memory
+    - emptyDir: {}
       mountPath: /app/.next/cache
 
   accessPolicy:
@@ -48,6 +59,12 @@ spec:
         - application: zara
           namespace: tsm
     outbound:
+      # Every server-side host a vendor's integration touches must be listed here, not just their
+      # FHIR base URL: the authorization endpoint, token endpoint, and JWKS URI can each live on a
+      # different hostname (e.g. authserver.vendor.com vs fhir.vendor.com vs token.vendor.com). A
+      # SMART_ISSUERS entry that parses fine but omits one of these fails at runtime with an
+      # egress-blocked connection error. See README's registration section for the full list a
+      # vendor must PR-add here alongside their SMART_ISSUERS entry.
       external:
         - host: "api.dips.no"
         - host: "fhirapi.public.webmedepj.no"
@@ -61,7 +78,8 @@ spec:
     - name: NEXT_PUBLIC_ENVIRONMENT
       value: dev
     # One entry per vendor that authenticates with a static client. No entry is needed if your
-    # authorization server supports dynamic client registration (RFC 7591) instead — see README §4.
+    # authorization server supports dynamic client registration (RFC 7591) instead. See the
+    # README's "Register your EHR" section.
     #
     # authType must be exactly one of these three values:
     #   "public"      public client with PKCE, no secret

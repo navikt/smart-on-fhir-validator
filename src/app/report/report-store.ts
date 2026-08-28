@@ -11,7 +11,7 @@
  */
 
 import type { ValidationReport } from '#core/run'
-import { processSingleton } from '#core/storage/process-singleton'
+import { processSingleton, resetProcessSingleton } from '#core/storage/process-singleton'
 
 const REPORT_STORE_KEY = 'report-store'
 
@@ -24,7 +24,9 @@ export type ReportStore = {
     set(sessionId: string, report: ValidationReport): Promise<void>
 }
 
-function createInMemoryReportStore(): ReportStore {
+/** Exported so tests can exercise the store's own logic (TTL, expiry) on a fresh instance,
+ * without going through the `globalThis` singleton `getReportStore()` anchors on. */
+export function createInMemoryReportStore(): ReportStore {
     const reports = new Map<string, { report: ValidationReport; expiresAt: number }>()
 
     return {
@@ -49,4 +51,9 @@ function createInMemoryReportStore(): ReportStore {
 /** Must be anchored on `globalThis` — see `#core/storage/process-singleton`. */
 export function getReportStore(): ReportStore {
     return processSingleton(REPORT_STORE_KEY, createInMemoryReportStore)
+}
+
+/** Test-only: forgets the singleton so the next `getReportStore()` call builds a fresh store. */
+export function resetReportStoreForTests(): void {
+    resetProcessSingleton(REPORT_STORE_KEY)
 }

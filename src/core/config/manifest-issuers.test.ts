@@ -3,9 +3,10 @@
  * schema the app parses at startup.
  *
  * This exists because `SMART_ISSUERS` is contributed by outside EHR vendors through pull requests
- * (see README §4). CI never sets `SMART_ISSUERS`, so `loadIssuers()` silently returns `[]` in every
- * other test: a malformed entry would pass the whole pipeline green and then crash pod startup on
- * merge, with no pre-merge warning. Running here means a bad entry fails the contributor's own PR.
+ * (see README, "Register your EHR"). CI never sets `SMART_ISSUERS`, so `loadIssuers()` silently
+ * returns `[]` in every other test: a malformed entry would pass the whole pipeline green and then
+ * crash pod startup on merge, with no pre-merge warning. Running here means a bad entry fails the
+ * contributor's own PR.
  *
  * It lives in the test suite rather than a standalone CI step on purpose: `yarn test:coverage`
  * already runs inside the required "Lint, typecheck and test" check, so this blocks a merge without

@@ -1,0 +1,7 @@
+blank_issues_enabled: true
+contact_links:
+  - name: Register directly with a pull request
+    url: https://github.com/navikt/smart-on-fhir-validator/blob/main/README.md#register-your-ehr
+    about: >-
+      If you can open a pull request yourself, the README's "Register your EHR" section has the
+      exact steps and is usually faster than filing an issue.

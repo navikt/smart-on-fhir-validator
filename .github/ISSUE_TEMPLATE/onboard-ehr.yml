@@ -1,0 +1,94 @@
+name: Onboard an EHR (ask for help)
+description: >-
+  Not ready to open a pull request yourself, or want to talk through your setup first? Describe
+  your integration here and a maintainer will help you register it.
+title: "Onboard EHR: <vendor name>"
+labels:
+  - onboarding
+body:
+  - type: markdown
+    attributes:
+      value: |
+        **Never paste a client secret value into this issue.** Issues are public and permanent,
+        just like pull requests. If your integration uses `symmetric` client authentication, the
+        only thing we ever need from you is the *name* you want for the environment variable
+        (for example `SMART_CLIENT_SECRET_ACME`), never the secret itself. We will set the actual
+        value directly in Nav's deployment secret once it exists.
+
+        If you can open a pull request yourself instead, see ["Register your
+        EHR"](../../blob/main/README.md#register-your-ehr) in the README: it is usually faster
+        than this form.
+
+  - type: input
+    id: vendor-name
+    attributes:
+      label: EHR / vendor name
+      description: The name your entry should be registered under.
+      placeholder: Acme EHR
+    validations:
+      required: true
+
+  - type: input
+    id: fhir-base-url
+    attributes:
+      label: FHIR base URL
+      description: The `iss` your SMART launch supplies, i.e. this integration's FHIR base URL.
+      placeholder: https://fhir.acme.example.com/R4
+    validations:
+      required: true
+
+  - type: textarea
+    id: auth-endpoints
+    attributes:
+      label: Authorization endpoint, token endpoint, and JWKS URI
+      description: >-
+        These can live on a **different hostname** than the FHIR base URL above. List every
+        hostname involved: all of them need to be reachable from this app, which means each one
+        must be added to the outbound network allowlist
+        (`spec.accessPolicy.outbound.external` in `.nais/nais-dev.yaml`) in addition to any
+        `SMART_ISSUERS` entry.
+      placeholder: |
+        Authorization endpoint: https://auth.acme.example.com/authorize
+        Token endpoint: https://auth.acme.example.com/token
+        JWKS URI: https://auth.acme.example.com/.well-known/jwks.json
+    validations:
+      required: true
+
+  - type: dropdown
+    id: auth-type
+    attributes:
+      label: Client authentication type
+      description: >-
+        Which of the three SMART client-authentication types does your authorization server use?
+        Public and asymmetric need no secret coordination with Nav at all.
+      options:
+        - "public: PKCE only, no client secret"
+        - "asymmetric: private_key_jwt, signed against this app's published JWKS"
+        - "symmetric: client_secret_basic or client_secret_post, needs a secret set on Nav's side"
+        - Not sure yet
+    validations:
+      required: true
+
+  - type: dropdown
+    id: dynamic-registration
+    attributes:
+      label: Does your authorization server support Dynamic Client Registration (RFC 7591)?
+      description: >-
+        If yes, this app can register itself on first launch and no `SMART_ISSUERS` entry may be
+        needed at all. See "Register your EHR" in the README.
+      options:
+        - "Yes"
+        - "No"
+        - Not sure
+    validations:
+      required: true
+
+  - type: checkboxes
+    id: secret-warning-ack
+    attributes:
+      label: Confirmation
+      options:
+        - label: >-
+            I have read the warning above and will not paste a client secret value into this
+            issue or into any pull request.
+          required: true

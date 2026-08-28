@@ -30,6 +30,80 @@ async function MockEhrCard(): Promise<ReactElement | null> {
     )
 }
 
+async function RegisterEhrSection(): Promise<ReactElement> {
+    const origin = await getAppOrigin()
+
+    const registrationItems = [
+        { label: 'Launch URL', value: `${origin}/launch` },
+        { label: 'Redirect URI', value: `${origin}/callback` },
+        {
+            label: 'Requested scopes',
+            value: 'openid fhirUser launch launch/patient offline_access patient/Patient.rs patient/Practitioner.rs patient/PractitionerRole.rs patient/Organization.rs patient/Encounter.rs patient/Condition.rs patient/DocumentReference.cruds patient/Binary.cruds patient/QuestionnaireResponse.cruds',
+        },
+        { label: 'JWKS URL (for private_key_jwt)', value: `${origin}/.well-known/jwks.json` },
+    ]
+
+    return (
+        <section className="border-ax-border-neutral-subtle bg-ax-bg-neutral-soft mt-5 rounded border p-[22px]">
+            <h2 className="text-13 tracking-eyebrow text-ax-text-neutral-subtle font-bold uppercase">
+                Register your EHR
+            </h2>
+            <p className="text-16 mt-2">
+                Register a static client by opening a pull request against{' '}
+                <a href="https://github.com/navikt/smart-on-fhir-validator" className="underline">
+                    this repository
+                </a>
+                , or expose a <code>registration_endpoint</code> so this app can register itself dynamically.
+                A static registration needs:
+            </p>
+            <table className="text-14 border-ax-border-neutral-subtle mt-3 w-full table-fixed border-collapse overflow-hidden rounded border bg-white">
+                <tbody>
+                    {registrationItems.map((item) => (
+                        <tr
+                            key={item.label}
+                            className="border-ax-border-neutral-subtle border-t first:border-t-0"
+                        >
+                            <th
+                                scope="row"
+                                className="border-ax-border-neutral-subtle w-[220px] border-r px-3 py-2 text-left align-top font-semibold"
+                            >
+                                {item.label}
+                            </th>
+                            <td className="px-3 py-2 align-top font-mono break-all">{item.value}</td>
+                        </tr>
+                    ))}
+                </tbody>
+            </table>
+            <p className="text-16 mt-3">
+                Three client-authentication types are supported: <strong>public</strong> (PKCE, no secret),{' '}
+                <strong>symmetric</strong> (<code>client_secret_basic</code> or{' '}
+                <code>client_secret_post</code>, with a <code>clientSecretEnv</code>), and{' '}
+                <strong>asymmetric</strong> (<code>private_key_jwt</code>, signed with this app&apos;s one
+                published key). See{' '}
+                <a
+                    href="https://github.com/navikt/smart-on-fhir-validator#register-your-ehr"
+                    className="underline"
+                >
+                    the README&apos;s registration section
+                </a>{' '}
+                for the exact pull-request mechanism.
+            </p>
+            <p className="text-16 mt-3">
+                Nav&apos;s outbound network policy only allows connections to an explicit allowlist: make sure
+                every server-side host your integration touches (FHIR base URL, authorization endpoint, token
+                endpoint, JWKS URI) is added to that allowlist in the same pull request, as described in{' '}
+                <a
+                    href="https://github.com/navikt/smart-on-fhir-validator#network-access-egress-allowlist"
+                    className="underline"
+                >
+                    the README&apos;s network access section
+                </a>
+                .
+            </p>
+        </section>
+    )
+}
+
 function StandaloneLaunchCard(): ReactElement {
     return (
         <section className="border-ax-border-neutral-subtle flex flex-col rounded border bg-white p-5">
@@ -89,6 +163,8 @@ export default function HomePage(): ReactElement {
                     {LAUNCH_CONTRACT}
                 </pre>
             </section>
+
+            <RegisterEhrSection />
 
             <div className="mt-5 grid grid-cols-[repeat(auto-fit,minmax(300px,1fr))] gap-5">
                 <MockEhrCard />
