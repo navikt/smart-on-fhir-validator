@@ -1,0 +1,13 @@
+# This file controls required reviewers for pull requests (see the `main`
+# branch ruleset). Ownership is intentionally repo-wide: `src/**`, the
+# Dockerfile and lockfiles are all deployed with access to the app's
+# secrets, so partial ownership would be no ownership.
+#
+# GitHub only recognizes CODEOWNERS in these exact locations:
+# CODEOWNERS, .github/CODEOWNERS, or docs/CODEOWNERS. The root CODEOWNERS.md
+# is not one of them and has no effect.
+
+* @navikt/helseopplysninger
+
+# Protect this file so ownership can't be quietly changed or removed.
+/.github/CODEOWNERS @navikt/helseopplysninger
