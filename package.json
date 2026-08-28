@@ -10,6 +10,7 @@
         "dev": "next dev -p 3001",
         "build": "next build",
         "start": "next start",
+        "generate-key": "node --experimental-strip-types scripts/generate-key.ts",
         "lint": "oxlint",
         "lint:fix": "oxlint --fix",
         "fmt": "oxfmt",

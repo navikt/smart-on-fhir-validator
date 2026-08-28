@@ -241,6 +241,20 @@ This app is deployed on [nais](https://doc.nais.io/) (see `.nais/nais-dev.yaml`)
 [Valkey](https://valkey.io/) for session and report storage that survives a pod restart and is
 visible from either replica.
 
+### Signing key
+
+This app signs with its own key for `private_key_jwt` client authentication and publishes the
+public half at `/.well-known/jwks.json`. Generate one with:
+
+```sh
+yarn generate-key
+```
+
+This prints a single JSON line. Set it as `SMART_PRIVATE_JWK` in the deployed environment's secret
+(`smart-on-fhir-validator-clients`) — never commit it. Without it, `src/core/smart/jwks.ts`
+generates an ephemeral key at startup, which does not survive a restart and forces any EHR that
+pinned this app's public key to re-register.
+
 Every outbound HTTP call this app makes is recorded as a redacted `HttpExchange`
 (`src/core/http/exchange.ts`, `src/core/http/redact.ts`), with credentials stripped at recording
 time rather than at render time. Every validator (`src/validation/**`) is a pure function over
