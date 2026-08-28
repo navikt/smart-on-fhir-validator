@@ -11,7 +11,6 @@ import {
     parseStoredSession,
     resetSessionStoreForTests,
 } from './session-store'
-import { createValkeySessionStore, type ValkeyLike } from './valkey'
 
 function exchange(overrides: Partial<HttpExchange> = {}): HttpExchange {
     return {
@@ -199,116 +198,16 @@ describe('createInMemorySessionStore', () => {
     })
 })
 
-/** A minimal in-memory fake of the `ValkeyLike` surface, so this store is tested hermetically. */
-function createFakeValkeyClient(): ValkeyLike & { store: Map<string, string> } {
-    const store = new Map<string, string>()
-
-    return {
-        store,
-        get: (key) => Promise.resolve(store.get(key) ?? null),
-        set: (key, value) => {
-            store.set(key, value)
-            return Promise.resolve('OK')
-        },
-        del: (key) => {
-            const existed = store.delete(key)
-            return Promise.resolve(existed ? 1 : 0)
-        },
-    }
-}
-
-describe('createValkeySessionStore', () => {
-    it('round-trips a session through JSON serialisation', async () => {
-        const client = createFakeValkeyClient()
-        const store = createValkeySessionStore(client)
-        const session = activeSession()
-
-        await store.set(session.sessionId, session, 3600)
-
-        expect(await store.get(session.sessionId)).toEqual(session)
-    })
-
-    it('prefixes keys so session ids cannot collide with unrelated Valkey keys', async () => {
-        const client = createFakeValkeyClient()
-        const store = createValkeySessionStore(client)
-        const session = pendingSession()
-
-        await store.set(session.sessionId, session, 600)
-
-        expect([...client.store.keys()]).toEqual([`smart-session:${session.sessionId}`])
-    })
-
-    it('passes the TTL through as an EX expiry', async () => {
-        const client = createFakeValkeyClient()
-        const setSpy = vi.spyOn(client, 'set')
-        const store = createValkeySessionStore(client)
-
-        await store.set('id', pendingSession(), 123)
-
-        expect(setSpy).toHaveBeenCalledWith('smart-session:id', expect.any(String), 'EX', 123)
-    })
-
-    it('treats a missing key as a cache miss', async () => {
-        const client = createFakeValkeyClient()
-        const store = createValkeySessionStore(client)
-
-        expect(await store.get('missing')).toBeNull()
-    })
-
-    it('treats a value that is not valid JSON as a cache miss rather than throwing', async () => {
-        const client = createFakeValkeyClient()
-        client.store.set('smart-session:corrupt', '{not json')
-        const store = createValkeySessionStore(client)
-
-        await expect(store.get('corrupt')).resolves.toBeNull()
-    })
-
-    it('treats valid JSON that fails schema validation as a cache miss', async () => {
-        const client = createFakeValkeyClient()
-        client.store.set('smart-session:corrupt', JSON.stringify({ state: 'pending' }))
-        const store = createValkeySessionStore(client)
-
-        expect(await store.get('corrupt')).toBeNull()
-    })
-
-    it('caps the exchanges array on write', async () => {
-        const client = createFakeValkeyClient()
-        const store = createValkeySessionStore(client)
-        const many = Array.from({ length: MAX_STORED_EXCHANGES + 5 }, (_, i) => exchange({ id: `${i}` }))
-
-        await store.set('id', pendingSession({ exchanges: many }), 600)
-        const stored = await store.get('id')
-
-        expect(stored?.exchanges).toHaveLength(MAX_STORED_EXCHANGES)
-    })
-
-    it('delete removes the key', async () => {
-        const client = createFakeValkeyClient()
-        const store = createValkeySessionStore(client)
-        await store.set('id', pendingSession(), 600)
-
-        await store.delete('id')
-
-        expect(await store.get('id')).toBeNull()
-    })
-})
-
 describe('createSessionStore', () => {
-    const originalEnv = process.env.VALKEY_URI_SESSIONS
-
     beforeEach(() => {
         resetSessionStoreForTests()
     })
 
     afterEach(() => {
-        if (originalEnv === undefined) delete process.env.VALKEY_URI_SESSIONS
-        else process.env.VALKEY_URI_SESSIONS = originalEnv
         resetSessionStoreForTests()
     })
 
-    it('falls back to an in-memory store when VALKEY_URI_SESSIONS is not set', async () => {
-        delete process.env.VALKEY_URI_SESSIONS
-
+    it('creates a working in-memory store', async () => {
         const store = await createSessionStore()
         const session = pendingSession()
         await store.set(session.sessionId, session, 600)
@@ -317,8 +216,6 @@ describe('createSessionStore', () => {
     })
 
     it('returns the same store to every caller, so a session written by one request is readable by the next', async () => {
-        delete process.env.VALKEY_URI_SESSIONS
-
         // A launch and its callback are separate requests that each ask for a store; a fresh
         // store per call would leave the callback unable to find the pending session.
         const duringLaunch = await createSessionStore()
@@ -332,8 +229,6 @@ describe('createSessionStore', () => {
     })
 
     it('constructs the backend only once even when called concurrently', async () => {
-        delete process.env.VALKEY_URI_SESSIONS
-
         const [first, second] = await Promise.all([createSessionStore(), createSessionStore()])
 
         expect(first).toBe(second)

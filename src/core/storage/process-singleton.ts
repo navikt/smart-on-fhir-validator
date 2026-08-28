@@ -5,8 +5,8 @@
  * separate module graphs, so state written by `/callback` is invisible to `/report` — the write
  * is lost silently. Only `globalThis` is shared across those graphs.
  *
- * This shares state within one process only, which is enough because it is a fallback for local
- * development and tests; deployed environments set `VALKEY_URI_SESSIONS`.
+ * This shares state within one process only: sessions and reports are in-memory and do not
+ * survive a pod restart or replicate across pods.
  */
 
 const registry = globalThis as unknown as { smartValidatorSingletons?: Map<string, unknown> }
@@ -18,9 +18,6 @@ function store(): Map<string, unknown> {
 
 /**
  * Returns the value previously built for `key`, or builds and remembers it on first call.
- *
- * Caching a promise is intended: two concurrent first callers share one in-flight promise rather
- * than racing to construct two backends (and, for Valkey, two connections).
  */
 export function processSingleton<T>(key: string, build: () => T): T {
     const singletons = store()

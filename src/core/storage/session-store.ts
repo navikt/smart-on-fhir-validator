@@ -149,8 +149,8 @@ export function createInMemorySessionStore(): SessionStore {
                 return Promise.resolve(null)
             }
 
-            // Round-trip through the same schema real stores use, so tests against this fake
-            // catch the same corruption-handling bugs a Valkey-backed store would.
+            // Round-trip through the same schema used on write, so a corrupted or stale record is
+            // treated as a cache miss rather than crashing the caller.
             return Promise.resolve(parseStoredSession(entry.session))
         },
         set(sessionId, session, ttlSeconds) {
@@ -168,24 +168,20 @@ export function createInMemorySessionStore(): SessionStore {
 }
 
 /**
- * Picks the backend from the environment: Valkey when `VALKEY_URI_SESSIONS` is set, an in-memory
- * store otherwise. Lazy, so importing this module never requires network config.
+ * In-memory session store, memoised process-wide.
  *
  * Memoisation is load-bearing: a launch and its callback are separate requests, so a store
- * rebuilt per call would start empty on the callback and lose every pending session. Against
- * Valkey it would also open a new connection per request. See `#core/storage/process-singleton`
- * for why the memo cannot be a plain module-level variable.
+ * rebuilt per call would start empty on the callback and lose every pending session. See
+ * `#core/storage/process-singleton` for why the memo cannot be a plain module-level variable.
+ *
+ * Sessions do not survive a pod restart and are not shared across pods; a launch and its callback
+ * must land on the same pod within the session's TTL.
  */
 export function createSessionStore(): Promise<SessionStore> {
-    return processSingleton(SESSION_STORE_KEY, async (): Promise<SessionStore> => {
-        if (!process.env.VALKEY_URI_SESSIONS) return createInMemorySessionStore()
-
-        const { createValkeySessionStore, createValkeyClientFromEnv } = await import('./valkey')
-        return createValkeySessionStore(createValkeyClientFromEnv())
-    })
+    return Promise.resolve(processSingleton(SESSION_STORE_KEY, createInMemorySessionStore))
 }
 
-/** Test-only: drops the memoised store so a test can change `VALKEY_URI_SESSIONS`. */
+/** Test-only: drops the memoised store so a test can start from a clean one. */
 export function resetSessionStoreForTests(): void {
     resetProcessSingleton(SESSION_STORE_KEY)
 }

@@ -240,9 +240,11 @@ yarn e2e                # end-to-end smoke test: launch → callback → report,
 
 ## 9. For Nav developers / architecture
 
-This app is deployed on [nais](https://doc.nais.io/) (see `.nais/nais-dev.yaml`), backed by
-[Valkey](https://valkey.io/) for session and report storage that survives a pod restart and is
-visible from either replica.
+This app is deployed on [nais](https://doc.nais.io/) (see `.nais/nais-dev.yaml`). Session and
+report storage is in-process and in-memory only (`src/core/storage/session-store.ts`,
+`src/app/report/report-store.ts`): it does not survive a pod restart and is not shared across
+replicas, so a launch and its callback must land on the same pod within the session's TTL. This is
+an accepted tradeoff, not a gap — see `replicas.min`/`replicas.max` in `.nais/nais-dev.yaml`.
 
 ### Signing key
 

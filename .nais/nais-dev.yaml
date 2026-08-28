@@ -6,9 +6,6 @@ metadata:
   labels:
     team: helseopplysninger
 spec:
-  valkey:
-    - instance: nav-smart-on-fhir-validator
-      access: readwrite
   image: {{ image }}
 
   port: 3000
@@ -55,7 +52,7 @@ spec:
         - host: "api.dips.no"
         - host: "fhirapi.public.webmedepj.no"
         - host: "launch.smarthealthit.org"
-        - host: "epj.ansatt.dev.nav.no"
+        - host: "epj.ekstern.dev.nav.no"
 
   envFrom:
     - secret: smart-on-fhir-validator-clients
