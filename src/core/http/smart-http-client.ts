@@ -103,11 +103,13 @@ export class SmartHttpClient {
         url: string,
         form: Record<string, string>,
         headers: Record<string, string> = {},
+        redirect?: RequestInit['redirect'],
     ): Promise<RecordedResponse> {
         return this.send(phase, url, {
             method: 'POST',
             headers: { 'Content-Type': 'application/x-www-form-urlencoded', ...headers },
             body: new URLSearchParams(form).toString(),
+            ...(redirect === undefined ? {} : { redirect }),
         })
     }
 

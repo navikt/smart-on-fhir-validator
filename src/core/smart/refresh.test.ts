@@ -192,6 +192,24 @@ describe('refreshSession', () => {
         expect((result as { exchangeId?: string }).exchangeId).toBeDefined()
     })
 
+    it('never follows a redirect on the refresh request, even to a previously-validated origin', async () => {
+        const recorder = createExchangeRecorder()
+        const fetchImpl = vi.fn<typeof fetch>(async (_input, init) => {
+            expect(init?.redirect).toBe('manual')
+            return new Response(null, {
+                status: 307,
+                headers: { Location: 'https://attacker.example.com/token' },
+            })
+        })
+        const deps = baseDeps({ recorder, httpClient: new SmartHttpClient({ recorder, fetchImpl }) })
+        await deps.sessionStore.set(SESSION_ID, activeSession(), 86400)
+
+        const result = await refreshSession(SESSION_ID, deps)
+
+        expect(fetchImpl).toHaveBeenCalledTimes(1)
+        expect(result).toMatchObject({ error: 'refresh_failed' })
+    })
+
     it('reports a 2xx response missing access_token as invalid_token_response', async () => {
         const recorder = createExchangeRecorder()
         const deps = baseDeps({

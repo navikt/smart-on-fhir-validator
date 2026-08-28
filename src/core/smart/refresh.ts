@@ -63,7 +63,18 @@ export async function refreshSession(
             ...formFields,
         },
         headers,
+        // Same rationale as the callback token exchange: never follow a redirect on a
+        // credential-bearing request, even to a previously-validated origin.
+        'manual',
     )
+
+    if (response.status >= 300 && response.status < 400) {
+        return {
+            error: 'refresh_failed',
+            detail: `Token endpoint attempted to redirect the refresh request (status ${response.status}); refusing to follow.`,
+            exchangeId: response.exchange.id,
+        }
+    }
 
     if (!response.ok) {
         return {

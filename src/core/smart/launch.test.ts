@@ -228,15 +228,6 @@ describe('handleLaunch', () => {
         expect(isSmartError(result as SmartError)).toBe(false)
     })
 
-    it('falls back to the default public client when neither static config nor registration is available', async () => {
-        const result = await handleLaunch(
-            { iss: FHIR_BASE_URL, launch: 'launch-1' },
-            baseDeps({ defaultPublicClientId: 'shared-public-client' }),
-        )
-
-        expect(isSmartError(result as SmartError)).toBe(false)
-    })
-
     it('fails with no_client_configuration when nothing is available', async () => {
         const result = await handleLaunch({ iss: FHIR_BASE_URL, launch: 'launch-1' }, baseDeps())
         expect(result).toMatchObject({ error: 'no_client_configuration' })

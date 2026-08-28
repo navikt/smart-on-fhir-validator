@@ -5,11 +5,24 @@
  *
  * Read from the `SMART_ISSUERS` environment variable (a JSON array). This is our own
  * configuration, not EHR-supplied input, so a malformed value crashes at startup by design.
+ *
+ * `SMART_ISSUERS` is meant to be reviewable in a public pull request (see the manifest, not a
+ * secret): every field here is a name or a public identifier, never a secret value. Two
+ * constraints keep that true even once entries are contributed by outside vendors:
+ *
+ * - `clientSecretEnv` must match `SMART_CLIENT_SECRET_<NAME>` — never an arbitrary variable name,
+ *   so a PR-contributed entry cannot reference an unrelated secret such as `SMART_PRIVATE_JWK`.
+ * - `asymmetric` entries carry no env var at all: this app has exactly one signing identity,
+ *   published as a whole at `.well-known/jwks.json` (`#core/smart/jwks`), so every `private_key_jwt`
+ *   issuer necessarily uses that same key — there is no second private key to reference.
  */
 
 import * as z from 'zod'
 
 import type { IssuerConfig } from '#core/smart/types'
+
+/** This app's one signing identity — see `#core/smart/jwks`. Never issuer-configurable. */
+const PRIVATE_KEY_ENV_VAR = 'SMART_PRIVATE_JWK'
 
 const BaseEntrySchema = z.object({
     name: z.string().min(1),
@@ -26,15 +39,18 @@ const SymmetricEntrySchema = BaseEntrySchema.extend({
     // RFC 6749 does not mandate a client auth method; 'client_secret_basic' is the traditional
     // default for confidential clients that do not otherwise negotiate one.
     method: z.enum(['client_secret_basic', 'client_secret_post']).default('client_secret_basic'),
-    /** Name of the environment variable holding the secret — never the secret value itself. */
-    clientSecretEnv: z.string().min(1),
+    /**
+     * Name of the environment variable holding the secret — never the secret value itself, and
+     * constrained to this prefix so a contributed entry cannot name an unrelated variable.
+     */
+    clientSecretEnv: z.string().regex(/^SMART_CLIENT_SECRET_[A-Z0-9_]+$/, {
+        message: "clientSecretEnv must look like 'SMART_CLIENT_SECRET_<NAME>'",
+    }),
 })
 
 const AsymmetricEntrySchema = BaseEntrySchema.extend({
     authType: z.literal('asymmetric'),
-    /** Name of the environment variable holding this app's private JWK — never the key itself. */
-    privateKeyJwkEnv: z.string().min(1),
-})
+}).strict()
 
 const IssuerEntrySchema = z.discriminatedUnion('authType', [
     PublicEntrySchema,
@@ -113,10 +129,26 @@ function toIssuerConfig(entry: IssuerEntry): IssuerConfig {
                 clientId: entry.clientId,
                 auth: {
                     type: 'confidential-asymmetric',
-                    ...readPrivateKeyJwk(entry.privateKeyJwkEnv, entry.name),
+                    ...readPrivateKeyJwk(PRIVATE_KEY_ENV_VAR, entry.name),
                 },
                 dynamicallyRegistered: false,
             }
+    }
+}
+
+function assertNoDuplicateIssuers(entries: IssuerEntry[]): void {
+    const seen = new Map<string, string>()
+    for (const entry of entries) {
+        const key = normaliseIssuerUrl(entry.issuer)
+        const existingName = seen.get(key)
+        if (existingName) {
+            throw new Error(
+                `SMART_ISSUERS has two entries for the same issuer ('${entry.issuer}'): ` +
+                    `'${existingName}' and '${entry.name}'. Each issuer may only be registered once, so a ` +
+                    `spoofed discovery document cannot be matched against the wrong entry's credentials.`,
+            )
+        }
+        seen.set(key, entry.name)
     }
 }
 
@@ -138,6 +170,8 @@ function loadIssuers(): IssuerConfig[] {
     if (!parsed.success) {
         throw new Error(`SMART_ISSUERS is invalid: ${z.prettifyError(parsed.error)}`)
     }
+
+    assertNoDuplicateIssuers(parsed.data)
 
     return parsed.data.map(toIssuerConfig)
 }

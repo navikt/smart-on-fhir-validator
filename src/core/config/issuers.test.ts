@@ -1,6 +1,11 @@
 import { afterEach, describe, expect, it, vi } from 'vitest'
 
-const ENV_KEYS = ['SMART_ISSUERS', 'TEST_CLIENT_SECRET', 'TEST_PRIVATE_JWK', 'OTHER_CLIENT_SECRET'] as const
+const ENV_KEYS = [
+    'SMART_ISSUERS',
+    'SMART_CLIENT_SECRET_TEST',
+    'SMART_PRIVATE_JWK',
+    'SMART_CLIENT_SECRET_OTHER',
+] as const
 
 async function freshIssuersModule(): Promise<typeof import('./issuers')> {
     vi.resetModules()
@@ -48,7 +53,7 @@ describe('config/issuers', () => {
 
     it('reads the symmetric client secret from the named environment variable, not from SMART_ISSUERS', async () => {
         clearEnv()
-        process.env.TEST_CLIENT_SECRET = 'super-secret'
+        process.env.SMART_CLIENT_SECRET_TEST = 'super-secret'
         process.env.SMART_ISSUERS = JSON.stringify([
             {
                 name: 'Test EHR',
@@ -56,7 +61,7 @@ describe('config/issuers', () => {
                 clientId: 'client-1',
                 authType: 'symmetric',
                 method: 'client_secret_post',
-                clientSecretEnv: 'TEST_CLIENT_SECRET',
+                clientSecretEnv: 'SMART_CLIENT_SECRET_TEST',
             },
         ])
         const { findIssuerConfig } = await freshIssuersModule()
@@ -73,14 +78,14 @@ describe('config/issuers', () => {
 
     it('defaults the symmetric method to client_secret_basic when omitted', async () => {
         clearEnv()
-        process.env.TEST_CLIENT_SECRET = 'super-secret'
+        process.env.SMART_CLIENT_SECRET_TEST = 'super-secret'
         process.env.SMART_ISSUERS = JSON.stringify([
             {
                 name: 'Test EHR',
                 issuer: 'https://ehr.example.com/fhir',
                 clientId: 'client-1',
                 authType: 'symmetric',
-                clientSecretEnv: 'TEST_CLIENT_SECRET',
+                clientSecretEnv: 'SMART_CLIENT_SECRET_TEST',
             },
         ])
         const { findIssuerConfig } = await freshIssuersModule()
@@ -97,16 +102,32 @@ describe('config/issuers', () => {
                 issuer: 'https://ehr.example.com/fhir',
                 clientId: 'client-1',
                 authType: 'symmetric',
-                clientSecretEnv: 'DOES_NOT_EXIST',
+                clientSecretEnv: 'SMART_CLIENT_SECRET_MISSING',
             },
         ])
 
-        await expect(freshIssuersModule()).rejects.toThrow(/DOES_NOT_EXIST/)
+        await expect(freshIssuersModule()).rejects.toThrow(/SMART_CLIENT_SECRET_MISSING/)
     })
 
-    it('loads an asymmetric issuer entry, deriving keyId and algorithm from the referenced JWK', async () => {
+    it('rejects a clientSecretEnv that does not match the SMART_CLIENT_SECRET_<NAME> pattern', async () => {
         clearEnv()
-        process.env.TEST_PRIVATE_JWK = JSON.stringify({
+        process.env.SMART_ISSUERS = JSON.stringify([
+            {
+                name: 'Test EHR',
+                issuer: 'https://ehr.example.com/fhir',
+                clientId: 'client-1',
+                authType: 'symmetric',
+                // A PR-contributed entry must not be able to name an unrelated secret.
+                clientSecretEnv: 'SMART_PRIVATE_JWK',
+            },
+        ])
+
+        await expect(freshIssuersModule()).rejects.toThrow(/SMART_ISSUERS is invalid/)
+    })
+
+    it('loads an asymmetric issuer entry from this app own SMART_PRIVATE_JWK, deriving keyId and algorithm', async () => {
+        clearEnv()
+        process.env.SMART_PRIVATE_JWK = JSON.stringify({
             kty: 'EC',
             crv: 'P-384',
             kid: 'my-kid',
@@ -118,7 +139,6 @@ describe('config/issuers', () => {
                 issuer: 'https://ehr.example.com/fhir',
                 clientId: 'client-1',
                 authType: 'asymmetric',
-                privateKeyJwkEnv: 'TEST_PRIVATE_JWK',
             },
         ])
         const { findIssuerConfig } = await freshIssuersModule()
@@ -126,7 +146,7 @@ describe('config/issuers', () => {
         const config = findIssuerConfig('https://ehr.example.com/fhir')
         expect(config?.auth).toEqual({
             type: 'confidential-asymmetric',
-            privateKeyJwk: process.env.TEST_PRIVATE_JWK,
+            privateKeyJwk: process.env.SMART_PRIVATE_JWK,
             keyId: 'my-kid',
             algorithm: 'ES384',
         })
@@ -134,7 +154,7 @@ describe('config/issuers', () => {
 
     it('throws at load time when the asymmetric JWK is missing alg or uses an unsupported algorithm', async () => {
         clearEnv()
-        process.env.TEST_PRIVATE_JWK = JSON.stringify({
+        process.env.SMART_PRIVATE_JWK = JSON.stringify({
             kty: 'EC',
             crv: 'P-384',
             kid: 'my-kid',
@@ -146,11 +166,33 @@ describe('config/issuers', () => {
                 issuer: 'https://ehr.example.com/fhir',
                 clientId: 'client-1',
                 authType: 'asymmetric',
-                privateKeyJwkEnv: 'TEST_PRIVATE_JWK',
             },
         ])
 
         await expect(freshIssuersModule()).rejects.toThrow(/RS384.*ES384|ES384.*RS384/)
+    })
+
+    it('rejects an asymmetric entry that still carries the removed privateKeyJwkEnv field', async () => {
+        clearEnv()
+        process.env.SMART_PRIVATE_JWK = JSON.stringify({
+            kty: 'EC',
+            crv: 'P-384',
+            kid: 'my-kid',
+            alg: 'ES384',
+        })
+        process.env.SMART_ISSUERS = JSON.stringify([
+            {
+                name: 'Test EHR',
+                issuer: 'https://ehr.example.com/fhir',
+                clientId: 'client-1',
+                authType: 'asymmetric',
+                privateKeyJwkEnv: 'SOME_OTHER_VAR',
+            },
+        ])
+
+        // A stale privateKeyJwkEnv must be a hard error, not silently ignored, so a leftover
+        // legacy field doesn't quietly point at the wrong key without anyone noticing.
+        await expect(freshIssuersModule()).rejects.toThrow(/privateKeyJwkEnv/)
     })
 
     it('throws at load time when SMART_ISSUERS is not valid JSON', async () => {
@@ -186,22 +228,22 @@ describe('config/issuers', () => {
 
     it('supports multiple issuer entries and only reads the secret for the one being matched', async () => {
         clearEnv()
-        process.env.TEST_CLIENT_SECRET = 'secret-1'
-        process.env.OTHER_CLIENT_SECRET = 'secret-2'
+        process.env.SMART_CLIENT_SECRET_TEST = 'secret-1'
+        process.env.SMART_CLIENT_SECRET_OTHER = 'secret-2'
         process.env.SMART_ISSUERS = JSON.stringify([
             {
                 name: 'EHR One',
                 issuer: 'https://one.example.com/fhir',
                 clientId: 'client-1',
                 authType: 'symmetric',
-                clientSecretEnv: 'TEST_CLIENT_SECRET',
+                clientSecretEnv: 'SMART_CLIENT_SECRET_TEST',
             },
             {
                 name: 'EHR Two',
                 issuer: 'https://two.example.com/fhir',
                 clientId: 'client-2',
                 authType: 'symmetric',
-                clientSecretEnv: 'OTHER_CLIENT_SECRET',
+                clientSecretEnv: 'SMART_CLIENT_SECRET_OTHER',
             },
         ])
         const { findIssuerConfig } = await freshIssuersModule()
@@ -213,5 +255,27 @@ describe('config/issuers', () => {
             clientSecret: 'secret-2',
         })
         expect(findIssuerConfig('https://three.example.com/fhir')).toBeNull()
+    })
+
+    it('throws at load time when two entries register the same issuer', async () => {
+        clearEnv()
+        process.env.SMART_ISSUERS = JSON.stringify([
+            {
+                name: 'EHR One',
+                issuer: 'https://ehr.example.com/fhir',
+                clientId: 'client-1',
+                authType: 'public',
+            },
+            {
+                name: 'EHR One Again',
+                issuer: 'https://ehr.example.com/fhir/',
+                clientId: 'client-2',
+                authType: 'public',
+            },
+        ])
+
+        // A duplicate issuer would let a spoofed discovery document be matched against either
+        // entry's credentials — see credentialOriginIsAuthorized in #core/smart/callback.
+        await expect(freshIssuersModule()).rejects.toThrow(/same issuer/)
     })
 })

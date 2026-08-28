@@ -66,8 +66,6 @@ export type LaunchDependencies = {
     scope: string
     /** This app's display name, sent as `client_name` during dynamic client registration. */
     clientName: string
-    /** Used only by a client with no static config and no dynamic registration support. */
-    defaultPublicClientId?: string
     now?: () => Date
 }
 
@@ -173,8 +171,7 @@ export async function handleLaunch(
 
 /**
  * Static configuration first (an operator can pin a known-good client), then Dynamic Client
- * Registration when advertised, then a shared public client so an unconfigured EHR can still be
- * exercised.
+ * Registration when advertised, so an unconfigured EHR can still be exercised.
  *
  * Dynamic registration always requests a public client: sessions carry only `clientId`, so no
  * confidential credential could survive from the launch step to the callback step.
@@ -197,17 +194,8 @@ async function resolveIssuerConfig(
         })
     }
 
-    if (deps.defaultPublicClientId) {
-        return {
-            issuer,
-            clientId: deps.defaultPublicClientId,
-            auth: { type: 'public' },
-            dynamicallyRegistered: false,
-        }
-    }
-
     return {
         error: 'no_client_configuration',
-        detail: `No static configuration, dynamic registration or default public client available for issuer ${issuer}`,
+        detail: `No static configuration or dynamic registration available for issuer ${issuer}`,
     }
 }

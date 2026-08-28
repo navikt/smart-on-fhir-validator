@@ -81,12 +81,15 @@ This app supports all three SMART client-authentication types. Configure your is
 request body; PKCE (`S256`) is the only replay protection.
 
 **Symmetric** (`client_secret_basic` or `client_secret_post`): `authType: "symmetric"`, with a
-`clientSecretEnv` naming the environment variable that holds the secret. The secret is never
-written into configuration, only referenced by variable name.
+`clientSecretEnv` naming the environment variable that holds the secret. Must match
+`SMART_CLIENT_SECRET_<NAME>` — this keeps `SMART_ISSUERS` itself safe to put in a reviewable
+manifest, since no entry can name an unrelated variable. The secret value is never written into
+configuration, only referenced by name.
 
-**Asymmetric** (`private_key_jwt`): `authType: "asymmetric"`, with a `privateKeyJwkEnv` naming the
-environment variable holding this app's private key (`RS384` or `ES384`). Register this app's
-JWKS URL (`/.well-known/jwks.json`) rather than a static key, so a key rotation does not require
+**Asymmetric** (`private_key_jwt`): `authType: "asymmetric"`. No further fields: this app has
+exactly one signing identity (`SMART_PRIVATE_JWK`, see [§9](#9-for-nav-developers--architecture)),
+published as a whole at `/.well-known/jwks.json`, so every `private_key_jwt` issuer uses that same
+key. Register this app's JWKS URL rather than a static key, so a key rotation does not require
 re-registration.
 
 ### Dynamic Client Registration (zero-config)

@@ -84,6 +84,26 @@ function statesMatch(expected: string, actual: string): boolean {
 }
 
 /**
+ * A confidential credential (client secret or signed assertion) must only ever reach the token
+ * endpoint of the issuer it was configured for.
+ *
+ * Without this, an already-allowlisted but compromised or malicious host could declare *another*
+ * registered issuer's `issuer` string in its own `.well-known/smart-configuration` — `launch.ts`
+ * matches static configuration against that self-declared value, not against the host actually
+ * being talked to — and receive that other issuer's credential at its own `token_endpoint`. Public
+ * clients carry no credential, so they are exempt.
+ */
+export function credentialOriginIsAuthorized(issuerConfig: IssuerConfig, tokenEndpoint: string): boolean {
+    if (issuerConfig.auth.type === 'public') return true
+
+    try {
+        return new URL(issuerConfig.issuer).origin === new URL(tokenEndpoint).origin
+    } catch {
+        return false
+    }
+}
+
+/**
  * Sessions only carry `clientId`, not a full `ClientAuthMode`, so a dynamically-registered
  * client's auth mode cannot travel from launch to callback. `launch.ts` always registers as a
  * public client, so falling back to `{ type: 'public' }` here is exactly correct.
@@ -139,6 +159,17 @@ export async function handleCallback(
         }
     }
 
+    if (!credentialOriginIsAuthorized(issuerConfig, smartConfiguration.token_endpoint)) {
+        return {
+            error: 'token_endpoint_origin_mismatch',
+            detail:
+                `Refusing to send the '${issuerConfig.auth.type}' credential configured for issuer ` +
+                `'${issuerConfig.issuer}' to a token_endpoint on a different origin ` +
+                `('${smartConfiguration.token_endpoint}'). A registered issuer's credential may only be ` +
+                `used against that issuer's own origin.`,
+        }
+    }
+
     const clientAuth = deps.selectClientAuthentication(
         issuerConfig.clientId,
         issuerConfig.auth,
@@ -157,7 +188,18 @@ export async function handleCallback(
             ...formFields,
         },
         headers,
+        // Never follow a redirect on the token POST: an origin cleared by the check above could
+        // still 3xx-redirect the credential-bearing request off to another origin.
+        'manual',
     )
+
+    if (tokenResponse.status >= 300 && tokenResponse.status < 400) {
+        return {
+            error: 'token_exchange_failed',
+            detail: `Token endpoint attempted to redirect the token request (status ${tokenResponse.status}); refusing to follow.`,
+            exchangeId: tokenResponse.exchange.id,
+        }
+    }
 
     if (!tokenResponse.ok) {
         return {
