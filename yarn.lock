@@ -1609,10 +1609,10 @@ __metadata:
   languageName: node
   linkType: hard
 
-"hono@npm:^4.13.0":
-  version: 4.13.0
-  resolution: "hono@npm:4.13.0"
-  checksum: 10c0/d7cfb4d1063be19bea1982ea2a6b3cfa1840e8403a03203e86d17278e76fed11e7483974738345257543e183a935ea73ffc6d4a1e6ad7f0008451f55cdf8be7b
+"hono@npm:^4.13.4":
+  version: 4.13.4
+  resolution: "hono@npm:4.13.4"
+  checksum: 10c0/dbf18fd31c4f99144a652bff10155e23ad6d44724330ec14198c4d48c5cd1dc500904a1cc92ca450abaa86614c9af2508613df6e5b40e212a642df64cfefb184
   languageName: node
   linkType: hard
 
@@ -2657,7 +2657,7 @@ __metadata:
     "@types/react-dom": "npm:^19.2.3"
     "@vitest/coverage-v8": "npm:4.1.10"
     clsx: "npm:^2.1.1"
-    hono: "npm:^4.13.0"
+    hono: "npm:^4.13.4"
     iovalkey: "npm:^0.4.0"
     jose: "npm:^6.2.8"
     next: "npm:16.3.0"
