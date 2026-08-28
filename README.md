@@ -96,6 +96,11 @@ published as a whole at `/.well-known/jwks.json`, so every `private_key_jwt` iss
 key. Register this app's JWKS URL rather than a static key, so a key rotation does not require
 re-registration.
 
+Your pull request is checked automatically: CI parses the `SMART_ISSUERS` value straight out of the
+manifest through the same schema the app uses at startup
+(`src/core/config/manifest-issuers.test.ts`), so a malformed entry fails your PR rather than the
+deployment. Run it yourself with `yarn test` before pushing.
+
 ### Dynamic Client Registration (zero-config)
 
 If your authorization server advertises a `registration_endpoint` and no static entry exists for

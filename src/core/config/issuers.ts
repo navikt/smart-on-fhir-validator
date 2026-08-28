@@ -7,7 +7,7 @@
  * configuration, not EHR-supplied input, so a malformed value crashes at startup by design.
  *
  * `SMART_ISSUERS` is meant to be reviewable in a public pull request (see `.nais/nais-dev.yaml`,
- * not a secret): every field here is a name or a public identifier, never a secret value. Three
+ * not a secret): every field here is a name or a public identifier, never a secret value. Four
  * constraints keep that true even once entries are contributed by outside vendors:
  *
  * - `clientSecretEnv` must match `SMART_CLIENT_SECRET_<NAME>` — never an arbitrary variable name,
@@ -15,6 +15,9 @@
  * - Every `clientSecretEnv` value must be unique across the whole array (`assertNoDuplicateClientSecretEnv`)
  *   — otherwise a new entry could deliberately name an existing vendor's already-provisioned secret
  *   and have this app hand that vendor's client secret to the new entry's own token endpoint.
+ * - Every entry schema is `.strict()`. Without it zod silently *strips* unknown keys, so a vendor who
+ *   pasted a real `"clientSecret"` into their entry would get a green CI run while the secret sat in
+ *   public git history forever. Strict turns that mistake into a loud, pre-merge failure.
  * - `asymmetric` entries carry no env var at all: this app has exactly one signing identity,
  *   published as a whole at `.well-known/jwks.json` (`#core/smart/jwks`), so every `private_key_jwt`
  *   issuer necessarily uses that same key — there is no second private key to reference.
@@ -35,7 +38,7 @@ const BaseEntrySchema = z.object({
 
 const PublicEntrySchema = BaseEntrySchema.extend({
     authType: z.literal('public'),
-})
+}).strict()
 
 const SymmetricEntrySchema = BaseEntrySchema.extend({
     authType: z.literal('symmetric'),
@@ -49,7 +52,7 @@ const SymmetricEntrySchema = BaseEntrySchema.extend({
     clientSecretEnv: z.string().regex(/^SMART_CLIENT_SECRET_[A-Z0-9_]+$/, {
         message: "clientSecretEnv must look like 'SMART_CLIENT_SECRET_<NAME>'",
     }),
-})
+}).strict()
 
 const AsymmetricEntrySchema = BaseEntrySchema.extend({
     authType: z.literal('asymmetric'),
@@ -63,7 +66,7 @@ const IssuerEntrySchema = z.discriminatedUnion('authType', [
 
 const IssuersSchema = z.array(IssuerEntrySchema)
 
-type IssuerEntry = z.infer<typeof IssuerEntrySchema>
+export type IssuerEntry = z.infer<typeof IssuerEntrySchema>
 
 function readNamedEnv(envName: string, issuerName: string, purpose: string): string {
     const value = process.env[envName]
@@ -178,10 +181,18 @@ function assertNoDuplicateClientSecretEnv(entries: IssuerEntry[]): void {
     }
 }
 
-function loadIssuers(): IssuerConfig[] {
-    const raw = process.env.SMART_ISSUERS
-    if (!raw) return []
-
+/**
+ * Validates a raw `SMART_ISSUERS` JSON string and returns the parsed entries, applying every
+ * constraint that keeps a PR-contributed entry safe: the zod schema, the `SMART_CLIENT_SECRET_<NAME>`
+ * restriction on `clientSecretEnv`, `.strict()` on asymmetric entries, and the two uniqueness checks.
+ *
+ * Deliberately reads no secret: `toIssuerConfig` does that separately. That split is what lets CI
+ * validate the value committed to `.nais/nais-dev.yaml` without holding any deployment secret
+ * (see `manifest-issuers.test.ts`), so a bad entry fails a pull request instead of pod startup.
+ *
+ * Throws on any problem, since this is our own configuration rather than EHR-supplied input.
+ */
+export function parseIssuerEntries(raw: string): IssuerEntry[] {
     let json: unknown
     try {
         json = JSON.parse(raw)
@@ -200,7 +211,14 @@ function loadIssuers(): IssuerConfig[] {
     assertNoDuplicateIssuers(parsed.data)
     assertNoDuplicateClientSecretEnv(parsed.data)
 
-    return parsed.data.map(toIssuerConfig)
+    return parsed.data
+}
+
+function loadIssuers(): IssuerConfig[] {
+    const raw = process.env.SMART_ISSUERS
+    if (!raw) return []
+
+    return parseIssuerEntries(raw).map(toIssuerConfig)
 }
 
 // Parsed eagerly, at module load, so a malformed configuration fails the deployment immediately

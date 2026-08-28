@@ -257,6 +257,41 @@ describe('config/issuers', () => {
         expect(findIssuerConfig('https://three.example.com/fhir')).toBeNull()
     })
 
+    it('rejects an entry with a client secret pasted inline, rather than silently stripping it', async () => {
+        clearEnv()
+        process.env.SMART_ISSUERS = JSON.stringify([
+            {
+                name: 'Test EHR',
+                issuer: 'https://ehr.example.com/fhir',
+                clientId: 'client-1',
+                authType: 'public',
+                // The mistake this guards against: a vendor pastes their real secret into the
+                // manifest. Without .strict() zod drops unknown keys silently, so the PR would go
+                // green and the secret would stay in public git history with nobody warned.
+                clientSecret: 'super-secret-pasted-by-mistake',
+            },
+        ])
+
+        await expect(freshIssuersModule()).rejects.toThrow(/clientSecret/)
+    })
+
+    it('rejects an unknown field on a symmetric entry', async () => {
+        clearEnv()
+        process.env.SMART_CLIENT_SECRET_TEST = 'super-secret'
+        process.env.SMART_ISSUERS = JSON.stringify([
+            {
+                name: 'Test EHR',
+                issuer: 'https://ehr.example.com/fhir',
+                clientId: 'client-1',
+                authType: 'symmetric',
+                clientSecretEnv: 'SMART_CLIENT_SECRET_TEST',
+                privateKeyJwkEnv: 'SMART_PRIVATE_JWK',
+            },
+        ])
+
+        await expect(freshIssuersModule()).rejects.toThrow(/privateKeyJwkEnv/)
+    })
+
     it('throws at load time when two entries reference the same clientSecretEnv', async () => {
         clearEnv()
         process.env.SMART_CLIENT_SECRET_TEST = 'secret-1'
