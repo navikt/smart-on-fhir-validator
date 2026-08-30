@@ -1,6 +1,6 @@
 /**
  * PractitionerRole: searchable by `practitioner=Practitioner/{id}`. This is how the clinician's
- * organisation (and HPR/legekontor affiliation) is resolved — `PractitionerRole.organization`
+ * organisation (and HPR/legekontor affiliation) is resolved: `PractitionerRole.organization`
  * is the reference the Organization probe reads from.
  *
  * @see https://hl7.org/fhir/R4/practitionerrole.html

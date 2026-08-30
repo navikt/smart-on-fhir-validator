@@ -84,7 +84,7 @@ describe('validateFhirBaseUrl', () => {
         expect(isSmartError(result as SmartError)).toBe(true)
     })
 
-    it('rejects a plain http URL by default — an attacker-supplied iss must not redirect credentials to a non-https server', () => {
+    it('rejects a plain http URL by default, since an attacker-supplied iss must not redirect credentials to a non-https server', () => {
         const result = validateFhirBaseUrl('http://ehr.example.com/fhir')
         expect(isSmartError(result as SmartError)).toBe(true)
         expect((result as SmartError).error).toBe('invalid_iss')

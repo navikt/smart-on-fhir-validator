@@ -1,5 +1,5 @@
 /**
- * Parser for SMART App Launch scope strings — v1 clinical scopes (`read`/`write`/`*`), v2 granular
+ * Parser for SMART App Launch scope strings: v1 clinical scopes (`read`/`write`/`*`), v2 granular
  * clinical scopes (CRUDS letters, optionally with a `?` query), context/identity/refresh scopes,
  * and the v1<->v2 permission equivalence the spec defines between them.
  *
@@ -40,7 +40,7 @@ const refs = {
         cite: 'SMART App Launch 2.2 §Scopes for requesting a refresh token',
         href: `${scopesUrl}#scopes-for-requesting-a-refresh-token`,
     },
-    /** https://hl7.org/fhir/security.html — "least privilege" / servers should not over-grant. */
+    /** https://hl7.org/fhir/security.html: "least privilege" / servers should not over-grant. */
     security: { authority: 'fhir', cite: 'FHIR §Security', href: 'https://hl7.org/fhir/security.html' },
     navScopes: navRefs.smartGettingStarted,
 } satisfies Record<string, SpecRef>
@@ -82,7 +82,7 @@ export type ParsedScope =
     | UnrecognisedScope
     | MalformedScope
 
-/** c, r, u, d, s — the canonical order SMART v2 requires CRUDS letters to appear in. */
+/** c, r, u, d, s: the canonical order SMART v2 requires CRUDS letters to appear in. */
 const CANONICAL_ORDER = ['c', 'r', 'u', 'd', 's']
 
 /** The v1<->v2 clinical scope permission equivalence: https://hl7.org/fhir/smart-app-launch/scopes-and-launch-context.html#scopes-for-smart-v1-and-v2-compatibility */
@@ -177,7 +177,7 @@ function parseClinicalScope(raw: string): ClinicalScope | MalformedScope {
     }
 }
 
-/** Never throws — an unparseable token becomes a `malformed` scope. */
+/** Never throws: an unparseable token becomes a `malformed` scope. */
 export function parseScope(raw: string): ParsedScope {
     if (raw === 'launch') return { kind: 'context', raw, context: 'launch' }
     if (raw === 'launch/patient') return { kind: 'context', raw, context: 'launch/patient' }
@@ -229,7 +229,7 @@ export type ScopeDiffEntry = {
     granted: ParsedScope | null
     /**
      * For a matched clinical scope: CRUDS letters the server granted beyond what was requested
-     * for the same resource/query. A security smell per https://hl7.org/fhir/security.html —
+     * for the same resource/query. A security smell per https://hl7.org/fhir/security.html,
      * reported independently of `status`, which only reflects whether the request was satisfied.
      */
     extraCruds?: string
@@ -237,7 +237,7 @@ export type ScopeDiffEntry = {
 
 /**
  * Compares requested against granted, per scope. Clinical scopes are matched by
- * compartment/resource/query — a granular sub-scope's `?query` is part of its identity, so a
+ * compartment/resource/query: a granular sub-scope's `?query` is part of its identity, so a
  * server that grants the same resource without the restriction shows up as a `not-granted` +
  * `ungranted-extra` pair rather than being silently merged.
  */

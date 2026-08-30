@@ -1,5 +1,5 @@
 /**
- * Static, per-issuer client configuration — the primary way this app authenticates to an EHR's
+ * Static, per-issuer client configuration: the primary way this app authenticates to an EHR's
  * token endpoint. Dynamic client registration (`registration.ts`) is the fallback for vendors
  * that support RFC 7591 and have no entry here.
  *
@@ -10,24 +10,24 @@
  * not a secret): every field here is a name or a public identifier, never a secret value. Four
  * constraints keep that true even once entries are contributed by outside vendors:
  *
- * - `clientSecretEnv` must match `SMART_CLIENT_SECRET_<NAME>` — never an arbitrary variable name,
+ * - `clientSecretEnv` must match `SMART_CLIENT_SECRET_<NAME>` (never an arbitrary variable name),
  *   so a PR-contributed entry cannot reference an unrelated secret such as `SMART_PRIVATE_JWK`.
- * - Every `clientSecretEnv` value must be unique across the whole array (`assertNoDuplicateClientSecretEnv`)
- *   — otherwise a new entry could deliberately name an existing vendor's already-provisioned secret
+ * - Every `clientSecretEnv` value must be unique across the whole array (`assertNoDuplicateClientSecretEnv`).
+ *   Otherwise a new entry could deliberately name an existing vendor's already-provisioned secret
  *   and have this app hand that vendor's client secret to the new entry's own token endpoint.
  * - Every entry schema is `.strict()`. Without it zod silently *strips* unknown keys, so a vendor who
  *   pasted a real `"clientSecret"` into their entry would get a green CI run while the secret sat in
  *   public git history forever. Strict turns that mistake into a loud, pre-merge failure.
  * - `asymmetric` entries carry no env var at all: this app has exactly one signing identity,
  *   published as a whole at `.well-known/jwks.json` (`#core/smart/jwks`), so every `private_key_jwt`
- *   issuer necessarily uses that same key — there is no second private key to reference.
+ *   issuer necessarily uses that same key: there is no second private key to reference.
  */
 
 import * as z from 'zod'
 
 import type { IssuerConfig } from '#core/smart/types'
 
-/** This app's one signing identity — see `#core/smart/jwks`. Never issuer-configurable. */
+/** This app's one signing identity, see `#core/smart/jwks`. Never issuer-configurable. */
 const PRIVATE_KEY_ENV_VAR = 'SMART_PRIVATE_JWK'
 
 const BaseEntrySchema = z.object({
@@ -46,7 +46,7 @@ const SymmetricEntrySchema = BaseEntrySchema.extend({
     // default for confidential clients that do not otherwise negotiate one.
     method: z.enum(['client_secret_basic', 'client_secret_post']).default('client_secret_basic'),
     /**
-     * Name of the environment variable holding the secret — never the secret value itself, and
+     * Name of the environment variable holding the secret, never the secret value itself, and
      * constrained to this prefix so a contributed entry cannot name an unrelated variable.
      */
     clientSecretEnv: z.string().regex(/^SMART_CLIENT_SECRET_[A-Z0-9_]+$/, {

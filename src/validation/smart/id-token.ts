@@ -1,5 +1,5 @@
 /**
- * Validation of the SMART `id_token` — an OpenID Connect ID Token carrying the SMART-specific
+ * Validation of the SMART `id_token`, an OpenID Connect ID Token carrying the SMART-specific
  * `fhirUser` claim that identifies the logged-in clinician.
  *
  * Signature/issuer/audience/expiry verification happens in `#core/smart/id-token`, so a broken
@@ -63,7 +63,7 @@ function isFhirUserResourceType(resourceType: string): resourceType is FhirUserR
 export type ValidateIdTokenOptions = {
     idToken: string | undefined
     /**
-     * `null` when verification could not be attempted — e.g. the SMART configuration had no
+     * `null` when verification could not be attempted, e.g. the SMART configuration had no
      * `issuer`/`jwks_uri`. Claim checks still run against a best-effort decode in that case.
      */
     verification: IdTokenVerificationResult | null
@@ -167,7 +167,7 @@ function validateNonce(
 }
 
 /**
- * Returns `[]` when there is no id_token to validate — its presence (or required absence) is
+ * Returns `[]` when there is no id_token to validate: its presence (or required absence) is
  * `token-response.ts`'s concern.
  */
 export function validateIdToken(options: ValidateIdTokenOptions): Validation[] {

@@ -9,7 +9,7 @@ export default defineConfig({
         'typescript/no-non-null-assertion': 'error',
         'no-console': 'error',
         'promise/no-return-wrap': 'error',
-        // React 19 automatic JSX runtime — React need not be in scope.
+        // React 19 automatic JSX runtime: React need not be in scope.
         'react/react-in-jsx-scope': 'off',
         'import/no-unassigned-import': 'off',
     },

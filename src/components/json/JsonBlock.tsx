@@ -1,7 +1,7 @@
 import type { ReactElement } from 'react'
 
 function toDisplayText(value: unknown): string {
-    // Bodies that failed to parse as JSON arrive here as plain strings (see ExchangePanel) — render
+    // Bodies that failed to parse as JSON arrive here as plain strings (see ExchangePanel); render
     // them verbatim rather than JSON.stringify-ing them into a quoted, escaped string literal.
     if (typeof value === 'string') return value
 

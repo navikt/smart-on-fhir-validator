@@ -77,7 +77,7 @@ export type LaunchResult = {
 /**
  * Security-critical: an attacker-supplied `iss` must never be usable to redirect this app's
  * credentials, so SMART's https requirement is enforced against every real host. Loopback is the
- * one exception — unreachable from the network, and how the mock EHR and e2e suite launch. The
+ * one exception, unreachable from the network, and how the mock EHR and e2e suite launch. The
  * rule deliberately ignores `NODE_ENV` so the e2e suite exercises the deployed behaviour.
  */
 export function validateFhirBaseUrl(iss: string): URL | SmartError {

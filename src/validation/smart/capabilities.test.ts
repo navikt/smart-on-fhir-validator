@@ -52,7 +52,7 @@ describe('parseCapabilities', () => {
     })
 })
 
-describe('validateCapabilitySets — fully conformant server (all four sets satisfied)', () => {
+describe('validateCapabilitySets: fully conformant server (all four sets satisfied)', () => {
     const config: SmartConfiguration = {
         capabilities: [
             'launch-ehr',
@@ -91,7 +91,7 @@ describe('validateCapabilitySets — fully conformant server (all four sets sati
     })
 })
 
-describe('validateCapabilitySets — server advertising nothing', () => {
+describe('validateCapabilitySets: server advertising nothing', () => {
     const config: SmartConfiguration = { capabilities: [] }
 
     it('errors on the missing client type', () => {
@@ -126,7 +126,7 @@ describe('validateCapabilitySets — server advertising nothing', () => {
     })
 })
 
-describe('validateCapabilitySets — client type requirement', () => {
+describe('validateCapabilitySets: client type requirement', () => {
     it('is satisfied by client-public alone', () => {
         const errors = bySeverity({ capabilities: ['client-public'] }, 'ERROR').map((v) => v.message)
         expect(errors.some((m) => m.includes('client type') || m.includes('client-public'))).toBe(false)
@@ -147,7 +147,7 @@ describe('validateCapabilitySets — client type requirement', () => {
     })
 })
 
-describe('validateCapabilitySets — non-URI custom capability strings', () => {
+describe('validateCapabilitySets: non-URI custom capability strings', () => {
     it('warns when a server advertises a simple, non-URI custom capability string', () => {
         const warnings = bySeverity({ capabilities: ['launch-ehr', 'my-custom-capability'] }, 'WARNING').map(
             (v) => v.message,
@@ -171,7 +171,7 @@ describe('validateCapabilitySets — non-URI custom capability strings', () => {
     })
 })
 
-describe('validateCapabilitySets — hostile input', () => {
+describe('validateCapabilitySets: hostile input', () => {
     it('does not throw when capabilities is a string instead of an array', () => {
         const config = { capabilities: 'launch-ehr' } as unknown as SmartConfiguration
 

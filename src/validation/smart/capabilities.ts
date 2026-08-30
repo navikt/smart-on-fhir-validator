@@ -57,7 +57,7 @@ const KNOWN_CAPABILITY_SET: ReadonlySet<string> = new Set(KNOWN_CAPABILITIES)
 
 /**
  * Splits a server's advertised `capabilities` into ones defined by the SMART App Launch spec and
- * everything else. A malformed `capabilities` value is not reported here — that shape problem
+ * everything else. A malformed `capabilities` value is not reported here: that shape problem
  * belongs to the REQUIRED-field checks in `well-known.ts`; this function only classifies what it
  * can read.
  */

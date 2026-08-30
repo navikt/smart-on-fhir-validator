@@ -9,7 +9,7 @@ export const APP_CLIENT_NAME = 'Nav SMART on FHIR Validator'
  * Broad enough to exercise every phase the run engine checks: identity (`openid`/`fhirUser`),
  * both launch-context forms, refresh (`offline_access`), and v2 granular clinical scopes for
  * every resource the read/write probes touch. Granting less than requested is not itself a
- * failure — the scope and launch-context phases report on what was granted.
+ * failure: the scope and launch-context phases report on what was granted.
  */
 export const APP_SCOPE = [
     'openid',

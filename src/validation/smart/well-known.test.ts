@@ -48,7 +48,7 @@ const CONFORMANT_CONFIG: SmartConfiguration = {
     associated_endpoints: [{ url: 'https://state.example.com', capabilities: ['smart-app-state'] }],
 }
 
-describe('validateSmartConfiguration — fully conformant document', () => {
+describe('validateSmartConfiguration: fully conformant document', () => {
     it('produces no ERROR or WARNING findings', () => {
         expect(bySeverity(CONFORMANT_CONFIG, 'ERROR')).toEqual([])
         expect(bySeverity(CONFORMANT_CONFIG, 'WARNING')).toEqual([])
@@ -79,7 +79,7 @@ describe('validateSmartConfiguration — fully conformant document', () => {
     })
 })
 
-describe('validateSmartConfiguration — empty document', () => {
+describe('validateSmartConfiguration: empty document', () => {
     const findings = () => validateSmartConfiguration({}, EXCHANGE_ID)
 
     it('flags every REQUIRED field as an ERROR', () => {
@@ -117,7 +117,7 @@ describe('validateSmartConfiguration — empty document', () => {
     })
 })
 
-describe('validateSmartConfiguration — CONDITIONAL requirements', () => {
+describe('validateSmartConfiguration: CONDITIONAL requirements', () => {
     it('requires issuer and jwks_uri when sso-openid-connect is advertised', () => {
         const errors = bySeverity(
             {
@@ -166,7 +166,7 @@ describe('validateSmartConfiguration — CONDITIONAL requirements', () => {
     })
 })
 
-describe('validateSmartConfiguration — code_challenge_methods_supported', () => {
+describe('validateSmartConfiguration: code_challenge_methods_supported', () => {
     it('errors when S256 is missing', () => {
         const errors = bySeverity({ code_challenge_methods_supported: ['plain'] }, 'ERROR').map(
             (v) => v.message,
@@ -192,7 +192,7 @@ describe('validateSmartConfiguration — code_challenge_methods_supported', () =
     })
 })
 
-describe('validateSmartConfiguration — grant_types_supported', () => {
+describe('validateSmartConfiguration: grant_types_supported', () => {
     it('warns when authorization_code is missing', () => {
         const warnings = bySeverity({ grant_types_supported: ['client_credentials'] }, 'WARNING').map(
             (v) => v.message,
@@ -210,7 +210,7 @@ describe('validateSmartConfiguration — grant_types_supported', () => {
     })
 })
 
-describe('validateSmartConfiguration — absolute URL requirement', () => {
+describe('validateSmartConfiguration: absolute URL requirement', () => {
     it('errors on a relative endpoint URL and mentions RFC 3986 resolution and the exchange id', () => {
         const errors = bySeverity({ token_endpoint: '/auth/token' }, 'ERROR').map((v) => v.message)
         const relevant = errors.find((m) => m.includes('token_endpoint'))
@@ -229,7 +229,7 @@ describe('validateSmartConfiguration — absolute URL requirement', () => {
     })
 })
 
-describe('validateSmartConfiguration — hostile input', () => {
+describe('validateSmartConfiguration: hostile input', () => {
     it('treats capabilities given as a string instead of an array as missing', () => {
         const config = { capabilities: 'launch-ehr' } as unknown as SmartConfiguration
 

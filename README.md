@@ -124,7 +124,7 @@ an accepted tradeoff, see `replicas.min`/`replicas.max` in `.nais/nais-dev.yaml`
 This app signs with its own key for `private_key_jwt` client authentication and publishes the
 public half at `/.well-known/jwks.json`. Generate one with `yarn generate-key`, which prints a
 single JSON line. Set it as `SMART_PRIVATE_JWK` in the deployed environment's secret
-(`smart-on-fhir-validator-clients`) — never commit it. Without it, `src/core/smart/jwks.ts`
+(`smart-on-fhir-validator-clients`); never commit it. Without it, `src/core/smart/jwks.ts`
 generates an ephemeral key at startup, which does not survive a restart and forces any EHR that
 pinned this app's public key to re-register.
 

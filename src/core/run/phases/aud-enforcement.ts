@@ -3,7 +3,7 @@
  * whether the server enforces the requirement (classification lives in
  * `#validation/smart/aud-enforcement`).
  *
- * The real launch is untouched — `#core/smart/launch.ts` always sends the correct `aud`. The
+ * The real launch is untouched: `#core/smart/launch.ts` always sends the correct `aud`. The
  * probe must never complete an authorization: `redirect: 'manual'` stops `fetch` from following
  * a redirect that could carry a genuine authorization code, so it can provoke a code but never
  * collect or exchange one.

@@ -16,7 +16,7 @@ import { getSigningKey } from './jwks'
 import { isSmartError } from './types'
 
 export type RegistrationParams = {
-    /** The SMART issuer this registration is for — not the `registrationEndpoint` itself. */
+    /** The SMART issuer this registration is for, not the `registrationEndpoint` itself. */
     issuer: string
     clientName: string
     redirectUris: string[]

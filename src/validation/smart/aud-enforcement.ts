@@ -2,7 +2,7 @@
  * Pure classification logic for the `aud` enforcement probe.
  *
  * SMART App Launch requires the authorization server to validate that `aud` equals the FHIR
- * server's base URL — a confused-deputy defence: a malicious FHIR server could otherwise replay a
+ * server's base URL: a confused-deputy defence, since a malicious FHIR server could otherwise replay a
  * captured launch request to mint a token for a different, genuine resource server. This app's own
  * launch always sends the correct `aud`, so enforcement can only be observed via a separate,
  * deliberately wrong `aud` request; that HTTP call is made by `#core/run/phases/aud-enforcement`.
@@ -41,7 +41,7 @@ export type AudEnforcementVerdict =
     | ConclusiveAudEnforcementVerdict
     | {
           kind: 'inconclusive'
-          /** Why the response could not be interpreted — surfaced verbatim as a skipped-section reason. */
+          /** Why the response could not be interpreted, surfaced verbatim as a skipped-section reason. */
           reason: string
       }
 
@@ -95,7 +95,7 @@ function evaluateRedirect(status: number, location: string | null, context: AudE
  * Classifies the response to a deliberately-wrong-`aud` authorization request. The three outcomes
  * are never conflated: a redirect (or direct 4xx) rejecting the request is `rejected` (conformant);
  * a redirect carrying a `code` despite the bad `aud` is `not-rejected` (a security finding);
- * anything uninterpretable — network failure, interactive login page, ambiguous redirect — is
+ * anything uninterpretable (network failure, interactive login page, ambiguous redirect) is
  * `inconclusive` and must never be read as either a pass or a fail.
  */
 export function evaluateAudEnforcementResponse(
@@ -128,7 +128,7 @@ export function evaluateAudEnforcementResponse(
     return inconclusive(`The authorization endpoint responded with an unexpected HTTP status ${status}.`)
 }
 
-/** `inconclusive` verdicts are never passed here — callers turn those into a `skippedSection`
+/** `inconclusive` verdicts are never passed here: callers turn those into a `skippedSection`
  * instead, so a probe that could not run never reads as a pass. */
 export function buildAudEnforcementFinding(verdict: ConclusiveAudEnforcementVerdict): Validation {
     switch (verdict.kind) {

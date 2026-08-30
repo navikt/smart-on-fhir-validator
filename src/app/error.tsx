@@ -8,7 +8,7 @@ type ErrorPageProps = {
 }
 
 /**
- * Only catches genuinely unexpected rendering bugs in this app's own UI — every SMART/FHIR
+ * Only catches genuinely unexpected rendering bugs in this app's own UI: every SMART/FHIR
  * failure the validator detects is a `ReportFinding` or `SmartError` rendered as ordinary
  * content, so a crash here is never a finding about the EHR being validated.
  */

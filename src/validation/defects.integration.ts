@@ -4,7 +4,7 @@
  * Each misbehaviour in `src/mocks/defects.ts` is injected into the mock EHR and a full launch is
  * driven through this app's own SMART client. Each defect must either fail the launch/callback
  * outright (correct when this app's client hard-requires the broken field) or produce a specific
- * finding from `runValidation`. A conformant server must produce zero ERROR findings — false
+ * finding from `runValidation`. A conformant server must produce zero ERROR findings: false
  * positives train people to ignore the report, false negatives mean nothing is validated.
  *
  * Coverage gaps (defect present, launch completes, no finding) are named explicitly below rather
@@ -112,7 +112,7 @@ describe('defects that break the launch or callback itself, before any report ca
     it('well-known-relative-urls: the authorize redirect 404s because the resolved URL drops the FHIR base path', async () => {
         // The mock strips the whole `baseUrl` including its `/fhir` path, leaving root-relative
         // paths. `resolveEndpoint` resolves those against the origin per RFC 3986 §5, which is
-        // correct but lands off the FHIR base — an artefact of this defect, not an app bug. The
+        // correct but lands off the FHIR base (an artefact of this defect, not an app bug). The
         // "relative URL" ERROR is unit-tested in `well-known.test.ts`; here we only prove broken
         // endpoint URLs break the live launch, which is the correct loud outcome.
         const outcome = await launchAgainstMockEhr({ defects: ['well-known-relative-urls'] })
@@ -123,7 +123,7 @@ describe('defects that break the launch or callback itself, before any report ca
 
     it('token-response-missing-scope: callback fails because `scope` is RFC 6749-required', async () => {
         // `handleCallback`'s schema requires `scope`, so the response is rejected before a session
-        // exists — `token-response.ts`'s own "`scope` is missing" ERROR is unreachable via a live
+        // exists: `token-response.ts`'s own "`scope` is missing" ERROR is unreachable via a live
         // launch and is unit-tested in `token-response.test.ts` instead.
         const outcome = await launchAgainstMockEhr({ defects: ['token-response-missing-scope'] })
         expect(outcome.ok).toBe(false)
@@ -157,7 +157,7 @@ describe('SMART discovery defects (src/mocks/auth/well-known.ts)', () => {
 
     it('no-sso-openid-connect: token-response ERRORs on the missing id_token', async () => {
         // Removing `sso-openid-connect` also removes `issuer`/`jwks_uri` and the `id_token`. Those
-        // fields are only CONDITIONALLY required, so `discovery` does not ERROR — the observable
+        // fields are only CONDITIONALLY required, so `discovery` does not ERROR: the observable
         // failure is that an identity scope was requested but no `id_token` came back.
         const report = await runReportWithDefects(['no-sso-openid-connect'])
         expectFinding(

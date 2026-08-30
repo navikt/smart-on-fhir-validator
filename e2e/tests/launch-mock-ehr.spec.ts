@@ -14,7 +14,7 @@ const TERMINAL_URL_PATTERN = /\/(report|launch\/error|callback\/error)(\?|$)/
 
 /**
  * Navigates through the mock-EHR launch link and waits for the flow to reach a terminal page.
- * Fails loudly — naming the exact upstream `error`/`detail` — if that page is either error page
+ * Fails loudly, naming the exact upstream `error`/`detail`, if that page is either error page
  * instead of `/report`.
  */
 async function launchAgainstMockEhr(page: Page): Promise<void> {
@@ -68,8 +68,8 @@ function decodeNested(value: string): unknown {
 }
 
 /**
- * Recursively verifies that every sensitive key anywhere in a serialised `ValidationReport` —
- * including inside recorded exchange bodies, which are strings, not objects — is either absent
+ * Recursively verifies that every sensitive key anywhere in a serialised `ValidationReport`
+ * (including inside recorded exchange bodies, which are strings, not objects) is either absent
  * or exactly the `[REDACTED]` marker.
  */
 function assertCredentialsRedacted(value: unknown, path: string): void {
@@ -110,7 +110,7 @@ test.describe('landing → launch against the mock EHR → report', () => {
     }) => {
         await launchAgainstMockEhr(page)
 
-        // A real verdict and real sections — not a placeholder page. Deliberately
+        // A real verdict and real sections, not a placeholder page. Deliberately
         // verdict-agnostic: the mock EHR's exact defect-free behaviour is validated in depth by
         // the integration suite.
         const verdict = page.getByRole('status')

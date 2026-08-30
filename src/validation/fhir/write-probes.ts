@@ -37,7 +37,7 @@ import {
  * delete it afterwards.
  *
  * Nav's real write-back (`bundle.md` / ADR01) uses `PUT /<type>/<sykmelding-id>` with a
- * client-assigned id so a retried write is idempotent — resending the same PUT must not file the
+ * client-assigned id so a retried write is idempotent: resending the same PUT must not file the
  * sykmelding twice in the patient's journal. The DocumentReference and QuestionnaireResponse
  * probes therefore issue the same PUT twice and assert the id does not change. Binary is written
  * with `POST` (server-assigned id) instead, since Nav never needs it reachable by a chosen id.

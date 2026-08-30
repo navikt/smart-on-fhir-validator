@@ -97,7 +97,7 @@ spec:
     #   [{ "name": "Acme EHR", "issuer": "https://acme.example.com", "clientId": "abc123",
     #      "authType": "asymmetric" }]
     # If entries already exist, add a comma and your object before the closing "]". Keep the
-    # result valid JSON — no comments inside the block below, since it becomes the literal value.
+    # result valid JSON: no comments inside the block below, since it becomes the literal value.
     # CI parses this value through the real schema, so a mistake fails your PR, not the pod.
     - name: SMART_ISSUERS
       value: |

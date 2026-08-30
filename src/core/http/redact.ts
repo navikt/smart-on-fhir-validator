@@ -3,7 +3,7 @@
  *
  * Exchanges are rendered to the browser and pasted into support tickets, so anything that could
  * be replayed against the EHR must never survive into an `HttpExchange`. Redaction happens once,
- * at recording time, rather than at render time — a value that is never stored cannot leak.
+ * at recording time, rather than at render time: a value that is never stored cannot leak.
  *
  * See https://hl7.org/fhir/security.html
  */
@@ -50,7 +50,7 @@ export function redactHeaders(headers: Headers | Record<string, string>): Record
 
 /**
  * Redacts sensitive query parameters while keeping the URL readable. A vendor must be able to
- * see the exact search that was issued — that is the point of the report — so only credential
+ * see the exact search that was issued (that is the point of the report), so only credential
  * parameters are masked, never search parameters.
  */
 export function redactUrl(url: string): string {

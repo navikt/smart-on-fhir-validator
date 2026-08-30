@@ -43,7 +43,7 @@ export type CallbackDependencies = {
     fetchSmartConfiguration: FetchSmartConfiguration
     findIssuerConfig: FindIssuerConfig
     selectClientAuthentication: SelectClientAuthentication
-    /** This app's own `/callback` URL — must match what was sent to the authorization endpoint. */
+    /** This app's own `/callback` URL, must match what was sent to the authorization endpoint. */
     redirectUri: string
     now?: () => Date
 }
@@ -88,9 +88,9 @@ function statesMatch(expected: string, actual: string): boolean {
  * endpoint of the issuer it was configured for.
  *
  * Without this, an already-allowlisted but compromised or malicious host could declare *another*
- * registered issuer's `issuer` string in its own `.well-known/smart-configuration` — `launch.ts`
+ * registered issuer's `issuer` string in its own `.well-known/smart-configuration` (`launch.ts`
  * matches static configuration against that self-declared value, not against the host actually
- * being talked to — and receive that other issuer's credential at its own `token_endpoint`. Public
+ * being talked to) and receive that other issuer's credential at its own `token_endpoint`. Public
  * clients carry no credential, so they are exempt.
  */
 export function credentialOriginIsAuthorized(issuerConfig: IssuerConfig, tokenEndpoint: string): boolean {

@@ -17,7 +17,7 @@ export function createEncounter(defects: DefectSet): Encounter {
         resourceType: 'Encounter',
         id: ENCOUNTER_ID,
         status: 'finished',
-        // `class` is required on `Encounter`; the cast is deliberate — this defect exists to
+        // `class` is required on `Encounter`; the cast is deliberate: this defect exists to
         // produce a resource that violates that requirement.
         ...(defects.has('encounter-missing-class') ? {} : { class: KONTAKTTYPE_FYSISK_OPPMOTE }),
         subject: { reference: `Patient/${PATIENT_ID}` },

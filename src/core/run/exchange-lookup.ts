@@ -2,7 +2,7 @@ import type { ExchangePhase, HttpExchange } from '#core/http/exchange'
 
 /**
  * The most recent recorded exchange for `phase`, or `null` when none was recorded. Attributes a
- * phase's findings to the call that produced the evidence — token-response findings belong to
+ * phase's findings to the call that produced the evidence: token-response findings belong to
  * the token call made during `/callback`, not to the run itself.
  */
 export function findLastExchangeId(exchanges: readonly HttpExchange[], phase: ExchangePhase): string | null {

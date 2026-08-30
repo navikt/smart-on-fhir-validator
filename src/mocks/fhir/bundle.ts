@@ -66,7 +66,7 @@ type DispatchResult = { status: number; body: unknown; location?: string }
 
 /**
  * Dispatches a single Bundle entry back through the mock's own routing rather than duplicating
- * resource logic here — a batch/transaction entry behaves exactly like the equivalent standalone
+ * resource logic here: a batch/transaction entry behaves exactly like the equivalent standalone
  * HTTP request, including defects and scope enforcement.
  */
 async function dispatchEntry(

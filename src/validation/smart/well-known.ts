@@ -31,7 +31,7 @@ type FieldSpec = {
     field: keyof SmartConfiguration
     kind: FieldKind
     label: string
-    /** Only checked when true — used for the CONDITIONAL requirements. */
+    /** Only checked when true, used for the CONDITIONAL requirements. */
     when?: (config: SmartConfiguration) => boolean
     reason?: string
 }

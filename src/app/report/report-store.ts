@@ -6,8 +6,8 @@
  * artefact, produced exactly once per run so that re-visiting `/report` never re-triggers
  * write-back probes against a real EHR.
  *
- * A `ValidationReport` never carries credentials — every `HttpExchange` inside it was redacted at
- * recording time (`#core/http/redact`) — so serving it verbatim to the browser is safe.
+ * A `ValidationReport` never carries credentials: every `HttpExchange` inside it was redacted at
+ * recording time (`#core/http/redact`), so serving it verbatim to the browser is safe.
  */
 
 import type { ValidationReport } from '#core/run'
@@ -48,7 +48,7 @@ export function createInMemoryReportStore(): ReportStore {
     }
 }
 
-/** Must be anchored on `globalThis` — see `#core/storage/process-singleton`. */
+/** Must be anchored on `globalThis`; see `#core/storage/process-singleton`. */
 export function getReportStore(): ReportStore {
     return processSingleton(REPORT_STORE_KEY, createInMemoryReportStore)
 }

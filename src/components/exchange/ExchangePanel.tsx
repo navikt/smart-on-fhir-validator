@@ -40,7 +40,7 @@ function statusColorClass(status: number): string {
 
 /**
  * The raw evidence behind a finding: the exact request this app sent and the exact response the
- * EHR returned, verbatim (already redacted at recording time — see `#core/http/redact`).
+ * EHR returned, verbatim (already redacted at recording time; see `#core/http/redact`).
  */
 export function ExchangePanel({ exchange }: { exchange: HttpExchange }): ReactElement {
     return (

@@ -22,7 +22,7 @@ export type ProbeOutcome = {
 }
 
 /**
- * A single, self-contained check against the EHR's FHIR server. Probes never throw — a
+ * A single, self-contained check against the EHR's FHIR server. Probes never throw: a
  * non-conformant EHR is the expected case, and must be reported as findings rather than crash.
  */
 export type ResourceProbe = {

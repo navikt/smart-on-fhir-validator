@@ -1,8 +1,8 @@
 /**
  * Turns a completed SMART launch (`ActiveSession`) into a serialisable `ValidationReport`.
  *
- * Phases run in a fixed order — discovery, capability statement, `aud` enforcement, token
- * response, id_token, scopes, launch context, read probes, write probes — so the report reads
+ * Phases run in a fixed order: discovery, capability statement, `aud` enforcement, token
+ * response, id_token, scopes, launch context, read probes, write probes, so the report reads
  * earliest-lifecycle evidence first. A failing phase never stops the run: every error path
  * becomes a finding or an `errorSection`/`skippedSection`, so EHR misbehaviour can only fill the
  * report with ERROR findings, never crash it.

@@ -13,7 +13,7 @@ function plural(count: number, word: string): string {
 
 /**
  * One plain sentence stating the real counts behind a verdict. The `skipped` verdict states both
- * what could not run and that conformance was not demonstrated either way — it must never read
+ * what could not run and that conformance was not demonstrated either way: it must never read
  * as any kind of pass.
  */
 export function verdictSentence(summary: ReportSummary, sectionsTotal: number): string {
@@ -89,7 +89,7 @@ const SEVERITIES_BY_FILTER: Record<Exclude<SeverityFilterValue, 'all' | 'nottest
 
 /**
  * Applies the active severity filter to one section: hides non-matching findings, then hides the
- * section entirely if none remain — except that `nottested` matches a section's own `skipped`
+ * section entirely if none remain, except that `nottested` matches a section's own `skipped`
  * status directly, so a skipped section (which has no findings) still passes that filter.
  */
 export function filterSection(section: ReportSection, filter: SeverityFilterValue): ReportSection | null {

@@ -13,7 +13,7 @@ const VERDICT_LABEL: Record<Verdict, string> = {
 }
 
 /**
- * `skipped` gets a dashed neutral border and no status hue — never a colour that could read as a
+ * `skipped` gets a dashed neutral border and no status hue: never a colour that could read as a
  * soft pass. Same "we don't know" language as `SectionStatusBadge`'s `skipped` state.
  */
 const VERDICT_CLASSES: Record<Verdict, string> = {

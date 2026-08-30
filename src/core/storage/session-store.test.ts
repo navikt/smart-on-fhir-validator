@@ -101,7 +101,7 @@ describe('parseStoredSession', () => {
                 access_token: 'tok',
                 token_type: 'Bearer',
                 scope: 'openid',
-                // A vendor extension not in the TokenResponse type — should be preserved, not stripped.
+                // A vendor extension not in the TokenResponse type: should be preserved, not stripped.
                 vendor_extension: 'x',
             } as ActiveSession['tokenResponse'],
         })

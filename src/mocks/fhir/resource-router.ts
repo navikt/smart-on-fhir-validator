@@ -24,7 +24,7 @@ export type ResourceRouterConfig<T extends FhirResource> = {
     onUpdate?: (id: string, body: unknown) => WriteOutcome<T>
     /**
      * Defaults to parsing the body as FHIR JSON. A resource that also accepts a raw body per its
-     * own spec — e.g. Binary, https://hl7.org/fhir/R4/binary.html#rest — supplies its own parser.
+     * own spec (e.g. Binary, https://hl7.org/fhir/R4/binary.html#rest) supplies its own parser.
      */
     parseBody?: (c: Context) => Promise<unknown>
     /** Bearer + scope enforcement, shared across every resource via `fhir/auth-middleware.ts`. */

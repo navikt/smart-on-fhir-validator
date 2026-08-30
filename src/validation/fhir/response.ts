@@ -1,7 +1,7 @@
 /**
  * Shared checks every read/search response must pass before a probe looks at the resource itself:
  * transport, the status code FHIR R4 requires, `Content-Type`, an `OperationOutcome` returned in
- * place of the resource, and — for a search — that the body is a `searchset` Bundle.
+ * place of the resource, and, for a search, that the body is a `searchset` Bundle.
  *
  * @see https://hl7.org/fhir/R4/http.html
  * @see https://hl7.org/fhir/R4/search.html

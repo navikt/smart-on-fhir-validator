@@ -1,7 +1,7 @@
 /**
  * The ordered list of FHIR read probes. Order matters for one dependency: the Organization probe
  * may only reach an Organization via the `Organization/{id}` reference discovered from the
- * PractitionerRole response — never from configuration — so PractitionerRole must run immediately
+ * PractitionerRole response, never from configuration, so PractitionerRole must run immediately
  * before Organization. That reference is threaded through a private, per-run discovery object.
  * Every other probe derives its query entirely from launch context.
  */

@@ -160,7 +160,7 @@ function validateReference(
 
 /**
  * FHIR R4: "Groups cannot have answers and therefore must nest directly within item." Nav's item
- * tree follows this — a group item carries only nested `item`, a leaf item only `answer`.
+ * tree follows this: a group item carries only nested `item`, a leaf item only `answer`.
  */
 function validateItemTree(
     items: QuestionnaireResponseItem[],

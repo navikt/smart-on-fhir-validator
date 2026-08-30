@@ -31,7 +31,7 @@ export type { MockClientAuthMethod, MockEhrConfig } from './state'
 export async function createMockEhr(config: MockEhrConfig): Promise<Hono> {
     const state = await createMockState(config)
     const basePath = new URL(config.baseUrl).pathname
-    // `POST {baseUrl}` and `POST {baseUrl}/` must both reach the Bundle route — real clients are
+    // `POST {baseUrl}` and `POST {baseUrl}/` must both reach the Bundle route: real clients are
     // inconsistent about a trailing slash on the FHIR service base URL.
     const app = new Hono({ strict: false }).basePath(basePath)
 

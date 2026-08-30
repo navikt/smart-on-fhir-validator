@@ -336,7 +336,7 @@ describe('config/issuers', () => {
         ])
 
         // A duplicate issuer would let a spoofed discovery document be matched against either
-        // entry's credentials — see credentialOriginIsAuthorized in #core/smart/callback.
+        // entry's credentials, see credentialOriginIsAuthorized in #core/smart/callback.
         await expect(freshIssuersModule()).rejects.toThrow(/same issuer/)
     })
 })

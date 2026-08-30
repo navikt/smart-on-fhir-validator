@@ -7,7 +7,7 @@
  *
  * Usage: `yarn generate-key`, then paste the single line of output into the
  * `smart-on-fhir-validator-clients` Kubernetes secret as `SMART_PRIVATE_JWK`. The private key (`d`)
- * never needs to leave that secret — `getPublicJwks()` derives the public JWKS served at
+ * never needs to leave that secret: `getPublicJwks()` derives the public JWKS served at
  * `/.well-known/jwks.json` from it at runtime.
  */
 

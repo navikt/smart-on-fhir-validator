@@ -4,7 +4,7 @@ import type { MockClientAuthMethod, MockState } from '#mocks/state'
 
 /**
  * The `.well-known/smart-configuration` document. Conformant by default per
- * https://build.fhir.org/ig/HL7/smart-app-launch/conformance.html — every REQUIRED and
+ * https://build.fhir.org/ig/HL7/smart-app-launch/conformance.html: every REQUIRED and
  * RECOMMENDED field the spec lists is populated, and `capabilities` reflects the client
  * authentication method this instance was configured to require.
  */

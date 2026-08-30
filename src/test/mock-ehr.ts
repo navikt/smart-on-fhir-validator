@@ -1,6 +1,6 @@
 /**
- * Shared integration-test harness: drives a complete SMART App Launch — discovery, authorize,
- * PKCE-protected code exchange, token — through this app's own `#core/smart` modules against the
+ * Shared integration-test harness: drives a complete SMART App Launch (discovery, authorize,
+ * PKCE-protected code exchange, token) through this app's own `#core/smart` modules against the
  * in-repo mock EHR (`#mocks/server`), entirely in-process. No network, no port.
  *
  * Every integration test therefore exercises the real client code path rather than
@@ -71,7 +71,7 @@ export type ClientAuthFixture = {
 /**
  * Builds matching mock-EHR registration config and this app's own `ClientAuthMode` for a given
  * client authentication method, so both sides of the handshake agree on the same credentials.
- * `private_key_jwt` uses RS384 — one of SMART's two required baseline algorithms for asymmetric
+ * `private_key_jwt` uses RS384, one of SMART's two required baseline algorithms for asymmetric
  * client authentication.
  */
 export async function createClientAuthFixture(clientAuth: MockClientAuthMethod): Promise<ClientAuthFixture> {
@@ -142,7 +142,7 @@ export type LaunchOptions = {
     clientId?: string
     /**
      * When true, `findIssuerConfig` returns `null`, forcing `handleLaunch` down the real RFC
-     * 7591 Dynamic Client Registration path — what this app does for any issuer not statically
+     * 7591 Dynamic Client Registration path: what this app does for any issuer not statically
      * configured in `#core/config/issuers`. Other tests supply a ready-made `issuerConfig` and
      * so never exercise registration at all.
      */

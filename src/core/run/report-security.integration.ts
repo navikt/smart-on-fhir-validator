@@ -5,8 +5,8 @@ import { ALL_CLIENT_AUTH_METHODS, DEFAULT_SCOPE, requireSuccessfulLaunch } from 
 
 /**
  * Guards the security property in `src/core/http/redact.ts`: a report is rendered in the browser
- * and pasted into support tickets, so nothing replayable against a vendor's EHR — access/refresh
- * token, client secret, client-assertion JWT, private key — may survive into it. A dependency
+ * and pasted into support tickets, so nothing replayable against a vendor's EHR (access/refresh
+ * token, client secret, client-assertion JWT, private key) may survive into it. A dependency
  * bump that dropped the redaction step must fail loudly here.
  *
  * Each case drives a real launch against the mock EHR with freshly generated credentials, then

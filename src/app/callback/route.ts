@@ -33,7 +33,7 @@ async function errorRedirect(error: string, detail?: string): Promise<NextRespon
  * The SMART EHR launch callback: the authorization server redirects the browser here with
  * `?code=&state=` (or `?error=`) after the user approves the launch. Exchanges the code for a
  * token, then immediately runs every validator this app has (`runValidation`) against that real,
- * live session — exactly once, since the read/write probes write data to the EHR and must never
+ * live session, exactly once, since the read/write probes write data to the EHR and must never
  * be re-run just because a vendor reloads `/report`. The resulting report is persisted keyed by
  * the session cookie, and the browser is redirected on to `/report` to read it.
  */

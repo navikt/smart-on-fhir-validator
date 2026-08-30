@@ -11,7 +11,7 @@ const CONTEXT: AudEnforcementContext = {
     redirectUri: 'https://validator.nav.no/callback',
 }
 
-describe('evaluateAudEnforcementResponse — rejected', () => {
+describe('evaluateAudEnforcementResponse: rejected', () => {
     it('is rejected when the server redirects back with an OAuth `error`', () => {
         const verdict = evaluateAudEnforcementResponse(
             {
@@ -43,7 +43,7 @@ describe('evaluateAudEnforcementResponse — rejected', () => {
     })
 })
 
-describe('evaluateAudEnforcementResponse — not-rejected (the security finding)', () => {
+describe('evaluateAudEnforcementResponse: not-rejected (the security finding)', () => {
     it('is not-rejected when the server redirects back with a `code` despite the wrong aud', () => {
         const verdict = evaluateAudEnforcementResponse(
             { status: 302, location: 'https://validator.nav.no/callback?code=abc123&state=xyz' },
@@ -54,7 +54,7 @@ describe('evaluateAudEnforcementResponse — not-rejected (the security finding)
     })
 })
 
-describe('evaluateAudEnforcementResponse — inconclusive', () => {
+describe('evaluateAudEnforcementResponse: inconclusive', () => {
     it('is inconclusive on a transport failure (status 0)', () => {
         const verdict = evaluateAudEnforcementResponse({ status: 0, location: null }, CONTEXT)
 

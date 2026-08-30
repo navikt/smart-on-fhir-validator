@@ -66,7 +66,7 @@ describe('parseFhirReference', () => {
     })
 })
 
-describe('validateIdToken — end-to-end signature verification (via core verifyIdToken)', () => {
+describe('validateIdToken: end-to-end signature verification (via core verifyIdToken)', () => {
     it('verifies a correctly signed token and reports OK findings, with fhirUser resolved', async () => {
         const { publicKey, privateKey } = await generateKeys()
         const idToken = await signToken(privateKey, { fhirUser: 'Practitioner/1' })
@@ -142,7 +142,7 @@ describe('validateIdToken — end-to-end signature verification (via core verify
     })
 })
 
-describe('validateIdToken — malformed tokens and skipped verification', () => {
+describe('validateIdToken: malformed tokens and skipped verification', () => {
     it('returns [] when idToken is undefined', () => {
         const results = validateIdToken({
             idToken: undefined,
@@ -164,7 +164,7 @@ describe('validateIdToken — malformed tokens and skipped verification', () => 
 
         expect(verification.status).toBe('failed')
         // Claims cannot even be best-effort decoded for a non-JWS string, so only the failed
-        // verification and missing-`sub` findings are reported — never a throw.
+        // verification and missing-`sub` findings are reported, never a throw.
         expect(bySeverity(results, 'ERROR').length).toBeGreaterThanOrEqual(1)
         expect(bySeverity(results, 'ERROR').some((e) => e.message.match(/verification/i))).toBe(true)
     })
@@ -181,7 +181,7 @@ describe('validateIdToken — malformed tokens and skipped verification', () => 
         })
 
         // The signature couldn't be checked, but claim-level analysis still runs against a
-        // best-effort decode — `sub` is present, so it reports OK.
+        // best-effort decode: `sub` is present, so it reports OK.
         const errors = bySeverity(results, 'ERROR')
         expect(errors).toHaveLength(1)
         expect(errors[0]?.message).toMatch(/issuer/)
@@ -189,7 +189,7 @@ describe('validateIdToken — malformed tokens and skipped verification', () => 
     })
 })
 
-describe('validateIdToken — fhirUser and profile claims', () => {
+describe('validateIdToken: fhirUser and profile claims', () => {
     it('reports an ERROR when fhirUser was requested but neither fhirUser nor profile is present', async () => {
         const { publicKey, privateKey } = await generateKeys()
         const idToken = await signToken(privateKey, {})
@@ -246,7 +246,7 @@ describe('validateIdToken — fhirUser and profile claims', () => {
     })
 })
 
-describe('validateIdToken — nonce', () => {
+describe('validateIdToken: nonce', () => {
     it('reports OK when the nonce matches', async () => {
         const { publicKey, privateKey } = await generateKeys()
         const idToken = await signToken(privateKey, { nonce: 'abc123' })
@@ -304,7 +304,7 @@ describe('validateIdToken — nonce', () => {
     })
 })
 
-describe('validateIdToken — RS256 key pair also works (algorithm-agnostic)', () => {
+describe('validateIdToken: RS256 key pair also works (algorithm-agnostic)', () => {
     it('verifies an RS384-signed token end to end', async () => {
         const { publicKey, privateKey } = await generateKeyPair('RS384', { extractable: true })
         const idToken = await new SignJWT({ fhirUser: 'Patient/9' })
@@ -338,7 +338,7 @@ describe('jose interop sanity check', () => {
     })
 })
 
-describe('validateIdToken — accepts a pre-computed IdTokenVerificationResult', () => {
+describe('validateIdToken: accepts a pre-computed IdTokenVerificationResult', () => {
     it('works with a manually constructed failed result', () => {
         const verification: IdTokenVerificationResult = {
             status: 'failed',

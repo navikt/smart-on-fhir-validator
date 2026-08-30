@@ -8,7 +8,7 @@ import type { MockState } from '#mocks/state'
  * https://build.fhir.org/ig/HL7/smart-app-launch/app-launch.html#step-3-app-exchanges-authorization-code-for-access-token
  *
  * Validates the authorization request and issues a code. `aud` MUST equal this server's FHIR
- * base URL — a common client bug is sending the issuer instead. Skippable via the
+ * base URL: a common client bug is sending the issuer instead. Skippable via the
  * `aud-not-validated` defect.
  */
 export function authorizeHandler(state: MockState) {

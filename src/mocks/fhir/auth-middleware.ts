@@ -28,7 +28,7 @@ function readBearerToken(c: Context, state: MockState): AccessTokenRecord | Resp
     return record
 }
 
-/** Requires a valid Bearer token but does not check scope — for the batch/transaction root. */
+/** Requires a valid Bearer token but does not check scope, for the batch/transaction root. */
 export function requireValidBearerToken(state: MockState): MiddlewareHandler {
     return async (c, next) => {
         const result = readBearerToken(c, state)

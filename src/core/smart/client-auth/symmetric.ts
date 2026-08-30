@@ -28,7 +28,7 @@ export function createSymmetricClientAuthentication(
 
 /**
  * RFC 6749 §2.3.1: client id and secret are each form-urlencoded *before* being joined with a
- * colon and base64-encoded — not `base64(clientId + ':' + clientSecret)`. Skipping the per-value
+ * colon and base64-encoded, not `base64(clientId + ':' + clientSecret)`. Skipping the per-value
  * encoding is the most common mistake here, and breaks any value containing ':' or '@'.
  */
 function basicAuthValue(clientId: string, clientSecret: string): string {

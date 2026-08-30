@@ -101,7 +101,7 @@ export const hl7Refs = {
         cite: 'FHIR R4 §Resource List',
         href: 'https://hl7.org/fhir/R4/resourcelist.html',
     },
-    /** The authority is FHIR R4 itself, not the no-basis profile — and the simplifier.net link
+    /** The authority is FHIR R4 itself, not the no-basis profile: the simplifier.net link
      *  this used to carry in `simplifierRefs` returned HTTP 404, so do not move it back. */
     telecom: {
         authority: 'fhir',

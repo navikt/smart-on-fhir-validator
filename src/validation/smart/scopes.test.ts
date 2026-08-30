@@ -17,7 +17,7 @@ function bySeverity(options: Parameters<typeof validateScopes>[0], severity: Sev
     return validateScopes(options).filter((v) => v.severity === severity)
 }
 
-describe('parseScope — v1 clinical scopes', () => {
+describe('parseScope: v1 clinical scopes', () => {
     it.each([
         ['patient/Observation.read', 'patient', 'Observation', 'v1', 'rs'],
         ['user/*.write', 'user', '*', 'v1', 'cud'],
@@ -34,7 +34,7 @@ describe('parseScope — v1 clinical scopes', () => {
     })
 })
 
-describe('parseScope — v2 clinical scopes', () => {
+describe('parseScope: v2 clinical scopes', () => {
     it('parses a basic CRUDS scope', () => {
         const scope = parseScope('patient/Observation.rs')
         expect(scope).toMatchObject({
@@ -80,7 +80,7 @@ describe('parseScope — v2 clinical scopes', () => {
     })
 })
 
-describe('parseScope — context, identity, refresh and orchestrate scopes', () => {
+describe('parseScope: context, identity, refresh and orchestrate scopes', () => {
     it.each([
         ['launch', 'context'],
         ['launch/patient', 'context'],
@@ -96,7 +96,7 @@ describe('parseScope — context, identity, refresh and orchestrate scopes', () 
     })
 })
 
-describe('parseScope — hostile input', () => {
+describe('parseScope: hostile input', () => {
     it.each([
         ['patient/', 'malformed'],
         ['patient/Observation.', 'malformed'],

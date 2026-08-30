@@ -66,8 +66,8 @@ async function verifyPrivateKeyJwt(
 }
 
 /**
- * Identifies and authenticates the client making a token request — HTTP Basic, a client_secret
- * in the body, or a private_key_jwt assertion — and checks that mechanism against what that
+ * Identifies and authenticates the client making a token request (HTTP Basic, a client_secret
+ * in the body, or a private_key_jwt assertion) and checks that mechanism against what that
  * client registered with (statically via config, or dynamically via `POST /register`).
  */
 export async function identifyClient(

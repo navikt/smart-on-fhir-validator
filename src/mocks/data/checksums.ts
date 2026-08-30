@@ -1,6 +1,6 @@
 /**
  * Modulus-11 check digits for the Norwegian identifiers used across the synthetic data set.
- * Real algorithms applied to invented base digits — never real personal data — so the generated
+ * Real algorithms applied to invented base digits (never real personal data) so the generated
  * identifiers pass the same validation an EHR vendor's own system would apply.
  *
  * @see https://www.skatteetaten.no/person/folkeregister/fodsel-og-navnevalg/barn-fodt-i-norge/fodselsnummer/
@@ -14,7 +14,7 @@ function weightedCheckDigit(digits: readonly number[], weights: readonly number[
     const sum = digits.reduce((acc, digit, i) => acc + digit * (weights[i] ?? 0), 0)
     const check = 11 - (sum % 11)
     if (check === 11) return 0
-    if (check === 10) return null // no valid check digit for this base — caller must pick another
+    if (check === 10) return null // no valid check digit for this base: caller must pick another
 
     return check
 }

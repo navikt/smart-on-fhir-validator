@@ -25,7 +25,7 @@ const FULL_RESPONSE = {
     tenant: 'tenant-1',
 }
 
-describe('validateTokenResponse — a fully conformant response', () => {
+describe('validateTokenResponse: a fully conformant response', () => {
     const requestedScope = 'openid fhirUser launch offline_access patient/Patient.read'
 
     it('produces no ERROR or WARNING findings', () => {
@@ -47,7 +47,7 @@ describe('validateTokenResponse — a fully conformant response', () => {
     })
 })
 
-describe('validateTokenResponse — malformed body shapes', () => {
+describe('validateTokenResponse: malformed body shapes', () => {
     it('reports an ERROR when the body is not a JSON object', () => {
         const errors = bySeverity('not an object', 'openid', 'ERROR')
         expect(errors).toHaveLength(1)
@@ -65,7 +65,7 @@ describe('validateTokenResponse — malformed body shapes', () => {
     })
 })
 
-describe('validateTokenResponse — OAuth error response', () => {
+describe('validateTokenResponse: OAuth error response', () => {
     it('surfaces error and error_description and stops further checks', () => {
         const result = validateTokenResponse(
             { error: 'invalid_grant', error_description: 'the authorization code has expired' },
@@ -85,7 +85,7 @@ describe('validateTokenResponse — OAuth error response', () => {
     })
 })
 
-describe('validateTokenResponse — access_token', () => {
+describe('validateTokenResponse: access_token', () => {
     it('reports an ERROR when access_token is missing', () => {
         const errors = bySeverity({ token_type: 'Bearer', scope: 'openid' }, 'openid', 'ERROR')
         expect(errors.some((e) => e.message.includes('access_token'))).toBe(true)
@@ -110,7 +110,7 @@ describe('validateTokenResponse — access_token', () => {
     })
 })
 
-describe('validateTokenResponse — token_type', () => {
+describe('validateTokenResponse: token_type', () => {
     it('reports an ERROR when token_type is missing', () => {
         const errors = bySeverity({ access_token: 'x', scope: 'openid' }, 'openid', 'ERROR')
         expect(errors.some((e) => e.message.includes('token_type'))).toBe(true)
@@ -135,7 +135,7 @@ describe('validateTokenResponse — token_type', () => {
     })
 })
 
-describe('validateTokenResponse — expires_in', () => {
+describe('validateTokenResponse: expires_in', () => {
     it('reports a WARNING when expires_in is absent', () => {
         const warnings = bySeverity(
             { access_token: 'x', token_type: 'Bearer', scope: 'openid' },
@@ -164,14 +164,14 @@ describe('validateTokenResponse — expires_in', () => {
     })
 })
 
-describe('validateTokenResponse — scope', () => {
+describe('validateTokenResponse: scope', () => {
     it('reports an ERROR when scope is missing', () => {
         const errors = bySeverity({ access_token: 'x', token_type: 'Bearer' }, 'openid', 'ERROR')
         expect(errors.some((e) => e.message.includes('`scope`'))).toBe(true)
     })
 })
 
-describe('validateTokenResponse — id_token', () => {
+describe('validateTokenResponse: id_token', () => {
     const base = { access_token: 'x', token_type: 'Bearer', scope: 'openid fhirUser' }
 
     it('reports an ERROR when openid+fhirUser were requested but id_token is missing', () => {
@@ -190,7 +190,7 @@ describe('validateTokenResponse — id_token', () => {
     })
 })
 
-describe('validateTokenResponse — refresh_token', () => {
+describe('validateTokenResponse: refresh_token', () => {
     const base = { access_token: 'x', token_type: 'Bearer', scope: 'offline_access' }
 
     it('reports a WARNING when offline_access was requested but refresh_token is missing', () => {
@@ -204,7 +204,7 @@ describe('validateTokenResponse — refresh_token', () => {
     })
 })
 
-describe('validateTokenResponse — patient and encounter launch context', () => {
+describe('validateTokenResponse: patient and encounter launch context', () => {
     const base = { access_token: 'x', token_type: 'Bearer', scope: 'launch' }
 
     it('reports an ERROR when launch/patient was requested but patient is missing', () => {
@@ -233,7 +233,7 @@ describe('validateTokenResponse — patient and encounter launch context', () =>
     })
 })
 
-describe('validateTokenResponse — never throws on hostile input', () => {
+describe('validateTokenResponse: never throws on hostile input', () => {
     it.each([
         [undefined, ''],
         [null, ''],

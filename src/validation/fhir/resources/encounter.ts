@@ -1,6 +1,6 @@
 /**
- * Encounter: searched by `subject=Patient/{patientId}` and, where supported, `patient=` — R4
- * defines both. With an `encounterId` in launch context the probe also reads it directly.
+ * Encounter: searched by `subject=Patient/{patientId}` and, where supported, `patient=` (R4
+ * defines both). With an `encounterId` in launch context the probe also reads it directly.
  *
  * @see https://hl7.org/fhir/R4/encounter.html
  * @see https://github.com/navikt/syk-inn/blob/main/docs/fhir/encounter.md

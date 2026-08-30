@@ -19,13 +19,13 @@ export type SessionCookieAttributes = {
     httpOnly: true
     /**
      * Must be `true` whenever the app is served over HTTPS and `false` for plain-HTTP local
-     * development — a `Secure` cookie set over `http://` is silently dropped, breaking every launch.
+     * development: a `Secure` cookie set over `http://` is silently dropped, breaking every launch.
      */
     secure: boolean
     /**
      * Must be `Lax`, not `Strict`: the EHR's authorization server redirects the browser back to
      * `/callback` cross-site after login, and a `Strict` cookie is not sent on that top-level
-     * cross-site navigation — the session would be unreadable at the one moment it matters most.
+     * cross-site navigation: the session would be unreadable at the one moment it matters most.
      */
     sameSite: 'lax'
     path: '/'
@@ -92,7 +92,7 @@ export async function readSessionIdFromCookies(): Promise<string | null> {
 /**
  * Whether the current request arrived over HTTPS. Trusts `x-forwarded-proto` first (nais's
  * ingress terminates TLS), then treats `localhost` as the only genuine plain-HTTP case. Never
- * keyed off `NODE_ENV` — this attribute is a real security boundary, not a convenience.
+ * keyed off `NODE_ENV`: this attribute is a real security boundary, not a convenience.
  */
 async function isRequestSecure(): Promise<boolean> {
     const { headers } = await import('next/headers')

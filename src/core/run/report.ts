@@ -103,7 +103,7 @@ export type SkippedSectionInput = {
     reason: string
 }
 
-/** A phase that could not run at all — never a failure, just an absence of evidence. */
+/** A phase that could not run at all: never a failure, just an absence of evidence. */
 export function skippedSection(input: SkippedSectionInput): ReportSection {
     return {
         id: input.id,
@@ -122,7 +122,7 @@ export type ErrorSectionInput = {
     error: SmartError
 }
 
-/** A phase whose own HTTP call failed outright (transport error or non-2xx) — a real failure. */
+/** A phase whose own HTTP call failed outright (transport error or non-2xx): a real failure. */
 export function errorSection(input: ErrorSectionInput): ReportSection {
     const { error } = input
     const message = error.detail ? `${error.error}: ${error.detail}` : error.error
@@ -163,7 +163,7 @@ export function sectionFromProbeOutcome(outcome: ProbeOutcome, category: Section
 }
 
 /**
- * A run with any skipped section is never a plain pass — that would overstate what was verified.
+ * A run with any skipped section is never a plain pass: that would overstate what was verified.
  * Precedence is fail > skipped > warnings > pass, since a failure is the more actionable signal.
  */
 export function summarize(sections: readonly ReportSection[]): ReportSummary {

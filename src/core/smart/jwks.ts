@@ -4,8 +4,8 @@
  *
  * Read once from `SMART_PRIVATE_JWK`, or an ephemeral ES384 key pair when unset so local
  * development needs no configuration. An ephemeral key does not survive a restart, forcing any
- * EHR that pinned this app's public key to re-register — hence the warning, and hence not
- * acceptable outside local development.
+ * EHR that pinned this app's public key to re-register (hence the warning, and hence not
+ * acceptable outside local development).
  */
 
 import { exportJWK, generateKeyPair, importJWK, type JWK } from 'jose'
@@ -40,7 +40,7 @@ function loadOrGenerateIdentity(): Promise<SigningIdentity> {
 
     logger.warn(
         'SMART_PRIVATE_JWK is not set; generating an ephemeral ES384 key pair for asymmetric ' +
-            'client authentication. This key will not survive a restart — set SMART_PRIVATE_JWK ' +
+            'client authentication. This key will not survive a restart. Set SMART_PRIVATE_JWK ' +
             'in any environment where EHRs register against this app.',
     )
     return generateEphemeralIdentity()
@@ -83,7 +83,7 @@ export async function getSigningKey(): Promise<{ key: CryptoKey; kid: string; al
     return { key, kid, alg }
 }
 
-/** Public key material only — see the `PRIVATE_JWK_MEMBERS` filter and its test. */
+/** Public key material only, see the `PRIVATE_JWK_MEMBERS` filter and its test. */
 export async function getPublicJwks(): Promise<{ keys: JWK[] }> {
     const { publicJwk } = await getIdentity()
     return { keys: [publicJwk] }

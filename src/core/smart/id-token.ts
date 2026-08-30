@@ -15,7 +15,7 @@ export type IdTokenKeyResolver = Parameters<typeof jwtVerify>[1]
 
 export type VerifyIdTokenOptions = {
     issuer: string
-    /** The SMART client's own `client_id` — the id token's required audience. */
+    /** The SMART client's own `client_id`, the id token's required audience. */
     clientId: string
     /** The issuer's JWKS endpoint. Ignored when `keyResolver` is given. */
     jwksUri?: string
@@ -72,7 +72,7 @@ function buildJwksKeyResolver(options: VerifyIdTokenOptions): IdTokenKeyResolver
     return createRemoteJWKSet(jwksUrl, { [customFetch]: recordedFetch(options.httpClient) })
 }
 
-/** Unverified inspection only — never use this result to authorize anything. */
+/** Unverified inspection only, never use this result to authorize anything. */
 export function decodeIdTokenClaims(idToken: string): JWTPayload | null {
     try {
         return decodeJwt(idToken)
@@ -95,7 +95,7 @@ export function describeVerificationError(cause: unknown): string {
         const code = 'code' in cause && typeof cause.code === 'string' ? cause.code : undefined
         const claim = 'claim' in cause && typeof cause.claim === 'string' ? cause.claim : undefined
         if (claim && claim !== 'unspecified')
-            return `${code ?? cause.name}: \`${claim}\` claim — ${cause.message}`
+            return `${code ?? cause.name}: \`${claim}\` claim (${cause.message})`
         return code ? `${code}: ${cause.message}` : cause.message
     }
     return String(cause)

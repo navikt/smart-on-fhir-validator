@@ -7,7 +7,7 @@ import { NO_BASIS_PROFILE, OID } from './oid'
 
 export const PATIENT_ID = 'patient-espen-eksempel'
 
-/** A synthetic fødselsnummer that passes the real modulus-11 check digits — never a real person. */
+/** A synthetic fødselsnummer that passes the real modulus-11 check digits, never a real person. */
 const ESPEN_FNR = fodselsnummer('010190', '501')
 
 export function createPatient(defects: DefectSet): Patient {

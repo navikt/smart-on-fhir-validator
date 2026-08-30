@@ -260,7 +260,7 @@ describe('handleCallback', () => {
         async () => {
             // Simulates a compromised or malicious allowlisted host declaring another registered
             // issuer's `issuer` string in its own discovery document, then advertising its own
-            // token_endpoint — the attack credentialOriginIsAuthorized exists to stop.
+            // token_endpoint, the attack credentialOriginIsAuthorized exists to stop.
             const staticConfig: IssuerConfig = {
                 issuer: 'https://other-vendor.example.com',
                 clientId: 'static-client',

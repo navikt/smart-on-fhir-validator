@@ -54,7 +54,7 @@ export class FhirClient {
         }
     }
 
-    /** `GET [base]/[type]/[id]` — only legal when the id came from launch context. */
+    /** `GET [base]/[type]/[id]`, only legal when the id came from launch context. */
     read(resourceType: string, id: string): Promise<RecordedResponse> {
         return this.http.get('fhir-read', `${this.baseUrl}/${resourceType}/${id}`, this.headers())
     }

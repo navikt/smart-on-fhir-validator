@@ -19,7 +19,7 @@ const CATEGORY_LABEL: Record<SectionCategory, string> = {
 /**
  * Card chrome by status. `failed` gets a coloured border and tinted header so it stays findable
  * while scrolling. `skipped` gets a dashed border and no status hue: it recedes, but is never
- * hidden — it must not be mistaken for a pass.
+ * hidden: it must not be mistaken for a pass.
  */
 const CARD_CLASSES: Record<ReportSection['status'], string> = {
     passed: 'border-ax-border-neutral-subtle bg-white',

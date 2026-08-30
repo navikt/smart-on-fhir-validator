@@ -23,7 +23,7 @@ const DEFAULT_TIMEOUT_MS = 15_000
 /**
  * The single outbound HTTP path of the application: no code path can reach an EHR without
  * leaving evidence in the report. Non-2xx responses and transport failures are returned rather
- * than thrown — a malformed or failing server is the subject under test, not an exception.
+ * than thrown: a malformed or failing server is the subject under test, not an exception.
  */
 export class SmartHttpClient {
     private readonly recorder: ExchangeRecorder

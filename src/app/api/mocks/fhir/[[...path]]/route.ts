@@ -7,7 +7,7 @@ import { getAppOrigin } from '../../../../app-origin'
 export const runtime = 'nodejs'
 
 /**
- * The mock EHR issues real access tokens and signs `id_token`s — it must never be reachable in
+ * The mock EHR issues real access tokens and signs `id_token`s, so it must never be reachable in
  * a production deployment. `ENABLE_MOCK_EHR=true` exists purely for a deliberately-exposed demo
  * environment and must be set with full awareness of that risk.
  */

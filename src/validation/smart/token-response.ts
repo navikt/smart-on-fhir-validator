@@ -93,7 +93,7 @@ export function validateTokenResponse(
     const body = raw as object
 
     // An OAuth error response (RFC 6749 §5.2) is mutually exclusive with a successful token
-    // response, so surface it and stop — every other field check below would be noise.
+    // response, so surface it and stop: every other field check below would be noise.
     const errorCode = readString(body, 'error')
     if (errorCode !== undefined) {
         const description = readString(body, 'error_description')

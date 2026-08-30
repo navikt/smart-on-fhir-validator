@@ -10,7 +10,7 @@ const BASE_TOKEN_RESPONSE: TokenResponse = {
     scope: 'openid fhirUser launch patient/Patient.read',
 }
 
-describe('buildLaunchContext — happy path', () => {
+describe('buildLaunchContext: happy path', () => {
     it('builds a full launch context from patient/encounter/fhirUser', () => {
         const { launchContext, validations } = buildLaunchContext(
             { ...BASE_TOKEN_RESPONSE, patient: 'patient-1', encounter: 'encounter-1' },
@@ -55,7 +55,7 @@ describe('buildLaunchContext — happy path', () => {
     })
 })
 
-describe('buildLaunchContext — missing context', () => {
+describe('buildLaunchContext: missing context', () => {
     it('reports a WARNING and leaves patientId null when patient is absent', () => {
         const { launchContext, validations } = buildLaunchContext(BASE_TOKEN_RESPONSE, null)
         expect(launchContext.patientId).toBeNull()
@@ -115,7 +115,7 @@ describe('buildLaunchContext — missing context', () => {
     })
 })
 
-describe('buildLaunchContext — hostile input', () => {
+describe('buildLaunchContext: hostile input', () => {
     it('never throws for a non-string fhirUser claim', () => {
         expect(() =>
             buildLaunchContext(BASE_TOKEN_RESPONSE, { fhirUser: 12345 as unknown as string }),

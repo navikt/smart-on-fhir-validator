@@ -2,7 +2,7 @@
  * A process-wide singleton, anchored on `globalThis`.
  *
  * A module-level `let` is not enough: Route Handlers and Page Server Components are compiled into
- * separate module graphs, so state written by `/callback` is invisible to `/report` — the write
+ * separate module graphs, so state written by `/callback` is invisible to `/report`: the write
  * is lost silently. Only `globalThis` is shared across those graphs.
  *
  * This shares state within one process only: sessions and reports are in-memory and do not
