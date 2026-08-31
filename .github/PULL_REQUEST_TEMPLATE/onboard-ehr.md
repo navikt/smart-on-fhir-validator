@@ -1,7 +1,11 @@
 # Onboard EHR: <vendor name>
 
 Checklist for a pull request that adds an entry to the `SMART_ISSUERS` array in
-[`.nais/nais-dev.yaml`](../../.nais/nais-dev.yaml).
+[`.nais/nais-dev.yaml`](../../.nais/nais-dev.yaml). See the README's
+["Register your EHR"](../../blob/main/README.md#register-your-ehr) walkthrough, in particular
+["What your finished pull request should look
+like"](../../blob/main/README.md#what-your-finished-pull-request-should-look-like) for a worked
+example of exactly this diff.
 
 **Never paste a client secret value into this PR description, a commit message, or the diff.**
 Pull requests are public and permanent. If your integration uses `symmetric` client

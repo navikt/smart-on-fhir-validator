@@ -93,7 +93,7 @@ async function RegisterEhrSection(): Promise<ReactElement> {
                 every server-side host your integration touches (FHIR base URL, authorization endpoint, token
                 endpoint, JWKS URI) is added to that allowlist in the same pull request, as described in{' '}
                 <a
-                    href="https://github.com/navikt/smart-on-fhir-validator#network-access-egress-allowlist"
+                    href="https://github.com/navikt/smart-on-fhir-validator#step-2-allow-network-access"
                     className="underline"
                 >
                     the README&apos;s network access section
