@@ -1634,10 +1634,10 @@ __metadata:
   languageName: node
   linkType: hard
 
-"jose@npm:^6.2.8":
-  version: 6.2.8
-  resolution: "jose@npm:6.2.8"
-  checksum: 10c0/fe4c6a7197a1adab2251b000c1eaaa8b40b6cb7cfbef43dbc9e959dacd43bf2532827b2d5e0f4069731da79d26e4d9e4368ccb26559a42a884b3fe036927e6e1
+"jose@npm:^6.2.10":
+  version: 6.2.10
+  resolution: "jose@npm:6.2.10"
+  checksum: 10c0/799fd8d3d92fe748ebe1f57dbd3dfd917d2e61d9fb39912c72cc674ae61d69414b7cc0ce773df8a0160e849926fc31853aec9caab88c481563d5a8ab6558e107
   languageName: node
   linkType: hard
 
@@ -2571,7 +2571,7 @@ __metadata:
     "@vitest/coverage-v8": "npm:4.1.10"
     clsx: "npm:^2.1.1"
     hono: "npm:^4.13.0"
-    jose: "npm:^6.2.8"
+    jose: "npm:^6.2.10"
     next: "npm:16.3.0"
     next-logger: "npm:^5.0.2"
     oxfmt: "npm:^0.62.0"
