@@ -1,4 +1,4 @@
-import type { Bundle, DocumentReference, QuestionnaireResponse } from 'fhir/r4'
+import type { Bundle, DocumentReference, OperationOutcome, QuestionnaireResponse } from 'fhir/r4'
 import { describe, expect, it } from 'vitest'
 
 import type { Validation } from '#validation/validation'
@@ -80,16 +80,17 @@ describe('validateBatchBundleRequest', () => {
     })
 
     it('errors when an internal urn:uuid reference does not resolve to a fullUrl', () => {
+        const unresolvedReference: DocumentReference = {
+            ...documentReference,
+            context: { related: [{ reference: 'urn:uuid:unknown' }] },
+        }
         const bundle: Bundle = {
             resourceType: 'Bundle',
             type: 'batch',
             entry: [
                 {
                     fullUrl: 'urn:uuid:known',
-                    resource: {
-                        ...documentReference,
-                        context: { related: [{ reference: 'urn:uuid:unknown' }] },
-                    },
+                    resource: unresolvedReference,
                     request: { method: 'PUT', url: 'DocumentReference/sykmelding-1' },
                 },
             ],
@@ -137,6 +138,10 @@ describe('validateBatchBundleResponse', () => {
     })
 
     it('surfaces a failed entry individually without failing the whole batch (partial failure)', () => {
+        const failureOutcome: OperationOutcome = {
+            resourceType: 'OperationOutcome',
+            issue: [{ severity: 'error', code: 'invalid', diagnostics: 'Bad questionnaire item' }],
+        }
         const response: Bundle = {
             resourceType: 'Bundle',
             type: 'batch-response',
@@ -145,12 +150,7 @@ describe('validateBatchBundleResponse', () => {
                 {
                     response: {
                         status: '422 Unprocessable Entity',
-                        outcome: {
-                            resourceType: 'OperationOutcome',
-                            issue: [
-                                { severity: 'error', code: 'invalid', diagnostics: 'Bad questionnaire item' },
-                            ],
-                        },
+                        outcome: failureOutcome,
                     },
                 },
                 { response: { status: '201 Created' } },

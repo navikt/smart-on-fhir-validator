@@ -14,9 +14,12 @@ const RESOURCES = [
     'QuestionnaireResponse',
 ] as const
 
-function fhirVersion(state: MockState): string {
-    if (state.defects.has('fhir-version-r4b')) return '4.3.0'
-    if (state.defects.has('fhir-version-r5')) return '5.0.0'
+// The R4 `fhirVersion` type enumerates only releases up to 4.0.1, but the `fhir-version-r4b` and
+// `fhir-version-r5` defects deliberately advertise a newer release so the validator can be tested
+// against a server whose FHIR version does not match R4. The cast is what makes that possible.
+function fhirVersion(state: MockState): CapabilityStatement['fhirVersion'] {
+    if (state.defects.has('fhir-version-r4b')) return '4.3.0' as CapabilityStatement['fhirVersion']
+    if (state.defects.has('fhir-version-r5')) return '5.0.0' as CapabilityStatement['fhirVersion']
 
     return '4.0.1'
 }
