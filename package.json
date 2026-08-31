@@ -27,7 +27,7 @@
         "@navikt/ds-css": "^8.16.1",
         "@navikt/ds-tailwind": "^8.16.1",
         "clsx": "^2.1.1",
-        "hono": "^4.13.0",
+        "hono": "^4.13.5",
         "jose": "^6.2.8",
         "next": "16.3.0",
         "next-logger": "^5.0.2",
