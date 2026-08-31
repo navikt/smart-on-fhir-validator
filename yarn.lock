@@ -1078,10 +1078,10 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@types/fhir@npm:^0.0.44":
-  version: 0.0.44
-  resolution: "@types/fhir@npm:0.0.44"
-  checksum: 10c0/1b6c9d5247c96c919ebc59dfb6945164c49302579eef915840a957c0e8021ec6a97b42c3bea1f0b5a79673696b8e470ec0caef68d5ee3bf1bf5f7df454fa08fe
+"@types/fhir@npm:^3.0.2":
+  version: 3.0.2
+  resolution: "@types/fhir@npm:3.0.2"
+  checksum: 10c0/2596cf3d88b6eec3468b140f058ea1e95be78ed61ff435522fa839bb8b4706419bf10bd9f0ef1744bc63fb7628ded762992ec060a8db2fe3f2dc15d00d1bb199
   languageName: node
   linkType: hard
 
@@ -2564,7 +2564,7 @@ __metadata:
     "@navikt/ds-css": "npm:^8.16.1"
     "@navikt/ds-tailwind": "npm:^8.16.1"
     "@tailwindcss/postcss": "npm:^4.3.3"
-    "@types/fhir": "npm:^0.0.44"
+    "@types/fhir": "npm:^3.0.2"
     "@types/node": "npm:^24.13.3"
     "@types/react": "npm:^19.2.7"
     "@types/react-dom": "npm:^19.2.3"
