@@ -174,7 +174,7 @@ export async function launchAgainstMockEhr(options: LaunchOptions = {}): Promise
     const sessionStore = createInMemorySessionStore()
 
     const issuerConfig: IssuerConfig = {
-        issuer: MOCK_EHR_BASE_URL,
+        fhirBaseUrl: MOCK_EHR_BASE_URL,
         clientId,
         auth: fixture.authMode,
         dynamicallyRegistered: false,

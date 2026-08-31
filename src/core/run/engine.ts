@@ -105,7 +105,6 @@ export async function runValidation(
 
     return {
         generatedAt: now().toISOString(),
-        issuer: session.issuer,
         fhirBaseUrl: session.fhirBaseUrl,
         clientId: session.clientId,
         sections,

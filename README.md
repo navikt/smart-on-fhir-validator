@@ -21,7 +21,7 @@ exactly what each report section checks.
 ## Register your EHR
 
 To get validated: **register the app** (below), or expose a `registration_endpoint` for dynamic
-registration; **tell us your FHIR base URL** (and issuer/client id, for static registration);
+registration; **tell us your FHIR base URL** (and client id, for static registration);
 **launch from your EHR** at this app's `/launch`; then **read the report** at `/report`.
 
 | Item                              | Value                                                                                                                                                                                                                                                          |
@@ -38,7 +38,7 @@ granted, not what was asked for.
 
 ### Client authentication
 
-This app supports all three SMART client-authentication types. Register your issuer by opening a
+This app supports all three SMART client-authentication types. Register your EHR by opening a
 pull request that adds one entry to the `SMART_ISSUERS` array in
 [`.nais/nais-dev.yaml`](.nais/nais-dev.yaml) (schema: `src/core/config/issuers.ts`). Every field is
 a name or public identifier, never a secret, so this is safe to edit directly in the GitHub web UI:
@@ -54,7 +54,7 @@ a name or public identifier, never a secret, so this is safe to edit directly in
   published at `/.well-known/jwks.json`, so register this app's JWKS URL rather than a static key.
 
 If your authorization server advertises a `registration_endpoint` instead, and no static entry
-exists for your issuer, this app registers itself via
+exists for your FHIR base URL, this app registers itself via
 [RFC 7591](https://datatracker.ietf.org/doc/html/rfc7591) on first launch, as a public client, with
 nothing to configure on this app's side.
 

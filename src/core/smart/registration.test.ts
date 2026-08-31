@@ -8,7 +8,7 @@ import { getPublicJwks } from './jwks'
 import { registerClient } from './registration'
 
 const REGISTRATION_ENDPOINT = 'https://ehr.example.com/oauth/register'
-const ISSUER = 'https://ehr.example.com/fhir'
+const FHIR_BASE_URL = 'https://ehr.example.com/fhir'
 
 function jsonResponse(body: unknown, status = 201): Response {
     return new Response(JSON.stringify(body), {
@@ -27,7 +27,7 @@ describe('registerClient', () => {
         const client = clientWithFetch(fetchImpl)
 
         const result = await registerClient(client, REGISTRATION_ENDPOINT, {
-            issuer: ISSUER,
+            fhirBaseUrl: FHIR_BASE_URL,
             clientName: 'Nav validator',
             redirectUris: ['https://validator.nav.no/callback'],
             scope: 'launch openid fhirUser',
@@ -36,7 +36,7 @@ describe('registerClient', () => {
 
         expect(isSmartError(result)).toBe(false)
         if (isSmartError(result)) return
-        expect(result.issuer).toBe(ISSUER)
+        expect(result.fhirBaseUrl).toBe(FHIR_BASE_URL)
         expect(result.clientId).toBe('generated-id')
         expect(result.auth).toEqual({ type: 'public' })
         expect(result.dynamicallyRegistered).toBe(true)
@@ -51,7 +51,7 @@ describe('registerClient', () => {
         const client = clientWithFetch(fetchImpl)
 
         await registerClient(client, REGISTRATION_ENDPOINT, {
-            issuer: ISSUER,
+            fhirBaseUrl: FHIR_BASE_URL,
             clientName: 'Nav validator',
             redirectUris: ['https://validator.nav.no/callback'],
             scope: 'launch',
@@ -79,7 +79,7 @@ describe('registerClient', () => {
         const client = clientWithFetch(fetchImpl)
 
         await registerClient(client, REGISTRATION_ENDPOINT, {
-            issuer: ISSUER,
+            fhirBaseUrl: FHIR_BASE_URL,
             clientName: 'Nav validator',
             redirectUris: ['https://validator.nav.no/callback'],
             scope: 'launch',
@@ -101,7 +101,7 @@ describe('registerClient', () => {
         const client = clientWithFetch(fetchImpl)
 
         const result = await registerClient(client, REGISTRATION_ENDPOINT, {
-            issuer: ISSUER,
+            fhirBaseUrl: FHIR_BASE_URL,
             clientName: 'Nav validator',
             redirectUris: ['https://validator.nav.no/callback'],
             scope: 'launch',
@@ -124,7 +124,7 @@ describe('registerClient', () => {
         const client = clientWithFetch(fetchImpl)
 
         const result = await registerClient(client, REGISTRATION_ENDPOINT, {
-            issuer: ISSUER,
+            fhirBaseUrl: FHIR_BASE_URL,
             clientName: 'Nav validator',
             redirectUris: ['https://validator.nav.no/callback'],
             scope: 'launch',
@@ -147,7 +147,7 @@ describe('registerClient', () => {
         const client = clientWithFetch(fetchImpl)
 
         const result = await registerClient(client, REGISTRATION_ENDPOINT, {
-            issuer: ISSUER,
+            fhirBaseUrl: FHIR_BASE_URL,
             clientName: 'Nav validator',
             redirectUris: ['https://validator.nav.no/callback'],
             scope: 'launch',
@@ -168,7 +168,7 @@ describe('registerClient', () => {
         const client = clientWithFetch(fetchImpl)
 
         const result = await registerClient(client, REGISTRATION_ENDPOINT, {
-            issuer: ISSUER,
+            fhirBaseUrl: FHIR_BASE_URL,
             clientName: 'Nav validator',
             redirectUris: ['https://validator.nav.no/callback'],
             scope: 'launch',
@@ -204,7 +204,7 @@ describe('registerClient', () => {
         const client = clientWithFetch(fetchImpl)
 
         const result = await registerClient(client, REGISTRATION_ENDPOINT, {
-            issuer: ISSUER,
+            fhirBaseUrl: FHIR_BASE_URL,
             clientName: 'Nav validator',
             redirectUris: [],
             scope: 'launch',
@@ -225,7 +225,7 @@ describe('registerClient', () => {
         const client = clientWithFetch(fetchImpl)
 
         const result = await registerClient(client, REGISTRATION_ENDPOINT, {
-            issuer: ISSUER,
+            fhirBaseUrl: FHIR_BASE_URL,
             clientName: 'Nav validator',
             redirectUris: ['https://validator.nav.no/callback'],
             scope: 'launch',
@@ -242,7 +242,7 @@ describe('registerClient', () => {
         const client = clientWithFetch(fetchImpl)
 
         const result = await registerClient(client, REGISTRATION_ENDPOINT, {
-            issuer: ISSUER,
+            fhirBaseUrl: FHIR_BASE_URL,
             clientName: 'Nav validator',
             redirectUris: ['https://validator.nav.no/callback'],
             scope: 'launch',
@@ -259,7 +259,7 @@ describe('registerClient', () => {
         const client = clientWithFetch(fetchImpl)
 
         const result = await registerClient(client, REGISTRATION_ENDPOINT, {
-            issuer: ISSUER,
+            fhirBaseUrl: FHIR_BASE_URL,
             clientName: 'Nav validator',
             redirectUris: ['https://validator.nav.no/callback'],
             scope: 'launch',

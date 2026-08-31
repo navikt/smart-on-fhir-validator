@@ -14,6 +14,13 @@ spec:
   # split traffic across two stores with no shared state, and a user's session could vanish
   # mid-flow depending on which pod handled the next request. min stays 1, not 0: nais only scales
   # on CPU/Kafka triggers, not HTTP traffic, so min 0 would mean permanently down, not scale-to-zero.
+  #
+  # This does not make in-memory state fully rollout-safe even at max=1: Kubernetes/nais's default
+  # RollingUpdate strategy for a single replica still allows maxSurge (one extra pod created before
+  # the old one terminates), so two pods can briefly run side by side during a deploy. A session
+  # whose launch and callback straddle that window can land on different pods and still be lost,
+  # exactly as if max were 2. This setting only removes the *steady-state* traffic split; it is not
+  # a substitute for shared session storage if that rollout-window loss ever needs to be closed.
   replicas:
     max: 1
     min: 1
@@ -94,7 +101,7 @@ spec:
     #
     # To add your EHR: open a pull request that turns the empty array below into a one-element
     # array containing your entry, for example:
-    #   [{ "name": "Acme EHR", "issuer": "https://acme.example.com", "clientId": "abc123",
+    #   [{ "name": "Acme EHR", "fhirBaseUrl": "https://acme.example.com", "clientId": "abc123",
     #      "authType": "asymmetric" }]
     # If entries already exist, add a comma and your object before the closing "]". Keep the
     # result valid JSON: no comments inside the block below, since it becomes the literal value.

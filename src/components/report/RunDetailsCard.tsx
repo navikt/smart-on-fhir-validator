@@ -14,10 +14,6 @@ export function RunDetailsCard({ report }: { report: ValidationReport }): ReactE
             <div className="grid grid-cols-[repeat(auto-fit,minmax(260px,1fr))] gap-x-8 gap-y-4 px-5 py-[18px]">
                 <dl className="contents">
                     <div>
-                        <dt className="text-14 font-semibold text-ax-text-neutral-subtle">Issuer</dt>
-                        <dd className="text-14 font-mono leading-[1.45] break-all">{report.issuer}</dd>
-                    </div>
-                    <div>
                         <dt className="text-14 font-semibold text-ax-text-neutral-subtle">FHIR base URL</dt>
                         <dd className="text-14 font-mono leading-[1.45] break-all">{report.fhirBaseUrl}</dd>
                     </div>

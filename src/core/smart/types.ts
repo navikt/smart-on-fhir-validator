@@ -60,9 +60,14 @@ export type ClientAuthMode =
       }
     | { type: 'confidential-asymmetric'; privateKeyJwk: string; keyId: string; algorithm: 'RS384' | 'ES384' }
 
-/** Per-issuer registration, from configuration or from dynamic client registration. */
+/**
+ * Per-client registration, from configuration or from dynamic client registration, keyed on the
+ * TLS-authenticated FHIR base URL (the `iss` launch parameter), never on the self-declared
+ * `issuer` field of a `.well-known/smart-configuration` document. See `resolveIssuerConfig` in
+ * `#core/smart/launch` for why.
+ */
 export type IssuerConfig = {
-    issuer: string
+    fhirBaseUrl: string
     clientId: string
     auth: ClientAuthMode
     /** True when the client was obtained via RFC 7591 rather than static configuration. */
@@ -73,7 +78,6 @@ export type IssuerConfig = {
 export type PendingSession = {
     state: 'pending'
     sessionId: string
-    issuer: string
     fhirBaseUrl: string
     clientId: string
     oauthState: string
@@ -105,7 +109,6 @@ export type TokenResponse = {
 export type ActiveSession = {
     state: 'active'
     sessionId: string
-    issuer: string
     fhirBaseUrl: string
     clientId: string
     requestedScope: string

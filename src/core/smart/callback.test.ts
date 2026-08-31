@@ -9,7 +9,6 @@ import { isSmartError } from '#core/smart/types'
 import {
     ACTIVE_SESSION_TTL_SECONDS,
     type CallbackDependencies,
-    credentialOriginIsAuthorized,
     handleCallback,
     type SelectClientAuthentication,
 } from './callback'
@@ -27,7 +26,6 @@ function pendingSession(overrides: Partial<PendingSession> = {}): PendingSession
     return {
         state: 'pending',
         sessionId: SESSION_ID,
-        issuer: 'https://ehr.example.com',
         fhirBaseUrl: FHIR_BASE_URL,
         clientId: 'client-123',
         oauthState: 'state-abc',
@@ -49,10 +47,11 @@ function httpClientWithTokenEndpoint(
             status: 200,
             headers: { 'Content-Type': 'application/json' },
         }),
+    tokenEndpoint: string = TOKEN_ENDPOINT,
 ): SmartHttpClient {
     const fetchImpl = (async (input: RequestInfo | URL, init?: RequestInit) => {
         const url = typeof input === 'string' ? input : input.toString()
-        if (url !== TOKEN_ENDPOINT) return new Response('not found', { status: 404 })
+        if (url !== tokenEndpoint) return new Response('not found', { status: 404 })
 
         const body = typeof init?.body === 'string' ? init.body : ''
         const form = new URLSearchParams(body)
@@ -130,7 +129,6 @@ describe('handleCallback', () => {
             {
                 state: 'active',
                 sessionId: SESSION_ID,
-                issuer: 'https://ehr.example.com',
                 fhirBaseUrl: FHIR_BASE_URL,
                 clientId: 'client-123',
                 requestedScope: 'openid',
@@ -233,7 +231,7 @@ describe('handleCallback', () => {
 
     it('uses the static issuer config when one is found for the issuer', async () => {
         const staticConfig: IssuerConfig = {
-            issuer: 'https://ehr.example.com',
+            fhirBaseUrl: FHIR_BASE_URL,
             clientId: 'static-client',
             auth: { type: 'confidential-symmetric', method: 'client_secret_post', clientSecret: 'sekret' },
             dynamicallyRegistered: false,
@@ -254,40 +252,6 @@ describe('handleCallback', () => {
         )
     })
 
-    it(
-        'refuses to send a confidential credential to a token_endpoint on a different origin than the ' +
-            'registered issuer',
-        async () => {
-            // Simulates a compromised or malicious allowlisted host declaring another registered
-            // issuer's `issuer` string in its own discovery document, then advertising its own
-            // token_endpoint, the attack credentialOriginIsAuthorized exists to stop.
-            const staticConfig: IssuerConfig = {
-                issuer: 'https://other-vendor.example.com',
-                clientId: 'static-client',
-                auth: {
-                    type: 'confidential-symmetric',
-                    method: 'client_secret_post',
-                    clientSecret: 'sekret',
-                },
-                dynamicallyRegistered: false,
-            }
-            const selectClientAuthentication = vi.fn<SelectClientAuthentication>(() => ({
-                formFields: async () => ({}),
-                headers: async () => ({}),
-            }))
-            const deps = baseDeps({ findIssuerConfig: () => staticConfig, selectClientAuthentication })
-            await seedPendingSession(deps)
-
-            const result = await handleCallback(
-                { sessionId: SESSION_ID, code: 'abc', state: 'state-abc' },
-                deps,
-            )
-
-            expect(result).toMatchObject({ error: 'token_endpoint_origin_mismatch' })
-            expect(selectClientAuthentication).not.toHaveBeenCalled()
-        },
-    )
-
     it('allows a public client whose issuer and token_endpoint are on different origins', async () => {
         const selectClientAuthentication = vi.fn<SelectClientAuthentication>(() => ({
             formFields: async () => ({}),
@@ -295,7 +259,7 @@ describe('handleCallback', () => {
         }))
         const deps = baseDeps({
             findIssuerConfig: () => ({
-                issuer: 'https://other-vendor.example.com',
+                fhirBaseUrl: 'https://other-vendor.example.com',
                 clientId: 'public-client',
                 auth: { type: 'public' },
                 dynamicallyRegistered: false,
@@ -314,6 +278,59 @@ describe('handleCallback', () => {
         )
     })
 
+    it(
+        'completes a confidential client token exchange when the authorization server is on a ' +
+            'different origin than the FHIR base URL (the Oracle Health/Cerner shape: FHIR on ' +
+            'fhir-ehr-code.cerner.com, OAuth on authorization.cerner.com)',
+        async () => {
+            // Regression guard for the `token_endpoint_origin_mismatch` check removed from this
+            // file: SMART App Launch 2.2 places no same-origin constraint between a FHIR base URL
+            // and its authorization server (every discovery endpoint need only be an "absolute
+            // URL"), and the split-origin shape is real, shipped production behaviour for at least
+            // one major vendor. A confidential client's token exchange must succeed here.
+            const splitOriginTokenEndpoint = 'https://authorization.cerner.example.com/oauth/token'
+            const recorder = createExchangeRecorder()
+            const staticConfig: IssuerConfig = {
+                fhirBaseUrl: FHIR_BASE_URL,
+                clientId: 'static-client',
+                auth: {
+                    type: 'confidential-symmetric',
+                    method: 'client_secret_post',
+                    clientSecret: 'sekret',
+                },
+                dynamicallyRegistered: false,
+            }
+            const selectClientAuthentication = vi.fn<SelectClientAuthentication>(() => ({
+                formFields: async () => ({ client_secret: 'sekret' }),
+                headers: async () => ({}),
+            }))
+            const deps = baseDeps({
+                recorder,
+                httpClient: httpClientWithTokenEndpoint(recorder, undefined, splitOriginTokenEndpoint),
+                fetchSmartConfiguration: async () => ({
+                    config: smartConfiguration({ token_endpoint: splitOriginTokenEndpoint }),
+                    raw: {},
+                    exchange: {} as never,
+                }),
+                findIssuerConfig: () => staticConfig,
+                selectClientAuthentication,
+            })
+            await seedPendingSession(deps)
+
+            const result = await handleCallback(
+                { sessionId: SESSION_ID, code: 'abc', state: 'state-abc' },
+                deps,
+            )
+
+            expect(isSmartError(result as SmartError)).toBe(false)
+            expect(selectClientAuthentication).toHaveBeenCalledWith(
+                'static-client',
+                staticConfig.auth,
+                splitOriginTokenEndpoint,
+            )
+        },
+    )
+
     it('never follows a redirect on the token exchange, even from an origin that passed the check', async () => {
         // A trusted, origin-matching token_endpoint could still be compromised into 307/308-ing the
         // credential-bearing POST off to another origin. The client must refuse to follow it.
@@ -326,7 +343,7 @@ describe('handleCallback', () => {
             })
         })
         const staticConfig: IssuerConfig = {
-            issuer: 'https://ehr.example.com',
+            fhirBaseUrl: FHIR_BASE_URL,
             clientId: 'static-client',
             auth: { type: 'confidential-symmetric', method: 'client_secret_post', clientSecret: 'sekret' },
             dynamicallyRegistered: false,
@@ -492,52 +509,5 @@ describe('handleCallback', () => {
         if (isSmartError(result)) throw new Error('expected an ActiveSession')
         expect(result.exchanges.some((exchange) => exchange.id === 'prior-1')).toBe(true)
         expect(result.exchanges.length).toBeGreaterThan(1)
-    })
-})
-
-describe('credentialOriginIsAuthorized', () => {
-    it('allows a public client regardless of origin', () => {
-        const config: IssuerConfig = {
-            issuer: 'https://ehr.example.com',
-            clientId: 'client-1',
-            auth: { type: 'public' },
-            dynamicallyRegistered: false,
-        }
-        expect(credentialOriginIsAuthorized(config, 'https://attacker.example.com/token')).toBe(true)
-    })
-
-    it('allows a confidential credential when the token_endpoint shares the issuer origin', () => {
-        const config: IssuerConfig = {
-            issuer: 'https://ehr.example.com',
-            clientId: 'client-1',
-            auth: { type: 'confidential-symmetric', method: 'client_secret_basic', clientSecret: 'x' },
-            dynamicallyRegistered: false,
-        }
-        expect(credentialOriginIsAuthorized(config, 'https://ehr.example.com/oauth/token')).toBe(true)
-    })
-
-    it('refuses a confidential credential when the token_endpoint is on a different origin', () => {
-        const config: IssuerConfig = {
-            issuer: 'https://ehr.example.com',
-            clientId: 'client-1',
-            auth: {
-                type: 'confidential-asymmetric',
-                privateKeyJwk: '{}',
-                keyId: 'kid',
-                algorithm: 'ES384',
-            },
-            dynamicallyRegistered: false,
-        }
-        expect(credentialOriginIsAuthorized(config, 'https://attacker.example.com/oauth/token')).toBe(false)
-    })
-
-    it('refuses a confidential credential when the token_endpoint is not a valid URL', () => {
-        const config: IssuerConfig = {
-            issuer: 'https://ehr.example.com',
-            clientId: 'client-1',
-            auth: { type: 'confidential-symmetric', method: 'client_secret_basic', clientSecret: 'x' },
-            dynamicallyRegistered: false,
-        }
-        expect(credentialOriginIsAuthorized(config, 'not-a-url')).toBe(false)
     })
 })

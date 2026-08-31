@@ -1,5 +1,5 @@
 /**
- * Static, per-issuer client configuration: the primary way this app authenticates to an EHR's
+ * Static, per-vendor client configuration: the primary way this app authenticates to an EHR's
  * token endpoint. Dynamic client registration (`registration.ts`) is the fallback for vendors
  * that support RFC 7591 and have no entry here.
  *
@@ -20,7 +20,13 @@
  *   public git history forever. Strict turns that mistake into a loud, pre-merge failure.
  * - `asymmetric` entries carry no env var at all: this app has exactly one signing identity,
  *   published as a whole at `.well-known/jwks.json` (`#core/smart/jwks`), so every `private_key_jwt`
- *   issuer necessarily uses that same key: there is no second private key to reference.
+ *   vendor necessarily uses that same key: there is no second private key to reference.
+ *
+ * The lookup key is `fhirBaseUrl`, this vendor's FHIR server base URL (the `iss` SMART launch
+ * parameter), never an OIDC `issuer`. The field used to be named `issuer`, which was ambiguous
+ * enough to cause a real bug: see `resolveIssuerConfig` in `#core/smart/launch` for why a vendor's
+ * FHIR base URL, not their (possibly different-origin) OIDC issuer, is the only safe credential
+ * lookup key.
  */
 
 import * as z from 'zod'
@@ -32,7 +38,7 @@ const PRIVATE_KEY_ENV_VAR = 'SMART_PRIVATE_JWK'
 
 const BaseEntrySchema = z.object({
     name: z.string().min(1),
-    issuer: z.url(),
+    fhirBaseUrl: z.url(),
     clientId: z.string().min(1),
 })
 
@@ -111,7 +117,7 @@ function toIssuerConfig(entry: IssuerEntry): IssuerConfig {
     switch (entry.authType) {
         case 'public':
             return {
-                issuer: entry.issuer,
+                fhirBaseUrl: entry.fhirBaseUrl,
                 clientId: entry.clientId,
                 auth: { type: 'public' },
                 dynamicallyRegistered: false,
@@ -119,7 +125,7 @@ function toIssuerConfig(entry: IssuerEntry): IssuerConfig {
 
         case 'symmetric':
             return {
-                issuer: entry.issuer,
+                fhirBaseUrl: entry.fhirBaseUrl,
                 clientId: entry.clientId,
                 auth: {
                     type: 'confidential-symmetric',
@@ -131,7 +137,7 @@ function toIssuerConfig(entry: IssuerEntry): IssuerConfig {
 
         case 'asymmetric':
             return {
-                issuer: entry.issuer,
+                fhirBaseUrl: entry.fhirBaseUrl,
                 clientId: entry.clientId,
                 auth: {
                     type: 'confidential-asymmetric',
@@ -145,13 +151,13 @@ function toIssuerConfig(entry: IssuerEntry): IssuerConfig {
 function assertNoDuplicateIssuers(entries: IssuerEntry[]): void {
     const seen = new Map<string, string>()
     for (const entry of entries) {
-        const key = normaliseIssuerUrl(entry.issuer)
+        const key = normaliseFhirBaseUrl(entry.fhirBaseUrl)
         const existingName = seen.get(key)
         if (existingName) {
             throw new Error(
-                `SMART_ISSUERS has two entries for the same issuer ('${entry.issuer}'): ` +
-                    `'${existingName}' and '${entry.name}'. Each issuer may only be registered once, so a ` +
-                    `spoofed discovery document cannot be matched against the wrong entry's credentials.`,
+                `SMART_ISSUERS has two entries for the same fhirBaseUrl ('${entry.fhirBaseUrl}'): ` +
+                    `'${existingName}' and '${entry.name}'. Each FHIR base URL may only be registered once, ` +
+                    `so a spoofed discovery document cannot be matched against the wrong entry's credentials.`,
             )
         }
         seen.set(key, entry.name)
@@ -226,11 +232,11 @@ function loadIssuers(): IssuerConfig[] {
 const issuers: IssuerConfig[] = loadIssuers()
 
 /**
- * Matches on a normalised issuer URL: trailing slash ignored, host compared case-insensitively
+ * Matches on a normalised FHIR base URL: trailing slash ignored, host compared case-insensitively
  * (`URL` already lower-cases it), path compared case-sensitively (paths are meaningful in FHIR
  * base URLs, e.g. multi-tenant EHRs distinguishing tenants by path segment).
  */
-function normaliseIssuerUrl(value: string): string {
+function normaliseFhirBaseUrl(value: string): string {
     try {
         const url = new URL(value)
         return `${url.protocol}//${url.host}${url.pathname.replace(/\/+$/, '')}${url.search}`
@@ -239,11 +245,15 @@ function normaliseIssuerUrl(value: string): string {
     }
 }
 
-export function findIssuerConfig(issuer: string): IssuerConfig | null {
-    const target = normaliseIssuerUrl(issuer)
-    return issuers.find((config) => normaliseIssuerUrl(config.issuer) === target) ?? null
+/**
+ * Looked up by the vendor's TLS-authenticated FHIR base URL (the SMART `iss` launch parameter),
+ * never by an OIDC `issuer`. See `resolveIssuerConfig` in `#core/smart/launch`.
+ */
+export function findIssuerConfig(fhirBaseUrl: string): IssuerConfig | null {
+    const target = normaliseFhirBaseUrl(fhirBaseUrl)
+    return issuers.find((config) => normaliseFhirBaseUrl(config.fhirBaseUrl) === target) ?? null
 }
 
-export function isKnownIssuer(issuer: string): boolean {
-    return findIssuerConfig(issuer) !== null
+export function isKnownIssuer(fhirBaseUrl: string): boolean {
+    return findIssuerConfig(fhirBaseUrl) !== null
 }

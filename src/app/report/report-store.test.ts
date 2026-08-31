@@ -2,12 +2,16 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 
 import type { ValidationReport } from '#core/run/report'
 
-import { createInMemoryReportStore, getReportStore, resetReportStoreForTests } from './report-store'
+import {
+    createInMemoryReportStore,
+    getReportStore,
+    MAX_STORED_REPORTS,
+    resetReportStoreForTests,
+} from './report-store'
 
 function report(overrides: Partial<ValidationReport> = {}): ValidationReport {
     return {
         generatedAt: new Date('2024-01-01T00:00:00.000Z').toISOString(),
-        issuer: 'https://ehr.example.com',
         fhirBaseUrl: 'https://ehr.example.com/fhir',
         clientId: 'client-123',
         sections: [],
@@ -70,6 +74,63 @@ describe('createInMemoryReportStore', () => {
 
         expect((await store.get('session-1'))?.clientId).toBe('client-a')
         expect((await store.get('session-2'))?.clientId).toBe('client-b')
+    })
+
+    it('never holds more than MAX_STORED_REPORTS entries at once', async () => {
+        const store = createInMemoryReportStore()
+
+        for (let i = 0; i < MAX_STORED_REPORTS + 10; i++) {
+            await store.set(`session-${i}`, report())
+        }
+
+        let live = 0
+        for (let i = 0; i < MAX_STORED_REPORTS + 10; i++) {
+            if ((await store.get(`session-${i}`)) !== null) live++
+        }
+        expect(live).toBe(MAX_STORED_REPORTS)
+    })
+
+    it('evicts the oldest report once the cap is exceeded', async () => {
+        const store = createInMemoryReportStore()
+
+        for (let i = 0; i < MAX_STORED_REPORTS; i++) {
+            await store.set(`session-${i}`, report())
+        }
+        // All reports share the same TTL, so none has expired yet: the very next write must evict
+        // the oldest (first-written) entry rather than picking an arbitrary one.
+        await store.set('session-overflow', report())
+
+        expect(await store.get('session-0')).toBeNull()
+        expect(await store.get('session-1')).not.toBeNull()
+        expect(await store.get('session-overflow')).not.toBeNull()
+    })
+
+    it('prefers evicting an already-expired report over a live one, even if the live one is older', async () => {
+        const store = createInMemoryReportStore()
+
+        // Every report shares the same fixed TTL relative to when it was written, so under
+        // normal circumstances the oldest entry is also the first to expire. To prove the store
+        // really checks expiry (and doesn't just delete the oldest key), session-0 is refreshed
+        // just before it would have expired: a `Map.set` on an existing key updates its expiry
+        // without moving its position, so session-0 stays oldest by insertion order while
+        // ending up with the furthest-out expiry of the batch.
+        for (let i = 0; i < MAX_STORED_REPORTS; i++) {
+            await store.set(`session-${i}`, report())
+        }
+
+        vi.advanceTimersByTime(24 * 60 * 60 * 1000 - 1_000)
+        await store.set('session-0', report())
+
+        // The rest of the original batch (session-1..session-(MAX-1)) now expires, while the
+        // refreshed session-0 does not.
+        vi.advanceTimersByTime(2_000)
+
+        await store.set('session-overflow', report())
+
+        // The expired session-1 was reclaimed, not the older-by-position-but-live session-0.
+        expect(await store.get('session-1')).toBeNull()
+        expect(await store.get('session-0')).not.toBeNull()
+        expect(await store.get('session-overflow')).not.toBeNull()
     })
 })
 

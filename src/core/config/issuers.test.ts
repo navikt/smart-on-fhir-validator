@@ -35,7 +35,7 @@ describe('config/issuers', () => {
         process.env.SMART_ISSUERS = JSON.stringify([
             {
                 name: 'Test EHR',
-                issuer: 'https://ehr.example.com/fhir',
+                fhirBaseUrl: 'https://ehr.example.com/fhir',
                 clientId: 'client-1',
                 authType: 'public',
             },
@@ -44,7 +44,7 @@ describe('config/issuers', () => {
 
         const config = findIssuerConfig('https://ehr.example.com/fhir')
         expect(config).toEqual({
-            issuer: 'https://ehr.example.com/fhir',
+            fhirBaseUrl: 'https://ehr.example.com/fhir',
             clientId: 'client-1',
             auth: { type: 'public' },
             dynamicallyRegistered: false,
@@ -57,7 +57,7 @@ describe('config/issuers', () => {
         process.env.SMART_ISSUERS = JSON.stringify([
             {
                 name: 'Test EHR',
-                issuer: 'https://ehr.example.com/fhir',
+                fhirBaseUrl: 'https://ehr.example.com/fhir',
                 clientId: 'client-1',
                 authType: 'symmetric',
                 method: 'client_secret_post',
@@ -82,7 +82,7 @@ describe('config/issuers', () => {
         process.env.SMART_ISSUERS = JSON.stringify([
             {
                 name: 'Test EHR',
-                issuer: 'https://ehr.example.com/fhir',
+                fhirBaseUrl: 'https://ehr.example.com/fhir',
                 clientId: 'client-1',
                 authType: 'symmetric',
                 clientSecretEnv: 'SMART_CLIENT_SECRET_TEST',
@@ -99,7 +99,7 @@ describe('config/issuers', () => {
         process.env.SMART_ISSUERS = JSON.stringify([
             {
                 name: 'Test EHR',
-                issuer: 'https://ehr.example.com/fhir',
+                fhirBaseUrl: 'https://ehr.example.com/fhir',
                 clientId: 'client-1',
                 authType: 'symmetric',
                 clientSecretEnv: 'SMART_CLIENT_SECRET_MISSING',
@@ -114,7 +114,7 @@ describe('config/issuers', () => {
         process.env.SMART_ISSUERS = JSON.stringify([
             {
                 name: 'Test EHR',
-                issuer: 'https://ehr.example.com/fhir',
+                fhirBaseUrl: 'https://ehr.example.com/fhir',
                 clientId: 'client-1',
                 authType: 'symmetric',
                 // A PR-contributed entry must not be able to name an unrelated secret.
@@ -136,7 +136,7 @@ describe('config/issuers', () => {
         process.env.SMART_ISSUERS = JSON.stringify([
             {
                 name: 'Test EHR',
-                issuer: 'https://ehr.example.com/fhir',
+                fhirBaseUrl: 'https://ehr.example.com/fhir',
                 clientId: 'client-1',
                 authType: 'asymmetric',
             },
@@ -163,7 +163,7 @@ describe('config/issuers', () => {
         process.env.SMART_ISSUERS = JSON.stringify([
             {
                 name: 'Test EHR',
-                issuer: 'https://ehr.example.com/fhir',
+                fhirBaseUrl: 'https://ehr.example.com/fhir',
                 clientId: 'client-1',
                 authType: 'asymmetric',
             },
@@ -183,7 +183,7 @@ describe('config/issuers', () => {
         process.env.SMART_ISSUERS = JSON.stringify([
             {
                 name: 'Test EHR',
-                issuer: 'https://ehr.example.com/fhir',
+                fhirBaseUrl: 'https://ehr.example.com/fhir',
                 clientId: 'client-1',
                 authType: 'asymmetric',
                 privateKeyJwkEnv: 'SOME_OTHER_VAR',
@@ -214,7 +214,7 @@ describe('config/issuers', () => {
         process.env.SMART_ISSUERS = JSON.stringify([
             {
                 name: 'Test EHR',
-                issuer: 'https://EHR.example.com/fhir/Tenant1',
+                fhirBaseUrl: 'https://EHR.example.com/fhir/Tenant1',
                 clientId: 'client-1',
                 authType: 'public',
             },
@@ -233,14 +233,14 @@ describe('config/issuers', () => {
         process.env.SMART_ISSUERS = JSON.stringify([
             {
                 name: 'EHR One',
-                issuer: 'https://one.example.com/fhir',
+                fhirBaseUrl: 'https://one.example.com/fhir',
                 clientId: 'client-1',
                 authType: 'symmetric',
                 clientSecretEnv: 'SMART_CLIENT_SECRET_TEST',
             },
             {
                 name: 'EHR Two',
-                issuer: 'https://two.example.com/fhir',
+                fhirBaseUrl: 'https://two.example.com/fhir',
                 clientId: 'client-2',
                 authType: 'symmetric',
                 clientSecretEnv: 'SMART_CLIENT_SECRET_OTHER',
@@ -262,7 +262,7 @@ describe('config/issuers', () => {
         process.env.SMART_ISSUERS = JSON.stringify([
             {
                 name: 'Test EHR',
-                issuer: 'https://ehr.example.com/fhir',
+                fhirBaseUrl: 'https://ehr.example.com/fhir',
                 clientId: 'client-1',
                 authType: 'public',
                 // The mistake this guards against: a vendor pastes their real secret into the
@@ -281,7 +281,7 @@ describe('config/issuers', () => {
         process.env.SMART_ISSUERS = JSON.stringify([
             {
                 name: 'Test EHR',
-                issuer: 'https://ehr.example.com/fhir',
+                fhirBaseUrl: 'https://ehr.example.com/fhir',
                 clientId: 'client-1',
                 authType: 'symmetric',
                 clientSecretEnv: 'SMART_CLIENT_SECRET_TEST',
@@ -298,17 +298,17 @@ describe('config/issuers', () => {
         process.env.SMART_ISSUERS = JSON.stringify([
             {
                 name: 'EHR One',
-                issuer: 'https://one.example.com/fhir',
+                fhirBaseUrl: 'https://one.example.com/fhir',
                 clientId: 'client-1',
                 authType: 'symmetric',
                 clientSecretEnv: 'SMART_CLIENT_SECRET_TEST',
             },
             {
                 // A malicious or careless PR could otherwise claim EHR One's already-provisioned
-                // secret for a second, unrelated issuer and have it sent to that issuer's own
+                // secret for a second, unrelated vendor and have it sent to that vendor's own
                 // token endpoint.
                 name: 'EHR Two',
-                issuer: 'https://two.example.com/fhir',
+                fhirBaseUrl: 'https://two.example.com/fhir',
                 clientId: 'client-2',
                 authType: 'symmetric',
                 clientSecretEnv: 'SMART_CLIENT_SECRET_TEST',
@@ -318,25 +318,25 @@ describe('config/issuers', () => {
         await expect(freshIssuersModule()).rejects.toThrow(/same clientSecretEnv/)
     })
 
-    it('throws at load time when two entries register the same issuer', async () => {
+    it('throws at load time when two entries register the same fhirBaseUrl', async () => {
         clearEnv()
         process.env.SMART_ISSUERS = JSON.stringify([
             {
                 name: 'EHR One',
-                issuer: 'https://ehr.example.com/fhir',
+                fhirBaseUrl: 'https://ehr.example.com/fhir',
                 clientId: 'client-1',
                 authType: 'public',
             },
             {
                 name: 'EHR One Again',
-                issuer: 'https://ehr.example.com/fhir/',
+                fhirBaseUrl: 'https://ehr.example.com/fhir/',
                 clientId: 'client-2',
                 authType: 'public',
             },
         ])
 
-        // A duplicate issuer would let a spoofed discovery document be matched against either
-        // entry's credentials, see credentialOriginIsAuthorized in #core/smart/callback.
-        await expect(freshIssuersModule()).rejects.toThrow(/same issuer/)
+        // A duplicate fhirBaseUrl would let a spoofed discovery document be matched against
+        // either entry's credentials.
+        await expect(freshIssuersModule()).rejects.toThrow(/same fhirBaseUrl/)
     })
 })

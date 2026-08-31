@@ -69,6 +69,35 @@ function readSoleEnvValue(manifest: unknown, name: string): string {
     return value
 }
 
+/**
+ * Returns every hostname listed under `spec.accessPolicy.outbound.external` (lower-cased, matching
+ * `URL#hostname`), throwing on anything malformed rather than returning an empty set that would
+ * make the egress cross-check below vacuously pass for the wrong reason.
+ */
+function readExternalHosts(manifest: unknown): Set<string> {
+    const external = (manifest as { spec?: { accessPolicy?: { outbound?: { external?: unknown } } } } | null)
+        ?.spec?.accessPolicy?.outbound?.external
+
+    if (!Array.isArray(external)) {
+        throw new Error(
+            '.nais/nais-dev.yaml has no spec.accessPolicy.outbound.external list to read egress hosts from.',
+        )
+    }
+
+    return new Set(
+        external.map((entry: unknown, index) => {
+            const host = (entry as { host?: unknown })?.host
+            if (typeof host !== 'string' || host.length === 0) {
+                throw new Error(
+                    `.nais/nais-dev.yaml spec.accessPolicy.outbound.external[${index}] must have a ` +
+                        `non-empty string host.`,
+                )
+            }
+            return host.toLowerCase()
+        }),
+    )
+}
+
 describe('.nais/nais-dev.yaml: SMART_ISSUERS', () => {
     const manifest = parseManifest(readFileSync(MANIFEST_PATH, 'utf8'))
 
@@ -95,4 +124,26 @@ describe('.nais/nais-dev.yaml: SMART_ISSUERS', () => {
         // without any deployment credential being available.
         expect(() => parseIssuerEntries(raw)).not.toThrow()
     })
+
+    it(
+        "lists every SMART_ISSUERS entry's FHIR base URL hostname under " +
+            'spec.accessPolicy.outbound.external, so a vendor missing that PR-required addition fails ' +
+            "here instead of failing at runtime with an egress-blocked connection error (see this " +
+            "file's README reference above)",
+        () => {
+            const raw = readSoleEnvValue(manifest, ENV_NAME)
+            const entries = parseIssuerEntries(raw)
+            const externalHosts = readExternalHosts(manifest)
+
+            // Only the FHIR base URL host is checked here: the authorization, token and JWKS hosts
+            // are frequently on other hostnames entirely (see the accessPolicy comment in the
+            // manifest itself) and can only be learned by actually running discovery against the
+            // vendor, not by statically reading SMART_ISSUERS.
+            const missingHosts = entries
+                .map((entry) => ({ name: entry.name, hostname: new URL(entry.fhirBaseUrl).hostname }))
+                .filter(({ hostname }) => !externalHosts.has(hostname))
+
+            expect(missingHosts).toEqual([])
+        },
+    )
 })

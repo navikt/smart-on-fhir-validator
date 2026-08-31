@@ -19,6 +19,28 @@ export interface SessionStore {
  */
 export const MAX_STORED_EXCHANGES = 200
 
+/**
+ * Hard cap on the number of sessions held at once, to bound the store's worst-case footprint
+ * against the pod's 1024Mi memory limit.
+ *
+ * `/launch` is internet-facing with no authentication and no rate limiting, and it writes a
+ * pending session on every successful discovery, so the number of live entries is attacker-
+ * controlled. Each entry can carry up to `MAX_STORED_EXCHANGES` full HTTP request/response
+ * bodies (not just headers), and a session lives for up to `ACTIVE_SESSION_TTL_SECONDS` (24h)
+ * once active, so entries cannot be relied on to age out quickly on their own.
+ *
+ * Assuming an average redacted exchange (headers plus a JSON body) of roughly 10KB -- generous
+ * for the small discovery/registration/token/jwks payloads that make up most of a run, while
+ * acknowledging that a handful of larger capability-statement or FHIR bundle exchanges can push
+ * a real session higher -- a fully-capped session costs about
+ * `MAX_STORED_EXCHANGES * 10KB` ~= 2MB. Reserving roughly 10% of the 1024Mi limit
+ * (~100MB) for this store, the most exposed of the two because it's reachable unauthenticated,
+ * yields `100MB / 2MB` ~= 50 sessions. The remaining ~90% stays available for the Next.js
+ * runtime, concurrent request handling and GC headroom -- the exact resource an unbounded store
+ * was starving, causing the single replica to be OOMKilled mid-flight for every in-flight user.
+ */
+export const MAX_STORED_SESSIONS = 50
+
 export function capExchanges(exchanges: readonly HttpExchange[]): HttpExchange[] {
     if (exchanges.length <= MAX_STORED_EXCHANGES) return [...exchanges]
 
@@ -99,7 +121,6 @@ const smartConfigurationSchema = z.object({
 const pendingSessionSchema = z.object({
     state: z.literal('pending'),
     sessionId: z.string(),
-    issuer: z.string(),
     fhirBaseUrl: z.string(),
     clientId: z.string(),
     oauthState: z.string(),
@@ -113,7 +134,6 @@ const pendingSessionSchema = z.object({
 const activeSessionSchema = z.object({
     state: z.literal('active'),
     sessionId: z.string(),
-    issuer: z.string(),
     fhirBaseUrl: z.string(),
     clientId: z.string(),
     requestedScope: z.string(),
@@ -139,6 +159,28 @@ export function parseStoredSession(value: unknown): SmartSession | null {
 export function createInMemorySessionStore(): SessionStore {
     const sessions = new Map<string, { session: SmartSession; expiresAt: number }>()
 
+    /**
+     * Frees up room for one more entry when the store is full.
+     *
+     * An already-expired entry is worthless, so reclaiming it costs nothing; evicting a live
+     * session kicks a real vendor mid-flow. So: sweep for the first expired entry and drop that,
+     * and only fall back to the oldest live entry (the first key in insertion order -- a `Map`
+     * preserves insertion order, and entries are never re-inserted on `get`, so this is oldest-
+     * write, not least-recently-used) if nothing has expired yet.
+     */
+    function evictOne(): void {
+        const now = Date.now()
+        for (const [sessionId, entry] of sessions) {
+            if (entry.expiresAt <= now) {
+                sessions.delete(sessionId)
+                return
+            }
+        }
+
+        const oldestSessionId = sessions.keys().next().value
+        if (oldestSessionId !== undefined) sessions.delete(oldestSessionId)
+    }
+
     return {
         get(sessionId) {
             const entry = sessions.get(sessionId)
@@ -154,6 +196,11 @@ export function createInMemorySessionStore(): SessionStore {
             return Promise.resolve(parseStoredSession(entry.session))
         },
         set(sessionId, session, ttlSeconds) {
+            // Overwriting an existing key doesn't grow the map, so it never needs to evict.
+            if (!sessions.has(sessionId) && sessions.size >= MAX_STORED_SESSIONS) {
+                evictOne()
+            }
+
             sessions.set(sessionId, {
                 session: { ...session, exchanges: capExchanges(session.exchanges) },
                 expiresAt: Date.now() + ttlSeconds * 1000,

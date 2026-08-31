@@ -48,7 +48,6 @@ export type ReportSummary = {
 
 export type ValidationReport = {
     generatedAt: string
-    issuer: string
     fhirBaseUrl: string
     clientId: string
     sections: ReportSection[]

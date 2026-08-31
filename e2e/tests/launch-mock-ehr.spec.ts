@@ -184,7 +184,6 @@ test.describe('landing → launch against the mock EHR → report', () => {
 
         const report: unknown = JSON.parse(Buffer.concat(chunks).toString('utf-8'))
         expect(report).toMatchObject({
-            issuer: expect.any(String),
             fhirBaseUrl: expect.any(String),
             sections: expect.any(Array),
             summary: expect.any(Object),

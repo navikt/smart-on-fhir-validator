@@ -15,7 +15,7 @@ secret value afterwards (see below), which adds a round trip.
 ## Before opening this PR
 
 - [ ] My entry is valid JSON and matches the schema in
-      [`src/core/config/issuers.ts`](../../src/core/config/issuers.ts): `name`, `issuer`,
+      [`src/core/config/issuers.ts`](../../src/core/config/issuers.ts): `name`, `fhirBaseUrl`,
       `clientId`, `authType` (`public`, `symmetric`, or `asymmetric`), and for `symmetric` also
       `method` (`client_secret_basic` or `client_secret_post`, defaults to basic) and
       `clientSecretEnv` matching `^SMART_CLIENT_SECRET_[A-Z0-9_]+$`.

@@ -15,7 +15,6 @@ function activeSession(overrides: Partial<ActiveSession> = {}): ActiveSession {
     return {
         state: 'active',
         sessionId: SESSION_ID,
-        issuer: 'https://ehr.example.com',
         fhirBaseUrl: 'https://ehr.example.com/fhir',
         clientId: 'client-123',
         requestedScope: 'openid launch offline_access',
@@ -85,7 +84,6 @@ describe('refreshSession', () => {
             {
                 state: 'pending',
                 sessionId: SESSION_ID,
-                issuer: 'https://ehr.example.com',
                 fhirBaseUrl: 'https://ehr.example.com/fhir',
                 clientId: 'client-123',
                 oauthState: 'state',

@@ -84,38 +84,18 @@ function statesMatch(expected: string, actual: string): boolean {
 }
 
 /**
- * A confidential credential (client secret or signed assertion) must only ever reach the token
- * endpoint of the issuer it was configured for.
- *
- * Without this, an already-allowlisted but compromised or malicious host could declare *another*
- * registered issuer's `issuer` string in its own `.well-known/smart-configuration` (`launch.ts`
- * matches static configuration against that self-declared value, not against the host actually
- * being talked to) and receive that other issuer's credential at its own `token_endpoint`. Public
- * clients carry no credential, so they are exempt.
- */
-export function credentialOriginIsAuthorized(issuerConfig: IssuerConfig, tokenEndpoint: string): boolean {
-    if (issuerConfig.auth.type === 'public') return true
-
-    try {
-        return new URL(issuerConfig.issuer).origin === new URL(tokenEndpoint).origin
-    } catch {
-        return false
-    }
-}
-
-/**
  * Sessions only carry `clientId`, not a full `ClientAuthMode`, so a dynamically-registered
  * client's auth mode cannot travel from launch to callback. `launch.ts` always registers as a
  * public client, so falling back to `{ type: 'public' }` here is exactly correct.
  */
 function resolveCallbackIssuerConfig(
-    issuer: string,
+    fhirBaseUrl: string,
     clientId: string,
     findIssuerConfig: FindIssuerConfig,
 ): IssuerConfig {
     return (
-        findIssuerConfig(issuer) ?? {
-            issuer,
+        findIssuerConfig(fhirBaseUrl) ?? {
+            fhirBaseUrl,
             clientId,
             auth: { type: 'public' },
             dynamicallyRegistered: true,
@@ -146,7 +126,7 @@ export async function handleCallback(
         return { error: 'state_mismatch', detail: 'state parameter does not match the pending session' }
     }
 
-    const issuerConfig = resolveCallbackIssuerConfig(pending.issuer, pending.clientId, deps.findIssuerConfig)
+    const issuerConfig = resolveCallbackIssuerConfig(pending.fhirBaseUrl, pending.clientId, deps.findIssuerConfig)
 
     const smartConfigResult = await deps.fetchSmartConfiguration(deps.httpClient, pending.fhirBaseUrl)
     if (isSmartError(smartConfigResult)) return smartConfigResult
@@ -159,16 +139,21 @@ export async function handleCallback(
         }
     }
 
-    if (!credentialOriginIsAuthorized(issuerConfig, smartConfiguration.token_endpoint)) {
-        return {
-            error: 'token_endpoint_origin_mismatch',
-            detail:
-                `Refusing to send the '${issuerConfig.auth.type}' credential configured for issuer ` +
-                `'${issuerConfig.issuer}' to a token_endpoint on a different origin ` +
-                `('${smartConfiguration.token_endpoint}'). A registered issuer's credential may only be ` +
-                `used against that issuer's own origin.`,
-        }
-    }
+    /**
+     * No origin check between `issuerConfig` (keyed on `fhirBaseUrl`) and `token_endpoint` here:
+     * SMART App Launch 2.2 places no same-origin constraint between a FHIR base URL and its
+     * authorization server, only requiring every discovery endpoint to be an "absolute URL"
+     * (conformance.html). Oracle Health/Cerner ships exactly this split-origin shape in
+     * production: FHIR on `fhir-ehr-code.cerner.com`, OAuth on `authorization.cerner.com`. The
+     * spec's own binding mechanism for a confidential asymmetric client is `client_assertion.aud`
+     * (client-confidential-asymmetric.html: "the FHIR authorization server's 'token URL'"), which
+     * this app already sets to `tokenEndpoint` in `client-auth/asymmetric.ts`. A prior version of
+     * this file rejected a mismatched origin here, but that check was itself non-conformant and
+     * broke split-origin vendors; it is unnecessary now that `resolveCallbackIssuerConfig` above
+     * looks up credentials by the TLS-authenticated `fhirBaseUrl`, never by the EHR's
+     * self-declared `smartConfiguration.issuer` (see `launch.ts`), so a hostile host can only ever
+     * be handed its own credential in the first place.
+     */
 
     const clientAuth = deps.selectClientAuthentication(
         issuerConfig.clientId,
@@ -223,7 +208,6 @@ export async function handleCallback(
     const activeSession: ActiveSession = {
         state: 'active',
         sessionId: request.sessionId,
-        issuer: pending.issuer,
         fhirBaseUrl: pending.fhirBaseUrl,
         clientId: issuerConfig.clientId,
         requestedScope: pending.requestedScope,

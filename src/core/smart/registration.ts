@@ -16,8 +16,8 @@ import { getSigningKey } from './jwks'
 import { isSmartError } from './types'
 
 export type RegistrationParams = {
-    /** The SMART issuer this registration is for, not the `registrationEndpoint` itself. */
-    issuer: string
+    /** The TLS-authenticated FHIR base URL this registration is for, not the `registrationEndpoint` itself. */
+    fhirBaseUrl: string
     clientName: string
     redirectUris: string[]
     scope: string
@@ -82,7 +82,7 @@ export async function registerClient(
     if (isSmartError(auth)) return auth
 
     return {
-        issuer: params.issuer,
+        fhirBaseUrl: params.fhirBaseUrl,
         clientId: parsed.data.client_id,
         auth,
         dynamicallyRegistered: true,

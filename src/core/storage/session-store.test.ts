@@ -8,6 +8,7 @@ import {
     createInMemorySessionStore,
     createSessionStore,
     MAX_STORED_EXCHANGES,
+    MAX_STORED_SESSIONS,
     parseStoredSession,
     resetSessionStoreForTests,
 } from './session-store'
@@ -33,7 +34,6 @@ function pendingSession(overrides: Partial<PendingSession> = {}): PendingSession
     return {
         state: 'pending',
         sessionId: 'session-1',
-        issuer: 'https://ehr.example.com',
         fhirBaseUrl: 'https://ehr.example.com/fhir',
         clientId: 'client-123',
         oauthState: 'state-abc',
@@ -50,7 +50,6 @@ function activeSession(overrides: Partial<ActiveSession> = {}): ActiveSession {
     return {
         state: 'active',
         sessionId: 'session-1',
-        issuer: 'https://ehr.example.com',
         fhirBaseUrl: 'https://ehr.example.com/fhir',
         clientId: 'client-123',
         requestedScope: 'openid launch',
@@ -195,6 +194,61 @@ describe('createInMemorySessionStore', () => {
         const stored = await store.get(session.sessionId)
 
         expect(stored?.exchanges).toHaveLength(MAX_STORED_EXCHANGES)
+    })
+
+    it('never holds more than MAX_STORED_SESSIONS entries at once', async () => {
+        const store = createInMemorySessionStore()
+
+        for (let i = 0; i < MAX_STORED_SESSIONS + 10; i++) {
+            await store.set(`session-${i}`, pendingSession({ sessionId: `session-${i}` }), 600)
+        }
+
+        let live = 0
+        for (let i = 0; i < MAX_STORED_SESSIONS + 10; i++) {
+            if ((await store.get(`session-${i}`)) !== null) live++
+        }
+        expect(live).toBe(MAX_STORED_SESSIONS)
+    })
+
+    it('evicts the oldest session once the cap is exceeded', async () => {
+        const store = createInMemorySessionStore()
+
+        for (let i = 0; i < MAX_STORED_SESSIONS; i++) {
+            await store.set(`session-${i}`, pendingSession({ sessionId: `session-${i}` }), 600)
+        }
+        // All sessions share the same TTL, so none has expired yet: the very next write must evict
+        // the oldest (first-written) entry rather than picking an arbitrary one.
+        await store.set('session-overflow', pendingSession({ sessionId: 'session-overflow' }), 600)
+
+        expect(await store.get('session-0')).toBeNull()
+        expect(await store.get('session-1')).not.toBeNull()
+        expect(await store.get('session-overflow')).not.toBeNull()
+    })
+
+    it('prefers evicting an already-expired session over a live one, even if the live one is older', async () => {
+        const store = createInMemorySessionStore()
+
+        // The oldest entry (session-0) is given a long TTL, so it's still live when the cap is
+        // hit. A later entry is given a short TTL and left to expire before the store fills up.
+        await store.set('session-0', pendingSession({ sessionId: 'session-0' }), 600)
+        await store.set('session-expiring', pendingSession({ sessionId: 'session-expiring' }), 5)
+
+        for (let i = 1; i < MAX_STORED_SESSIONS - 1; i++) {
+            await store.set(`session-${i}`, pendingSession({ sessionId: `session-${i}` }), 600)
+        }
+        // Store is now at capacity: session-0 (live, oldest), session-expiring (about to expire),
+        // session-1..session-(MAX-2) (live).
+
+        vi.advanceTimersByTime(6_000)
+        // session-expiring has now expired, but nothing has read it yet, so it's still sitting in
+        // the map as dead weight.
+
+        await store.set('session-overflow', pendingSession({ sessionId: 'session-overflow' }), 600)
+
+        // The expired entry was reclaimed, not the older-but-live session-0.
+        expect(await store.get('session-expiring')).toBeNull()
+        expect(await store.get('session-0')).not.toBeNull()
+        expect(await store.get('session-overflow')).not.toBeNull()
     })
 })
 

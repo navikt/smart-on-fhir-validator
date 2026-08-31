@@ -29,7 +29,7 @@ describe.each(ALL_CLIENT_AUTH_METHODS)(
             const { session, fhir, launchContext } = await requireSuccessfulLaunch({ clientAuth })
 
             expect(session.state).toBe('active')
-            expect(session.issuer).toBe(MOCK_EHR_BASE_URL)
+            expect(session.fhirBaseUrl).toBe(MOCK_EHR_BASE_URL)
             expect(session.tokenResponse.access_token).toEqual(expect.any(String))
             expect(session.tokenResponse.token_type).toBe('Bearer')
             expect(launchContext.patientId).toEqual(expect.any(String))

@@ -89,7 +89,6 @@ async function buildActiveSession(
     return {
         state: 'active',
         sessionId: randomUUID(),
-        issuer: discovery.config.issuer ?? BASE_URL,
         fhirBaseUrl: BASE_URL,
         clientId: CLIENT_ID,
         requestedScope: SCOPE,
