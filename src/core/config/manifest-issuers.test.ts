@@ -128,7 +128,7 @@ describe('.nais/nais-dev.yaml: SMART_ISSUERS', () => {
     it(
         "lists every SMART_ISSUERS entry's FHIR base URL hostname under " +
             'spec.accessPolicy.outbound.external, so a vendor missing that PR-required addition fails ' +
-            "here instead of failing at runtime with an egress-blocked connection error (see this " +
+            'here instead of failing at runtime with an egress-blocked connection error (see this ' +
             "file's README reference above)",
         () => {
             const raw = readSoleEnvValue(manifest, ENV_NAME)

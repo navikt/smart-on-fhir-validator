@@ -126,7 +126,11 @@ export async function handleCallback(
         return { error: 'state_mismatch', detail: 'state parameter does not match the pending session' }
     }
 
-    const issuerConfig = resolveCallbackIssuerConfig(pending.fhirBaseUrl, pending.clientId, deps.findIssuerConfig)
+    const issuerConfig = resolveCallbackIssuerConfig(
+        pending.fhirBaseUrl,
+        pending.clientId,
+        deps.findIssuerConfig,
+    )
 
     const smartConfigResult = await deps.fetchSmartConfiguration(deps.httpClient, pending.fhirBaseUrl)
     if (isSmartError(smartConfigResult)) return smartConfigResult

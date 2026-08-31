@@ -209,7 +209,7 @@ describe('handleLaunch', () => {
 
     it(
         'matches static configuration by the TLS-authenticated FHIR base URL, not by ' +
-            "smartConfiguration.issuer, when the two name different origins (the Oracle Health/Cerner " +
+            'smartConfiguration.issuer, when the two name different origins (the Oracle Health/Cerner ' +
             'shape: FHIR on one host, the OIDC issuer on another)',
         async () => {
             // Oracle Health/Cerner really does this: FHIR is served from `fhir-ehr-code.cerner.com`
