@@ -2,8 +2,9 @@ name: CI
 
 on:
   pull_request:
-  push:
-    branches: [main]
+  # No `push` trigger for main: `build-deploy.yml` already runs this workflow as its gating
+  # `verify` job via `workflow_call`. A `push` trigger would start a second run that resolves
+  # to the same concurrency group below and cancel the deploy's own verification.
   workflow_call:
 
 concurrency:
