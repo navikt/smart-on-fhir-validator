@@ -77,7 +77,6 @@ spec:
         - host: "fhirapi.public.webmedepj.no"
         - host: "launch.smarthealthit.org"
         - host: "epj.ekstern.dev.nav.no"
-        - host: "test.medro.no"
 
   envFrom:
     - secret: smart-on-fhir-validator-clients
@@ -109,12 +108,4 @@ spec:
     # CI parses this value through the real schema, so a mistake fails your PR, not the pod.
     - name: SMART_ISSUERS
       value: |
-        [
-          {
-            "name": "Medro",
-            "fhirBaseUrl": "https://test.medro.no/api/fhir",
-            "clientId": "nav-smart-on-fhir-validator",
-            "authType": "symmetric",
-            "clientSecretEnv": "SMART_CLIENT_SECRET_MEDRO"
-          }
-        ]
+        []
