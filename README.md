@@ -82,7 +82,7 @@ authentication method:
   {
     "name": "Acme EHR",
     "fhirBaseUrl": "https://fhir.acme.example.com/R4",
-    "clientId": "acme-validator-client",
+    "clientId": "nav-smart-on-fhir-validator",
     "authType": "public"
   }
 ]
@@ -96,7 +96,7 @@ authorization server issued you (or will issue this app) a client secret string:
   {
     "name": "Acme EHR",
     "fhirBaseUrl": "https://fhir.acme.example.com/R4",
-    "clientId": "acme-validator-client",
+    "clientId": "nav-smart-on-fhir-validator",
     "authType": "symmetric",
     "clientSecretEnv": "SMART_CLIENT_SECRET_ACME"
   }
@@ -128,17 +128,23 @@ fixed URL (see [Step 3](#step-3-launch-from-your-ehr)) for your authorization se
   {
     "name": "Acme EHR",
     "fhirBaseUrl": "https://fhir.acme.example.com/R4",
-    "clientId": "acme-validator-client",
+    "clientId": "nav-smart-on-fhir-validator",
     "authType": "asymmetric"
   }
 ]
 ```
 
-In all three options, replace these three placeholders with your own values:
+In all three options, replace these placeholders with your own values:
 
 - `"Acme EHR"`: your vendor name
 - `"https://fhir.acme.example.com/R4"`: your FHIR base URL (the `iss` your SMART launch supplies)
-- `"acme-validator-client"`: your client ID
+- `"nav-smart-on-fhir-validator"`: this app's client ID. **Leave this exactly as it is** and
+  register this app under that ID on your authorization server; there is nothing for you to
+  invent here. Only change it if your authorization server issues client IDs itself and will not
+  accept a proposed value (common with servers that mint an opaque UUID per registration, or if
+  the string is already taken by a different app in your own client registry). If so, put
+  whatever ID your server actually issued here instead — see the note in
+  [Step 3](#step-3-launch-from-your-ehr).
 
 **If the array already has other entries in it, add a comma and your object before the closing
 `]`. Don't delete what's already there.**
@@ -210,7 +216,7 @@ entries, yours is appended alongside them instead:
 +          {
 +            "name": "Acme EHR",
 +            "fhirBaseUrl": "https://fhir.acme.example.com/R4",
-+            "clientId": "acme-validator-client",
++            "clientId": "nav-smart-on-fhir-validator",
 +            "authType": "symmetric",
 +            "clientSecretEnv": "SMART_CLIENT_SECRET_ACME"
 +          }
@@ -254,7 +260,7 @@ registered in Step 1 exactly:
 | Item                              | Value                                                                                                                                                                                                                                                          |
 | ---------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | Redirect URI                       | `{this app's origin}/callback`                                                                                                                                                                                                                                   |
-| Client ID                          | Exactly the `clientId` you set in Step 1                                                                                                                                                                                                                        |
+| Client ID                          | `nav-smart-on-fhir-validator`, unless your authorization server mints its own client IDs and would not accept that value — in which case use whatever it issued, and make sure your Step 1 `SMART_ISSUERS` entry has the matching value                                                       |
 | Client authentication method       | Whatever your EHR's configuration UI calls the `authType` you set in Step 1. See the list below.                                                                                                                                                              |
 | Requested scopes                   | `openid fhirUser launch launch/patient offline_access patient/Patient.rs patient/Practitioner.rs patient/PractitionerRole.rs patient/Organization.rs patient/Encounter.rs patient/Condition.rs patient/DocumentReference.cruds patient/Binary.cruds patient/QuestionnaireResponse.cruds` |
 | JWKS URL (only if `authType: "asymmetric"`) | `{this app's origin}/.well-known/jwks.json`. This is this app's one public signing key. Your authorization server fetches it to verify `private_key_jwt` tokens.                                                                                    |
