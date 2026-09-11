@@ -406,10 +406,10 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@navikt/ds-tailwind@npm:^8.16.1":
-  version: 8.16.1
-  resolution: "@navikt/ds-tailwind@npm:8.16.1"
-  checksum: 10c0/7fa9f2ea982fceb4b464d0ff9ba9ef48671c64515a5035c5fe36732c9593b0d8ce8f70e00b9f58b0a7bb478bf847abef3aefd53d3161b395e20e7d5e16f419e4
+"@navikt/ds-tailwind@npm:^8.16.2":
+  version: 8.16.2
+  resolution: "@navikt/ds-tailwind@npm:8.16.2"
+  checksum: 10c0/088cf5f6cb16583038283e062b6fc7fcf1f737aa0963bda5014eb30c7350082a43b235872b361e9defc465db4931bee6a3ccfc05d6ff82e325a44e7f6ba18b38
   languageName: node
   linkType: hard
 
@@ -2470,7 +2470,7 @@ __metadata:
   resolution: "smart-on-fhir-validator@workspace:."
   dependencies:
     "@navikt/ds-css": "npm:^8.16.1"
-    "@navikt/ds-tailwind": "npm:^8.16.1"
+    "@navikt/ds-tailwind": "npm:^8.16.2"
     "@tailwindcss/postcss": "npm:^4.3.3"
     "@types/fhir": "npm:^0.0.44"
     "@types/node": "npm:^24.13.4"
