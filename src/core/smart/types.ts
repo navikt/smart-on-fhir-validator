@@ -119,6 +119,12 @@ export type ActiveSession = {
     smartConfiguration: SmartConfiguration
     createdAt: string
     exchanges: HttpExchange[]
+    /**
+     * The method actually used to authenticate the token exchange, e.g. `private_key_jwt` for
+     * an `asymmetric` issuer. Recorded here, not re-derived from `IssuerConfig`, since it's the
+     * one field a validation report's summary can show without re-reading configuration.
+     */
+    clientAuthMethod: TokenEndpointAuthMethod | 'none'
 }
 
 export type SmartSession = PendingSession | ActiveSession

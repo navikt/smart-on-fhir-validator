@@ -6,7 +6,7 @@
 import type { HttpExchange } from '#core/http/exchange'
 import type { ProbeOutcome } from '#validation/fhir/probe'
 import type { RefTypes } from '#validation/common-refs'
-import type { SmartError } from '#core/smart/types'
+import type { SmartError, TokenEndpointAuthMethod } from '#core/smart/types'
 import type { Severity, Validation } from '#validation/validation'
 
 /** A section can mix SMART, FHIR and Nav findings; that distinction lives per-finding in `refs`. */
@@ -50,6 +50,8 @@ export type ValidationReport = {
     generatedAt: string
     fhirBaseUrl: string
     clientId: string
+    /** The client authentication method actually used for the token exchange, e.g. `private_key_jwt`. */
+    authMethodUsed: TokenEndpointAuthMethod | 'none'
     sections: ReportSection[]
     exchanges: HttpExchange[]
     summary: ReportSummary
