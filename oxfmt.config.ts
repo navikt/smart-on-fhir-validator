@@ -12,6 +12,7 @@ export default defineConfig({
         'node_modules',
         '.nais',
         '.github',
+        '.yarn',
         'coverage',
         'test-results',
         'public',
