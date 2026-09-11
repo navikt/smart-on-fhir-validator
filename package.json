@@ -24,7 +24,7 @@
         "e2e:install": "yarn workspace e2e run e2e:install"
     },
     "dependencies": {
-        "@navikt/ds-css": "^8.16.1",
+        "@navikt/ds-css": "^8.16.2",
         "@navikt/ds-tailwind": "^8.16.1",
         "clsx": "^2.1.1",
         "hono": "^4.13.7",
