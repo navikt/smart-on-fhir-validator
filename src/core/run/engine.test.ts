@@ -98,6 +98,7 @@ async function buildActiveSession(
         smartConfiguration: discovery.config as SmartConfiguration,
         createdAt: new Date().toISOString(),
         exchanges: [...recorder.all()],
+        clientAuthMethod: 'client_secret_basic',
     }
 }
 

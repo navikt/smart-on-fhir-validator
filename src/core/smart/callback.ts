@@ -6,7 +6,7 @@ import type { ExchangeRecorder } from '#core/http/exchange'
 import type { SmartHttpClient } from '#core/http/smart-http-client'
 import { decodeIdTokenClaims } from '#core/smart/id-token'
 import type { FetchSmartConfiguration, FindIssuerConfig } from '#core/smart/launch'
-import type { ActiveSession, ClientAuthMode, IssuerConfig, SmartError } from '#core/smart/types'
+import type { ActiveSession, ClientAuthMode, IssuerConfig, SmartError, TokenEndpointAuthMethod } from '#core/smart/types'
 import { isSmartError } from '#core/smart/types'
 import { capExchanges, type SessionStore } from '#core/storage/session-store'
 
@@ -26,6 +26,7 @@ export type CallbackRequest = {
 }
 
 export type ClientAuthentication = {
+    readonly method: TokenEndpointAuthMethod | 'none'
     formFields: () => Promise<Record<string, string>>
     headers: () => Promise<Record<string, string>>
 }
@@ -34,6 +35,7 @@ export type SelectClientAuthentication = (
     clientId: string,
     mode: ClientAuthMode,
     tokenEndpoint: string,
+    supportedMethods?: string[],
 ) => ClientAuthentication
 
 export type CallbackDependencies = {
@@ -163,6 +165,7 @@ export async function handleCallback(
         issuerConfig.clientId,
         issuerConfig.auth,
         smartConfiguration.token_endpoint,
+        smartConfiguration.token_endpoint_auth_methods_supported,
     )
     const [formFields, headers] = await Promise.all([clientAuth.formFields(), clientAuth.headers()])
 
@@ -223,6 +226,7 @@ export async function handleCallback(
         smartConfiguration,
         createdAt: pending.createdAt,
         exchanges: capExchanges([...pending.exchanges, ...deps.recorder.all()]),
+        clientAuthMethod: clientAuth.method,
     }
 
     await deps.sessionStore.set(request.sessionId, activeSession, ACTIVE_SESSION_TTL_SECONDS)

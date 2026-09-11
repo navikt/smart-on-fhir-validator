@@ -145,6 +145,43 @@ describe('asymmetric client authentication (private_key_jwt)', () => {
     })
 })
 
+describe('negotiated client authentication', () => {
+    const mode = {
+        type: 'confidential-negotiated' as const,
+        symmetric: { method: 'client_secret_basic' as const, clientSecret: 's3cr3t' },
+        asymmetric: { privateKeyJwk: '{}', keyId: 'test-kid', algorithm: 'ES384' as const },
+    }
+
+    it('uses private_key_jwt when the EHR advertises it', async () => {
+        const auth = selectClientAuthentication('client-123', mode, TOKEN_ENDPOINT, [
+            'client_secret_basic',
+            'private_key_jwt',
+        ])
+
+        expect(auth.method).toBe('private_key_jwt')
+    })
+
+    it('falls back to the configured symmetric method when the EHR does not advertise private_key_jwt', async () => {
+        const auth = selectClientAuthentication('client-123', mode, TOKEN_ENDPOINT, ['client_secret_basic'])
+
+        expect(auth.method).toBe('client_secret_basic')
+        const headers = await auth.headers()
+        expect(headers.Authorization).toBe(`Basic ${Buffer.from('client-123:s3cr3t').toString('base64')}`)
+    })
+
+    it('prefers private_key_jwt when the EHR advertises no methods at all', async () => {
+        const auth = selectClientAuthentication('client-123', mode, TOKEN_ENDPOINT, [])
+
+        expect(auth.method).toBe('private_key_jwt')
+    })
+
+    it('prefers private_key_jwt when token_endpoint_auth_methods_supported is absent entirely', async () => {
+        const auth = selectClientAuthentication('client-123', mode, TOKEN_ENDPOINT, undefined)
+
+        expect(auth.method).toBe('private_key_jwt')
+    })
+})
+
 describe('negotiateAuthMethod', () => {
     it('warns when the configured method is not advertised by the EHR', () => {
         const result = negotiateAuthMethod(
@@ -180,6 +217,34 @@ describe('negotiateAuthMethod', () => {
         )
 
         expect(result.method).toBe('private_key_jwt')
+        expect(result.warnings).toEqual([])
+    })
+
+    it('reports private_key_jwt for a negotiated mode when the EHR advertises it', () => {
+        const result = negotiateAuthMethod(
+            {
+                type: 'confidential-negotiated',
+                symmetric: { method: 'client_secret_basic', clientSecret: 'x' },
+                asymmetric: { privateKeyJwk: '{}', keyId: 'k', algorithm: 'ES384' },
+            },
+            ['client_secret_basic', 'private_key_jwt'],
+        )
+
+        expect(result.method).toBe('private_key_jwt')
+        expect(result.warnings).toEqual([])
+    })
+
+    it('reports the symmetric fallback for a negotiated mode when the EHR does not advertise private_key_jwt', () => {
+        const result = negotiateAuthMethod(
+            {
+                type: 'confidential-negotiated',
+                symmetric: { method: 'client_secret_basic', clientSecret: 'x' },
+                asymmetric: { privateKeyJwk: '{}', keyId: 'k', algorithm: 'ES384' },
+            },
+            ['client_secret_basic'],
+        )
+
+        expect(result.method).toBe('client_secret_basic')
         expect(result.warnings).toEqual([])
     })
 })

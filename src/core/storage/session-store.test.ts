@@ -59,6 +59,7 @@ function activeSession(overrides: Partial<ActiveSession> = {}): ActiveSession {
         smartConfiguration: { issuer: 'https://ehr.example.com' },
         createdAt: new Date('2024-01-01T00:00:00.000Z').toISOString(),
         exchanges: [],
+        clientAuthMethod: 'client_secret_basic',
         ...overrides,
     }
 }

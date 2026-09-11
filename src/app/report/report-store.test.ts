@@ -14,6 +14,7 @@ function report(overrides: Partial<ValidationReport> = {}): ValidationReport {
         generatedAt: new Date('2024-01-01T00:00:00.000Z').toISOString(),
         fhirBaseUrl: 'https://ehr.example.com/fhir',
         clientId: 'client-123',
+        authMethodUsed: 'client_secret_basic',
         sections: [],
         exchanges: [],
         summary: { counts: { OK: 0, INFO: 0, WARNING: 0, ERROR: 0 }, sectionsSkipped: 0, verdict: 'pass' },

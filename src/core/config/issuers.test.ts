@@ -339,4 +339,62 @@ describe('config/issuers', () => {
         // either entry's credentials.
         await expect(freshIssuersModule()).rejects.toThrow(/same fhirBaseUrl/)
     })
+
+    it('loads a negotiated issuer entry with both a symmetric secret and this app own asymmetric key', async () => {
+        clearEnv()
+        process.env.SMART_CLIENT_SECRET_TEST = 'super-secret'
+        process.env.SMART_PRIVATE_JWK = JSON.stringify({
+            kty: 'EC',
+            crv: 'P-384',
+            kid: 'my-kid',
+            alg: 'ES384',
+        })
+        process.env.SMART_ISSUERS = JSON.stringify([
+            {
+                name: 'Test EHR',
+                fhirBaseUrl: 'https://ehr.example.com/fhir',
+                clientId: 'client-1',
+                authType: 'negotiated',
+                method: 'client_secret_basic',
+                clientSecretEnv: 'SMART_CLIENT_SECRET_TEST',
+            },
+        ])
+        const { findIssuerConfig } = await freshIssuersModule()
+
+        const config = findIssuerConfig('https://ehr.example.com/fhir')
+        expect(config?.auth).toEqual({
+            type: 'confidential-negotiated',
+            symmetric: { method: 'client_secret_basic', clientSecret: 'super-secret' },
+            asymmetric: { privateKeyJwk: process.env.SMART_PRIVATE_JWK, keyId: 'my-kid', algorithm: 'ES384' },
+        })
+    })
+
+    it('throws at load time when a negotiated entry and a symmetric entry share a clientSecretEnv', async () => {
+        clearEnv()
+        process.env.SMART_CLIENT_SECRET_TEST = 'secret-1'
+        process.env.SMART_PRIVATE_JWK = JSON.stringify({
+            kty: 'EC',
+            crv: 'P-384',
+            kid: 'my-kid',
+            alg: 'ES384',
+        })
+        process.env.SMART_ISSUERS = JSON.stringify([
+            {
+                name: 'EHR One',
+                fhirBaseUrl: 'https://one.example.com/fhir',
+                clientId: 'client-1',
+                authType: 'symmetric',
+                clientSecretEnv: 'SMART_CLIENT_SECRET_TEST',
+            },
+            {
+                name: 'EHR Two',
+                fhirBaseUrl: 'https://two.example.com/fhir',
+                clientId: 'client-2',
+                authType: 'negotiated',
+                clientSecretEnv: 'SMART_CLIENT_SECRET_TEST',
+            },
+        ])
+
+        await expect(freshIssuersModule()).rejects.toThrow(/same clientSecretEnv/)
+    })
 })
