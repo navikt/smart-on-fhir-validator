@@ -143,6 +143,7 @@ const activeSessionSchema = z.object({
     smartConfiguration: smartConfigurationSchema,
     createdAt: z.string(),
     exchanges: z.array(httpExchangeSchema),
+    clientAuthMethod: z.enum(['client_secret_post', 'client_secret_basic', 'private_key_jwt', 'none']),
 })
 
 /**

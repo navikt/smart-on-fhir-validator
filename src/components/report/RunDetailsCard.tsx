@@ -22,6 +22,14 @@ export function RunDetailsCard({ report }: { report: ValidationReport }): ReactE
                         <dd className="text-14 font-mono leading-[1.45] break-all">{report.clientId}</dd>
                     </div>
                     <div>
+                        <dt className="text-14 font-semibold text-ax-text-neutral-subtle">
+                            Client auth method
+                        </dt>
+                        <dd className="text-14 font-mono leading-[1.45] break-all">
+                            {report.authMethodUsed}
+                        </dd>
+                    </div>
+                    <div>
                         <dt className="text-14 font-semibold text-ax-text-neutral-subtle">Generated</dt>
                         <dd className="text-14 font-mono leading-[1.45] break-all">{report.generatedAt}</dd>
                     </div>

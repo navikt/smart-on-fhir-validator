@@ -76,6 +76,7 @@ function baseDeps(overrides: Partial<CallbackDependencies> = {}): CallbackDepend
         }),
         findIssuerConfig: () => null,
         selectClientAuthentication: () => ({
+            method: 'none',
             formFields: async () => ({}),
             headers: async () => ({}),
         }),
@@ -138,6 +139,7 @@ describe('handleCallback', () => {
                 smartConfiguration: {},
                 createdAt: new Date().toISOString(),
                 exchanges: [],
+                clientAuthMethod: 'client_secret_basic',
             },
             600,
         )
@@ -237,6 +239,7 @@ describe('handleCallback', () => {
             dynamicallyRegistered: false,
         }
         const selectClientAuthentication = vi.fn<SelectClientAuthentication>(() => ({
+            method: 'client_secret_post',
             formFields: async () => ({}),
             headers: async () => ({}),
         }))
@@ -254,6 +257,7 @@ describe('handleCallback', () => {
 
     it('allows a public client whose issuer and token_endpoint are on different origins', async () => {
         const selectClientAuthentication = vi.fn<SelectClientAuthentication>(() => ({
+            method: 'none',
             formFields: async () => ({}),
             headers: async () => ({}),
         }))
@@ -301,6 +305,7 @@ describe('handleCallback', () => {
                 dynamicallyRegistered: false,
             }
             const selectClientAuthentication = vi.fn<SelectClientAuthentication>(() => ({
+                method: 'client_secret_post',
                 formFields: async () => ({ client_secret: 'sekret' }),
                 headers: async () => ({}),
             }))
@@ -363,6 +368,7 @@ describe('handleCallback', () => {
 
     it('falls back to a public client auth mode when the issuer has no static config (e.g. it was dynamically registered)', async () => {
         const selectClientAuthentication = vi.fn<SelectClientAuthentication>(() => ({
+            method: 'none',
             formFields: async () => ({}),
             headers: async () => ({}),
         }))
@@ -393,6 +399,7 @@ describe('handleCallback', () => {
                 )
             }),
             selectClientAuthentication: () => ({
+                method: 'client_secret_basic',
                 formFields: async () => ({ client_id: 'client-123' }),
                 headers: async () => ({ 'X-Test': 'yes' }),
             }),
@@ -509,5 +516,20 @@ describe('handleCallback', () => {
         if (isSmartError(result)) throw new Error('expected an ActiveSession')
         expect(result.exchanges.some((exchange) => exchange.id === 'prior-1')).toBe(true)
         expect(result.exchanges.length).toBeGreaterThan(1)
+    })
+
+    it('records the auth method selectClientAuthentication picked onto the resulting ActiveSession', async () => {
+        const selectClientAuthentication = vi.fn<SelectClientAuthentication>(() => ({
+            method: 'private_key_jwt',
+            formFields: async () => ({}),
+            headers: async () => ({}),
+        }))
+        const deps = baseDeps({ selectClientAuthentication })
+        await seedPendingSession(deps)
+
+        const result = await handleCallback({ sessionId: SESSION_ID, code: 'abc', state: 'state-abc' }, deps)
+
+        if (isSmartError(result)) throw new Error('expected an ActiveSession')
+        expect(result.clientAuthMethod).toBe('private_key_jwt')
     })
 })
