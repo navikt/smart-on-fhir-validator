@@ -6,7 +6,13 @@ import type { ExchangeRecorder } from '#core/http/exchange'
 import type { SmartHttpClient } from '#core/http/smart-http-client'
 import { decodeIdTokenClaims } from '#core/smart/id-token'
 import type { FetchSmartConfiguration, FindIssuerConfig } from '#core/smart/launch'
-import type { ActiveSession, ClientAuthMode, IssuerConfig, SmartError, TokenEndpointAuthMethod } from '#core/smart/types'
+import type {
+    ActiveSession,
+    ClientAuthMode,
+    IssuerConfig,
+    SmartError,
+    TokenEndpointAuthMethod,
+} from '#core/smart/types'
 import { isSmartError } from '#core/smart/types'
 import { capExchanges, type SessionStore } from '#core/storage/session-store'
 

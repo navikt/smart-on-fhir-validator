@@ -241,7 +241,11 @@ describe('refreshSession', () => {
                     { status: 200, headers: { 'Content-Type': 'application/json' } },
                 )
             }),
-            clientAuth: { method: 'client_secret_basic', formFields: async () => ({ client_id: 'client-123' }), headers: async () => ({}) },
+            clientAuth: {
+                method: 'client_secret_basic',
+                formFields: async () => ({ client_id: 'client-123' }),
+                headers: async () => ({}),
+            },
         })
         await deps.sessionStore.set(SESSION_ID, activeSession(), 86400)
 
