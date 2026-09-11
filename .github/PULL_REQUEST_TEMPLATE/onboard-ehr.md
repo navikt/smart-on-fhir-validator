@@ -33,6 +33,12 @@ secret value afterwards (see below), which adds a round trip.
       app cannot call out to them.
 - [ ] If my `authType` is `symmetric`, `clientSecretEnv` names the variable only, no secret value
       appears anywhere in this diff.
+- [ ] My `authType` matches what my authorization server's own `.well-known/smart-configuration`
+      actually advertises: `public` needs `none` in `token_endpoint_auth_methods_supported` and
+      `client-public` in `capabilities`; `asymmetric` needs `private_key_jwt` and
+      `client-confidential-asymmetric`; `symmetric` needs `client_secret_basic` or
+      `client_secret_post` and `client-confidential-symmetric`. A mismatch here fails token
+      exchange in `/callback`, before this app can produce any report at all.
 
 ## After opening this PR
 

@@ -229,6 +229,12 @@ Checklist before you open it:
       `src/core/config/manifest-issuers.test.ts` for you.
 - [ ] If `authType` is `symmetric`, you've flagged the PR for a maintainer to set the secret value
       (Step 1b). The PR alone does not configure the secret.
+- [ ] Your `authType` matches what your authorization server's own `.well-known/smart-configuration`
+      actually advertises: `public` needs `none` in `token_endpoint_auth_methods_supported` and
+      `client-public` in `capabilities`; `asymmetric` needs `private_key_jwt` and
+      `client-confidential-asymmetric`; `symmetric` needs `client_secret_basic` or
+      `client_secret_post` and `client-confidential-symmetric`. Getting this wrong fails token
+      exchange after the clinician has already logged in, before this app can produce any report.
 
 ### Step 3: Launch from your EHR
 
