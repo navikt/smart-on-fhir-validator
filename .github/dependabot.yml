@@ -20,6 +20,12 @@ updates:
     ignore:
       - dependency-name: 'eslint'
         versions: ['9.x']
+      # @types/fhir's 3.0.x line is a dead 2020 branch scoped to FHIR R3 only (no `fhir/r4`
+      # entry point). The maintained line is 0.0.x, which npm tags as `latest` and is what
+      # this repo imports from (`fhir/r4`). Dependabot reads 3.0.2 > 0.0.44 by semver and
+      # reopens this every month, so it needs an explicit ignore.
+      - dependency-name: '@types/fhir'
+        versions: ['>=1.0.0']
     groups:
       react-dependencies:
         patterns:

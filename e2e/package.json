@@ -8,8 +8,8 @@
         "tsc": "tsc --noEmit"
     },
     "devDependencies": {
-        "@playwright/test": "^1.62.1",
-        "@types/node": "^24.13.3",
+        "@playwright/test": "^1.63.0",
+        "@types/node": "^24.13.4",
         "typescript": "^7.0.2"
     }
 }
