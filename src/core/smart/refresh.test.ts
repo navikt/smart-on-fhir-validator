@@ -29,6 +29,7 @@ function activeSession(overrides: Partial<ActiveSession> = {}): ActiveSession {
         smartConfiguration: { issuer: 'https://ehr.example.com', token_endpoint: TOKEN_ENDPOINT },
         createdAt: '2024-01-01T00:00:00.000Z',
         exchanges: [],
+        clientAuthMethod: 'client_secret_basic',
         ...overrides,
     }
 }
@@ -65,7 +66,7 @@ function baseDeps(overrides: Partial<RefreshDependencies> = {}): RefreshDependen
         httpClient: httpClientWithTokenEndpoint(recorder),
         recorder,
         sessionStore: createInMemorySessionStore(),
-        clientAuth: { formFields: async () => ({}), headers: async () => ({}) },
+        clientAuth: { method: 'none', formFields: async () => ({}), headers: async () => ({}) },
         now: () => new Date('2024-01-01T00:10:00.000Z'),
         ...overrides,
     }
@@ -240,7 +241,11 @@ describe('refreshSession', () => {
                     { status: 200, headers: { 'Content-Type': 'application/json' } },
                 )
             }),
-            clientAuth: { formFields: async () => ({ client_id: 'client-123' }), headers: async () => ({}) },
+            clientAuth: {
+                method: 'client_secret_basic',
+                formFields: async () => ({ client_id: 'client-123' }),
+                headers: async () => ({}),
+            },
         })
         await deps.sessionStore.set(SESSION_ID, activeSession(), 86400)
 

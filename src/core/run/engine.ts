@@ -107,6 +107,7 @@ export async function runValidation(
         generatedAt: now().toISOString(),
         fhirBaseUrl: session.fhirBaseUrl,
         clientId: session.clientId,
+        authMethodUsed: session.clientAuthMethod,
         sections,
         exchanges: [...deps.recorder.all()],
         summary: summarize(sections),
