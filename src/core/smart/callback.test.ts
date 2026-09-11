@@ -252,7 +252,6 @@ describe('handleCallback', () => {
             'static-client',
             staticConfig.auth,
             TOKEN_ENDPOINT,
-            undefined,
         )
     })
 
@@ -280,7 +279,6 @@ describe('handleCallback', () => {
             'public-client',
             { type: 'public' },
             TOKEN_ENDPOINT,
-            undefined,
         )
     })
 
@@ -334,7 +332,6 @@ describe('handleCallback', () => {
                 'static-client',
                 staticConfig.auth,
                 splitOriginTokenEndpoint,
-                undefined,
             )
         },
     )
@@ -384,7 +381,6 @@ describe('handleCallback', () => {
             'dcr-client',
             { type: 'public' },
             TOKEN_ENDPOINT,
-            undefined,
         )
     })
 
@@ -522,32 +518,17 @@ describe('handleCallback', () => {
         expect(result.exchanges.length).toBeGreaterThan(1)
     })
 
-    it('passes the EHR advertised token_endpoint_auth_methods_supported to selectClientAuthentication and records the method it picked', async () => {
+    it('records the auth method selectClientAuthentication picked onto the resulting ActiveSession', async () => {
         const selectClientAuthentication = vi.fn<SelectClientAuthentication>(() => ({
             method: 'private_key_jwt',
             formFields: async () => ({}),
             headers: async () => ({}),
         }))
-        const deps = baseDeps({
-            fetchSmartConfiguration: async () => ({
-                config: smartConfiguration({
-                    token_endpoint_auth_methods_supported: ['client_secret_basic', 'private_key_jwt'],
-                }),
-                raw: {},
-                exchange: {} as never,
-            }),
-            selectClientAuthentication,
-        })
+        const deps = baseDeps({ selectClientAuthentication })
         await seedPendingSession(deps)
 
         const result = await handleCallback({ sessionId: SESSION_ID, code: 'abc', state: 'state-abc' }, deps)
 
-        expect(selectClientAuthentication).toHaveBeenCalledWith(
-            'client-123',
-            { type: 'public' },
-            TOKEN_ENDPOINT,
-            ['client_secret_basic', 'private_key_jwt'],
-        )
         if (isSmartError(result)) throw new Error('expected an ActiveSession')
         expect(result.clientAuthMethod).toBe('private_key_jwt')
     })

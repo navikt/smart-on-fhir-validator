@@ -35,7 +35,6 @@ export type SelectClientAuthentication = (
     clientId: string,
     mode: ClientAuthMode,
     tokenEndpoint: string,
-    supportedMethods?: string[],
 ) => ClientAuthentication
 
 export type CallbackDependencies = {
@@ -165,7 +164,6 @@ export async function handleCallback(
         issuerConfig.clientId,
         issuerConfig.auth,
         smartConfiguration.token_endpoint,
-        smartConfiguration.token_endpoint_auth_methods_supported,
     )
     const [formFields, headers] = await Promise.all([clientAuth.formFields(), clientAuth.headers()])
 

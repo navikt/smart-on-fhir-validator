@@ -134,26 +134,7 @@ fixed URL (see [Step 3](#step-3-launch-from-your-ehr)) for your authorization se
 ]
 ```
 
-**Option D: both ("negotiated" auth, `authType: "negotiated"`).** For a vendor whose authorization
-server already accepts both a shared secret and `private_key_jwt` on the same client. This app
-picks `private_key_jwt` whenever your discovery document advertises it, falling back to the
-`method`/`clientSecretEnv` pair otherwise, so a bad deploy of the asymmetric side degrades to the
-symmetric one instead of failing outright:
-
-```json
-[
-  {
-    "name": "Acme EHR",
-    "fhirBaseUrl": "https://fhir.acme.example.com/R4",
-    "clientId": "acme-validator-client",
-    "authType": "negotiated",
-    "method": "client_secret_basic",
-    "clientSecretEnv": "SMART_CLIENT_SECRET_ACME"
-  }
-]
-```
-
-In all four options, replace these placeholders with your own values:
+In all three options, replace these three placeholders with your own values:
 
 - `"Acme EHR"`: your vendor name
 - `"https://fhir.acme.example.com/R4"`: your FHIR base URL (the `iss` your SMART launch supplies)
@@ -291,8 +272,6 @@ in Step 1:
 - `symmetric` → `client_secret_basic` or `client_secret_post` (whichever `method` you set in
   Option B), with the matching secret
 - `asymmetric` → `private_key_jwt`, pointing at the JWKS URL above
-- `negotiated` → both: register `private_key_jwt` (JWKS URL above) and the `method`/secret from
-  Option D on your side, since this app picks whichever your discovery document advertises
 
 In Nav's dev environment, `{this app's origin}` is `https://nav-on-fhir.ekstern.dev.nav.no`.
 Locally it is `http://localhost:3001`. A vendor whose authorization server grants a narrower set

@@ -59,17 +59,6 @@ export type ClientAuthMode =
           clientSecret: string
       }
     | { type: 'confidential-asymmetric'; privateKeyJwk: string; keyId: string; algorithm: 'RS384' | 'ES384' }
-    | {
-          /**
-           * Both a symmetric secret and this app's asymmetric key are provisioned; the actual
-           * method is picked per-exchange from the EHR's advertised
-           * `token_endpoint_auth_methods_supported`, preferring `private_key_jwt` when the EHR
-           * lists it. See `selectClientAuthentication` in `#core/smart/client-auth`.
-           */
-          type: 'confidential-negotiated'
-          symmetric: { method: 'client_secret_basic' | 'client_secret_post'; clientSecret: string }
-          asymmetric: { privateKeyJwk: string; keyId: string; algorithm: 'RS384' | 'ES384' }
-      }
 
 /**
  * Per-client registration, from configuration or from dynamic client registration, keyed on the
@@ -131,10 +120,9 @@ export type ActiveSession = {
     createdAt: string
     exchanges: HttpExchange[]
     /**
-     * The method actually used to authenticate the token exchange, e.g. `private_key_jwt` for a
-     * `confidential-negotiated` issuer whose EHR advertised it. Recorded here, not re-derived
-     * from `IssuerConfig`, since a negotiated mode's outcome depends on the EHR's discovery
-     * document at the time of the exchange.
+     * The method actually used to authenticate the token exchange, e.g. `private_key_jwt` for
+     * an `asymmetric` issuer. Recorded here, not re-derived from `IssuerConfig`, since it's the
+     * one field a validation report's summary can show without re-reading configuration.
      */
     clientAuthMethod: TokenEndpointAuthMethod | 'none'
 }

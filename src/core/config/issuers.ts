@@ -22,12 +22,6 @@
  *   published as a whole at `.well-known/jwks.json` (`#core/smart/jwks`), so every `private_key_jwt`
  *   vendor necessarily uses that same key: there is no second private key to reference.
  *
- * `authType: "negotiated"` is for a vendor whose authorization server accepts both a symmetric
- * secret and `private_key_jwt`: this app picks `private_key_jwt` whenever the EHR's
- * `token_endpoint_auth_methods_supported` lists it, falling back to `method`/`clientSecretEnv`
- * otherwise (see `selectClientAuthentication` in `#core/smart/client-auth`). It still needs
- * `clientSecretEnv`, same as `symmetric`, for that fallback.
- *
  * The lookup key is `fhirBaseUrl`, this vendor's FHIR server base URL (the `iss` SMART launch
  * parameter), never an OIDC `issuer`. The field used to be named `issuer`, which was ambiguous
  * enough to cause a real bug: see `resolveIssuerConfig` in `#core/smart/launch` for why a vendor's
@@ -70,21 +64,10 @@ const AsymmetricEntrySchema = BaseEntrySchema.extend({
     authType: z.literal('asymmetric'),
 }).strict()
 
-const NegotiatedEntrySchema = BaseEntrySchema.extend({
-    authType: z.literal('negotiated'),
-    // Fallback method if the EHR's discovery document doesn't list private_key_jwt; see
-    // `selectClientAuthentication` in `#core/smart/client-auth`.
-    method: z.enum(['client_secret_basic', 'client_secret_post']).default('client_secret_basic'),
-    clientSecretEnv: z.string().regex(/^SMART_CLIENT_SECRET_[A-Z0-9_]+$/, {
-        message: "clientSecretEnv must look like 'SMART_CLIENT_SECRET_<NAME>'",
-    }),
-}).strict()
-
 const IssuerEntrySchema = z.discriminatedUnion('authType', [
     PublicEntrySchema,
     SymmetricEntrySchema,
     AsymmetricEntrySchema,
-    NegotiatedEntrySchema,
 ])
 
 const IssuersSchema = z.array(IssuerEntrySchema)
@@ -162,21 +145,6 @@ function toIssuerConfig(entry: IssuerEntry): IssuerConfig {
                 },
                 dynamicallyRegistered: false,
             }
-
-        case 'negotiated':
-            return {
-                fhirBaseUrl: entry.fhirBaseUrl,
-                clientId: entry.clientId,
-                auth: {
-                    type: 'confidential-negotiated',
-                    symmetric: {
-                        method: entry.method,
-                        clientSecret: readNamedEnv(entry.clientSecretEnv, entry.name, 'client secret'),
-                    },
-                    asymmetric: readPrivateKeyJwk(PRIVATE_KEY_ENV_VAR, entry.name),
-                },
-                dynamicallyRegistered: false,
-            }
     }
 }
 
@@ -204,7 +172,7 @@ function assertNoDuplicateIssuers(entries: IssuerEntry[]): void {
 function assertNoDuplicateClientSecretEnv(entries: IssuerEntry[]): void {
     const seen = new Map<string, string>()
     for (const entry of entries) {
-        if (entry.authType !== 'symmetric' && entry.authType !== 'negotiated') continue
+        if (entry.authType !== 'symmetric') continue
 
         const existingName = seen.get(entry.clientSecretEnv)
         if (existingName) {
