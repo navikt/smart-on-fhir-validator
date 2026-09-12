@@ -77,8 +77,6 @@ spec:
         - host: "fhirapi.public.webmedepj.no"
         - host: "launch.smarthealthit.org"
         - host: "epj.ekstern.dev.nav.no"
-        - host: "fhir-api-auth.public.webmedepj.no"
-        - host: "authority.public.webmedepj.no"
 
   envFrom:
     - secret: smart-on-fhir-validator-clients
