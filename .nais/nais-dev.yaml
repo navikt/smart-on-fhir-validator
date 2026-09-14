@@ -75,6 +75,8 @@ spec:
       external:
         - host: "api.dips.no"
         - host: "fhirapi.public.webmedepj.no"
+        - host: "authority.public.webmedepj.no"
+        - host: "fhir-api-auth.public.webmedepj.no"
         - host: "launch.smarthealthit.org"
         - host: "epj.ekstern.dev.nav.no"
 
