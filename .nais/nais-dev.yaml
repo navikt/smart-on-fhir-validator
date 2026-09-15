@@ -75,6 +75,8 @@ spec:
       external:
         - host: "api.dips.no"
         - host: "fhirapi.public.webmedepj.no"
+        - host: "authority.public.webmedepj.no"
+        - host: "fhir-api-auth.public.webmedepj.no"
         - host: "launch.smarthealthit.org"
         - host: "epj.ekstern.dev.nav.no"
         - host: "test.medro.no"
@@ -116,5 +118,10 @@ spec:
             "clientId": "nav-smart-on-fhir-validator",
             "authType": "symmetric",
             "clientSecretEnv": "SMART_CLIENT_SECRET_MEDRO"
+          },{
+            "name": "WebMed EPJ",
+            "fhirBaseUrl": "https://fhir-api-auth.public.webmedepj.no/",
+            "clientId": "NAV_SMART_on_FHIR_example",
+            "authType": "public"
           }
         ]
