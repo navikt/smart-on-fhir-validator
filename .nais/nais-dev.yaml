@@ -83,6 +83,7 @@ spec:
 
   envFrom:
     - secret: smart-on-fhir-validator-clients
+    - secret: smart-on-fhir-validator-config
 
   env:
     - name: NEXT_PUBLIC_ENVIRONMENT

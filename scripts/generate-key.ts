@@ -6,7 +6,7 @@
  * and a hand-edited JSON blob. `jose` is already a dependency and emits a JWK directly.
  *
  * Usage: `yarn generate-key`, then paste the single line of output into the
- * `smart-on-fhir-validator-clients` Kubernetes secret as `SMART_PRIVATE_JWK`. The private key (`d`)
+ * `smart-on-fhir-validator-config` Kubernetes secret as `SMART_PRIVATE_JWK`. The private key (`d`)
  * never needs to leave that secret: `getPublicJwks()` derives the public JWKS served at
  * `/.well-known/jwks.json` from it at runtime.
  */

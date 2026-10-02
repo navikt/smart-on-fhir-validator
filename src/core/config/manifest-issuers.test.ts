@@ -136,6 +136,17 @@ describe('.nais/nais-dev.yaml: SMART_ISSUERS', () => {
         })
     })
 
+    it('loads the persistent signing configuration separately from client secrets', () => {
+        expect(manifest).toMatchObject({
+            spec: {
+                envFrom: [
+                    { secret: 'smart-on-fhir-validator-clients' },
+                    { secret: 'smart-on-fhir-validator-config' },
+                ],
+            },
+        })
+    })
+
     it(
         "lists every SMART_ISSUERS entry's FHIR base URL hostname under " +
             'spec.accessPolicy.outbound.external, so a vendor missing that PR-required addition fails ' +

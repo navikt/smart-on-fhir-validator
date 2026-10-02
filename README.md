@@ -352,8 +352,12 @@ fail startup instead of leaving a ready server with a broken launch route.
 
 This app signs with its own key for `private_key_jwt` client authentication and publishes the
 public half at `/.well-known/jwks.json`. Generate one with `yarn generate-key`, which prints a
-single JSON line. Set it as `SMART_PRIVATE_JWK` in the deployed environment's secret
-(`smart-on-fhir-validator-clients`); never commit it. Without it, `src/core/smart/jwks.ts`
+single JSON line. Set it as `SMART_PRIVATE_JWK` in the deployed environment's
+`smart-on-fhir-validator-config` secret; never commit it. Keep client secrets in
+`smart-on-fhir-validator-clients`, and do not define `SMART_PRIVATE_JWK` in both secrets.
+Create the config secret before deploying the manifest, then replace the pod to load its
+environment. Keep the same private key across deployments so the public JWKS stays stable.
+Without it, `src/core/smart/jwks.ts`
 generates an ephemeral key at startup, which does not survive a restart and forces any EHR that
 pinned this app's public key to re-register.
 
