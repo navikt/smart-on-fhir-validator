@@ -1,4 +1,32 @@
-import { expect, test, type Page } from '@playwright/test'
+import { createServer } from 'node:http'
+import { expect, test as base, type Page } from '@playwright/test'
+
+const test = base.extend<{ epjOrigin: string }>({
+    epjOrigin: async ({ baseURL }, use) => {
+        const server = createServer((request, response) => {
+            const url = new URL(request.url ?? '/', baseURL)
+            const launchUrl = url.searchParams.get('launchUrl') ?? ''
+            response.setHeader('Content-Type', 'text/html')
+            response.end(
+                url.searchParams.get('mode') === 'iframe'
+                    ? `<iframe title="Validator" src="${launchUrl}"></iframe>`
+                    : `<a href="${launchUrl}" target="_blank" rel="noopener noreferrer">Launch validator</a>`,
+            )
+        })
+        await new Promise<void>((resolve) => server.listen(0, 'localhost', resolve))
+        const address = server.address()
+        if (address === null || typeof address === 'string') {
+            throw new Error('Mock EPJ server did not bind a TCP port')
+        }
+        try {
+            await use(`http://localhost:${address.port}`)
+        } finally {
+            await new Promise<void>((resolve, reject) =>
+                server.close((error) => (error ? reject(error) : resolve())),
+            )
+        }
+    },
+})
 
 /**
  * A thin browser smoke gate: one landing-page check plus a single consolidated SMART launch
@@ -30,6 +58,17 @@ async function launchAgainstMockEhr(page: Page): Promise<void> {
         '/callback/error',
     )
     expect(url.pathname, `launch must land on /report (${diagnostic})`).toBe('/report')
+}
+
+async function openMockEpj(page: Page, epjOrigin: string, mode: 'iframe' | 'tab'): Promise<void> {
+    await page.goto('/')
+    const launchPath = await page.getByRole('link', { name: 'Launch the mock EHR' }).getAttribute('href')
+    expect(launchPath).toBeTruthy()
+    const launchUrl = new URL(launchPath ?? '', page.url()).toString()
+    const epjUrl = new URL('/epj', epjOrigin)
+    epjUrl.searchParams.set('launchUrl', launchUrl)
+    epjUrl.searchParams.set('mode', mode)
+    await page.goto(epjUrl.toString())
 }
 
 /**
@@ -108,23 +147,21 @@ test.describe('landing → launch against the mock EHR → report', () => {
         }
     })
 
-    test('launch completes inside an iframe', async ({ page }) => {
-        await page.goto('/')
-        const origin = new URL(page.url()).origin
-        await page.setContent(`<iframe title="Validator" src="${origin}/"></iframe>`)
+    test('launch completes inside a same-site, cross-origin EPJ iframe', async ({ page, epjOrigin }) => {
+        await openMockEpj(page, epjOrigin, 'iframe')
         const validator = page.frameLocator('iframe')
-
-        await validator.getByRole('link', { name: 'Launch the mock EHR' }).click()
 
         await expect(validator.getByRole('status')).toHaveText(/Pass|Fail|Incomplete/)
         await expect(validator.getByText('FHIR base URL', { exact: true })).toBeVisible()
     })
 
-    test('launch completes in a new tab', async ({ context }) => {
-        const tab = await context.newPage()
+    test('launch completes in a new tab opened from the EPJ origin', async ({ page, epjOrigin }) => {
+        await openMockEpj(page, epjOrigin, 'tab')
+        const popup = page.waitForEvent('popup')
+        await page.getByRole('link', { name: 'Launch validator' }).click()
+        const tab = await popup
 
-        await launchAgainstMockEhr(tab)
-
+        await expect(tab).toHaveURL(/\/report$/)
         await expect(tab.getByRole('status')).toHaveText(/Pass|Fail|Incomplete/)
         await tab.close()
     })
