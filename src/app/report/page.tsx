@@ -12,7 +12,7 @@ export const dynamic = 'force-dynamic'
 function ReportUnavailable(): ReactElement {
     return (
         <main id="main-content" className="mx-auto max-w-[960px] px-6 pt-8 pb-24">
-            <h1 className="text-32 font-bold">No report available</h1>
+            <h1 className="text-32 font-bold text-balance">No report available</h1>
             <p className="text-16 mt-2 max-w-[70ch]">
                 There is no validation report for this browser session. It may have expired, already been
                 read, or you may not have completed a launch yet.

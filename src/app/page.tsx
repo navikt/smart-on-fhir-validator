@@ -142,7 +142,9 @@ function StandaloneLaunchCard(): ReactElement {
 export default function HomePage(): ReactElement {
     return (
         <main id="main-content" className="mx-auto max-w-[960px] px-6 pt-10 pb-20">
-            <h1 className="text-32 max-w-[22ch] font-semibold">Check your SMART on FHIR implementation</h1>
+            <h1 className="text-32 max-w-[22ch] font-semibold text-balance">
+                Check your SMART on FHIR implementation
+            </h1>
 
             <p className="text-18 text-pretty mt-4 max-w-[68ch]">
                 This validator checks that your EHR&apos;s SMART on FHIR and FHIR R4 implementation conforms
