@@ -4,7 +4,7 @@ import type { ReactElement } from 'react'
 
 export function SiteHeader(): ReactElement {
     return (
-        <header className="bg-brandblue-strong">
+        <header className="bg-brandblue-strong" style={{ viewTransitionName: 'site-header' }}>
             <div className="mx-auto flex max-w-[960px] flex-wrap items-center gap-x-6 gap-y-4 px-6 py-4">
                 <Image
                     src="/nav_logo_hvit.svg"
