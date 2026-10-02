@@ -85,7 +85,7 @@ export class SmartHttpClient {
             const exchange: HttpExchange = {
                 ...base,
                 response: null,
-                error: cause instanceof Error ? cause.message : String(cause),
+                error: describeTransportError(cause),
                 durationMs: Math.round(performance.now() - start),
             }
             this.recorder.record(exchange)
@@ -125,6 +125,18 @@ export class SmartHttpClient {
             body: JSON.stringify(payload),
         })
     }
+}
+
+function describeTransportError(error: unknown): string {
+    if (!(error instanceof Error)) return String(error)
+    if (!(error.cause instanceof Error)) return error.message
+
+    const code = 'code' in error.cause && typeof error.cause.code === 'string' ? error.cause.code : null
+    const causeMessage = error.cause.message
+    const reason =
+        code && !causeMessage.includes(code) ? [code, causeMessage].filter(Boolean).join(': ') : causeMessage
+
+    return reason ? `${error.message} (${reason})` : error.message
 }
 
 async function parseBody(response: Response): Promise<unknown> {

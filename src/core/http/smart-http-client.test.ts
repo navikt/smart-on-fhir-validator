@@ -119,6 +119,36 @@ describe('SmartHttpClient', () => {
         expect(exchange?.durationMs).toBeGreaterThanOrEqual(0)
     })
 
+    it.each([
+        [
+            'a cause message that already names the code',
+            Object.assign(new Error('getaddrinfo ENOTFOUND ehr.example.com'), { code: 'ENOTFOUND' }),
+            'fetch failed (getaddrinfo ENOTFOUND ehr.example.com)',
+        ],
+        [
+            'a cause with a code and an empty message',
+            Object.assign(new AggregateError([], ''), { code: 'ECONNREFUSED' }),
+            'fetch failed (ECONNREFUSED)',
+        ],
+        [
+            'a cause whose message omits the code',
+            Object.assign(new Error('Connect Timeout Error'), { code: 'UND_ERR_CONNECT_TIMEOUT' }),
+            'fetch failed (UND_ERR_CONNECT_TIMEOUT: Connect Timeout Error)',
+        ],
+    ])('includes the underlying network cause for %s', async (_, cause, expected) => {
+        const recorder = createExchangeRecorder()
+        const client = new SmartHttpClient({
+            recorder,
+            fetchImpl: stubFetch(() => {
+                throw new TypeError('fetch failed', { cause })
+            }),
+        })
+
+        await client.get('discovery', 'https://ehr.example.com/.well-known/smart-configuration')
+
+        expect(recorder.all()[0]?.error).toBe(expected)
+    })
+
     it('does not throw when fetchImpl rejects with a non-Error value', async () => {
         const recorder = createExchangeRecorder()
         const client = new SmartHttpClient({
