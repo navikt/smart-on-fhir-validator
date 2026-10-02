@@ -120,6 +120,7 @@ function StandaloneLaunchCard(): ReactElement {
                     id="iss"
                     name="iss"
                     type="url"
+                    autoComplete="url"
                     required
                     placeholder="https://ehr.example.com/fhir"
                     className="border-ax-border-neutral-strong text-16 font-mono box-border min-h-12 w-full rounded border px-3"
