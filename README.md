@@ -143,7 +143,7 @@ In all three options, replace these placeholders with your own values:
   invent here. Only change it if your authorization server issues client IDs itself and will not
   accept a proposed value (common with servers that mint an opaque UUID per registration, or if
   the string is already taken by a different app in your own client registry). If so, put
-  whatever ID your server actually issued here instead — see the note in
+  whatever ID your server actually issued here instead. See the note in
   [Step 3](#step-3-launch-from-your-ehr).
 
 **If the array already has other entries in it, add a comma and your object before the closing
@@ -266,7 +266,7 @@ registered in Step 1 exactly:
 | Item                              | Value                                                                                                                                                                                                                                                          |
 | ---------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | Redirect URI                       | `{this app's origin}/callback`                                                                                                                                                                                                                                   |
-| Client ID                          | `nav-smart-on-fhir-validator`, unless your authorization server mints its own client IDs and would not accept that value — in which case use whatever it issued, and make sure your Step 1 `SMART_ISSUERS` entry has the matching value                                                       |
+| Client ID                          | `nav-smart-on-fhir-validator`, unless your authorization server mints its own client IDs and would not accept that value. In that case, use whatever it issued, and make sure your Step 1 `SMART_ISSUERS` entry has the matching value                                                       |
 | Client authentication method       | Whatever your EHR's configuration UI calls the `authType` you set in Step 1. See the list below.                                                                                                                                                              |
 | Requested scopes                   | `openid fhirUser launch launch/patient offline_access patient/Patient.rs patient/Practitioner.rs patient/PractitionerRole.rs patient/Organization.rs patient/Encounter.rs patient/Condition.rs patient/DocumentReference.cruds patient/Binary.cruds patient/QuestionnaireResponse.cruds` |
 | JWKS URL (only if `authType: "asymmetric"`) | `{this app's origin}/.well-known/jwks.json`. This is this app's one public signing key. Your authorization server fetches it to verify `private_key_jwt` tokens.                                                                                    |
