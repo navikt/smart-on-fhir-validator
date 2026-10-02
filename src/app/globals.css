@@ -89,4 +89,9 @@
         outline: 3px solid var(--ax-border-focus);
         outline-offset: 2px;
     }
+
+    a,
+    button {
+        touch-action: manipulation;
+    }
 }
