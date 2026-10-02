@@ -1,5 +1,5 @@
 import Link from 'next/link'
-import type { ReactElement } from 'react'
+import { ViewTransition, type ReactElement } from 'react'
 
 import type { ValidationReport } from '#core/run'
 import { VerdictBanner } from '#components/status/VerdictBanner'
@@ -52,18 +52,20 @@ export function ReportView({
 
             <SeverityFilter active={severityFilter} counts={pillCounts} />
 
-            {sections.length === 0 ? (
-                <EmptyFilterPanel />
-            ) : (
-                <div className="flex flex-col gap-3">
-                    <h2 className="text-13 font-bold tracking-eyebrow text-ax-text-neutral-subtle uppercase">
-                        Sections
-                    </h2>
-                    {sections.map((section) => (
-                        <SectionCard key={section.id} section={section} exchanges={report.exchanges} />
-                    ))}
-                </div>
-            )}
+            <ViewTransition key={severityFilter} default="none" enter="fade-in" exit="fade-out">
+                {sections.length === 0 ? (
+                    <EmptyFilterPanel />
+                ) : (
+                    <div className="flex flex-col gap-3">
+                        <h2 className="text-13 font-bold tracking-eyebrow text-ax-text-neutral-subtle uppercase">
+                            Sections
+                        </h2>
+                        {sections.map((section) => (
+                            <SectionCard key={section.id} section={section} exchanges={report.exchanges} />
+                        ))}
+                    </div>
+                )}
+            </ViewTransition>
         </div>
     )
 }
