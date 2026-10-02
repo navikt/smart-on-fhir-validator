@@ -341,6 +341,15 @@ an accepted tradeoff, see `replicas.min`/`replicas.max` in `.nais/nais-dev.yaml`
 
 ### Signing key
 
+Nav EPJ is registered as `NAV_SMART_on_FHIR_validator` with asymmetric authentication.
+Its registration must use `/callback` as the redirect URI and `/.well-known/jwks.json`
+as the public key endpoint on this app's origin. EPJ must allow outbound access to that
+host to verify client assertions.
+
+Server startup validates every `SMART_ISSUERS` entry and its referenced credentials before
+accepting requests. Missing client secrets or an invalid asymmetric key configuration
+fail startup instead of leaving a ready server with a broken launch route.
+
 This app signs with its own key for `private_key_jwt` client authentication and publishes the
 public half at `/.well-known/jwks.json`. Generate one with `yarn generate-key`, which prints a
 single JSON line. Set it as `SMART_PRIVATE_JWK` in the deployed environment's secret

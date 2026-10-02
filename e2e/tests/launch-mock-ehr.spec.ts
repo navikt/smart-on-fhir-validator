@@ -96,6 +96,39 @@ function assertCredentialsRedacted(value: unknown, path: string): void {
 }
 
 test.describe('landing → launch against the mock EHR → report', () => {
+    test('missing and invalid launch parameters show an error page rather than HTTP 500', async ({
+        page,
+    }) => {
+        for (const path of ['/launch', '/launch?iss=invalid&launch=test-launch']) {
+            const response = await page.goto(path)
+
+            expect(response?.status()).toBe(200)
+            await expect(page).toHaveURL(/\/launch\/error\?/)
+            await expect(page.getByRole('heading', { name: 'Launch failed' })).toBeVisible()
+        }
+    })
+
+    test('launch completes inside an iframe', async ({ page }) => {
+        await page.goto('/')
+        const origin = new URL(page.url()).origin
+        await page.setContent(`<iframe title="Validator" src="${origin}/"></iframe>`)
+        const validator = page.frameLocator('iframe')
+
+        await validator.getByRole('link', { name: 'Launch the mock EHR' }).click()
+
+        await expect(validator.getByRole('status')).toHaveText(/Pass|Fail|Incomplete/)
+        await expect(validator.getByText('FHIR base URL', { exact: true })).toBeVisible()
+    })
+
+    test('launch completes in a new tab', async ({ context }) => {
+        const tab = await context.newPage()
+
+        await launchAgainstMockEhr(tab)
+
+        await expect(tab.getByRole('status')).toHaveText(/Pass|Fail|Incomplete/)
+        await tab.close()
+    })
+
     test('the landing page explains the tool and offers a mock-EHR launch', async ({ page }) => {
         await page.goto('/')
 

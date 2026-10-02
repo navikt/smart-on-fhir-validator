@@ -113,6 +113,12 @@ spec:
       value: |
         [
           {
+            "name": "Nav EPJ",
+            "fhirBaseUrl": "https://epj.ekstern.dev.nav.no/fhir",
+            "clientId": "NAV_SMART_on_FHIR_validator",
+            "authType": "asymmetric"
+          },
+          {
             "name": "Medro",
             "fhirBaseUrl": "https://dev.medro.no/api/fhir",
             "clientId": "nav-smart-on-fhir-validator",

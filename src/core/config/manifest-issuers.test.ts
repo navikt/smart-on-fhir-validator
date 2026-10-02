@@ -125,6 +125,17 @@ describe('.nais/nais-dev.yaml: SMART_ISSUERS', () => {
         expect(() => parseIssuerEntries(raw)).not.toThrow()
     })
 
+    it('registers Nav EPJ with its asymmetric validator client identity', () => {
+        const entries = parseIssuerEntries(readSoleEnvValue(manifest, ENV_NAME))
+
+        expect(entries.find((entry) => entry.fhirBaseUrl === 'https://epj.ekstern.dev.nav.no/fhir')).toEqual({
+            name: 'Nav EPJ',
+            fhirBaseUrl: 'https://epj.ekstern.dev.nav.no/fhir',
+            clientId: 'NAV_SMART_on_FHIR_validator',
+            authType: 'asymmetric',
+        })
+    })
+
     it(
         "lists every SMART_ISSUERS entry's FHIR base URL hostname under " +
             'spec.accessPolicy.outbound.external, so a vendor missing that PR-required addition fails ' +
