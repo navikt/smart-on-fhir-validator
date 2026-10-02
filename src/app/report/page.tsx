@@ -11,7 +11,7 @@ export const dynamic = 'force-dynamic'
 
 function ReportUnavailable(): ReactElement {
     return (
-        <main className="mx-auto max-w-[960px] px-6 pt-8 pb-24">
+        <main id="main-content" className="mx-auto max-w-[960px] px-6 pt-8 pb-24">
             <h1 className="text-32 font-bold">No report available</h1>
             <p className="text-16 mt-2 max-w-[70ch]">
                 There is no validation report for this browser session. It may have expired, already been
@@ -44,7 +44,7 @@ export default async function ReportPage({
     )
 
     return (
-        <main className="mx-auto max-w-[960px] px-6 pt-8 pb-24">
+        <main id="main-content" className="mx-auto max-w-[960px] px-6 pt-8 pb-24">
             <ReportView report={report} severityFilter={severityFilter} />
         </main>
     )

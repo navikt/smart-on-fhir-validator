@@ -22,7 +22,7 @@ const STAGE_LABEL: Record<FlowErrorProps['stage'], string> = {
  */
 export function FlowError({ stage, error, detail }: FlowErrorProps): ReactElement {
     return (
-        <main className="mx-auto max-w-[960px] px-6 pt-10 pb-20">
+        <main id="main-content" className="mx-auto max-w-[960px] px-6 pt-10 pb-20">
             <h1 className="text-32 font-semibold">Launch failed</h1>
             <p className="text-18 mt-4 max-w-[68ch]">
                 Something went wrong while {STAGE_LABEL[stage]}. This happened before any validation report

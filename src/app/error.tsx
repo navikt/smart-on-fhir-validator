@@ -14,7 +14,7 @@ type ErrorPageProps = {
  */
 export default function Error({ error, reset }: ErrorPageProps) {
     return (
-        <main className="mx-auto max-w-[960px] px-6 pt-10 pb-20">
+        <main id="main-content" className="mx-auto max-w-[960px] px-6 pt-10 pb-20">
             <h1 className="text-32 font-semibold">Something went wrong</h1>
             <p className="text-18 mt-4 max-w-[68ch]">
                 The validator hit an unexpected error while rendering this page. This is a bug in the
