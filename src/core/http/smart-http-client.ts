@@ -131,8 +131,17 @@ export class SmartHttpClient {
         }
     }
 
-    get(phase: ExchangePhase, url: string, headers: Record<string, string> = {}): Promise<RecordedResponse> {
-        return this.send(phase, url, { method: 'GET', headers })
+    get(
+        phase: ExchangePhase,
+        url: string,
+        headers: Record<string, string> = {},
+        redirect?: RequestInit['redirect'],
+    ): Promise<RecordedResponse> {
+        return this.send(phase, url, {
+            method: 'GET',
+            headers,
+            ...(redirect === undefined ? {} : { redirect }),
+        })
     }
 
     postForm(
