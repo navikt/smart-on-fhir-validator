@@ -330,16 +330,26 @@ function RequestBuilder({
                     <label htmlFor={`${ids}-custom-token`} className={LABEL_CLASSES}>
                         Custom access token
                     </label>
-                    <input
+                    <textarea
                         id={`${ids}-custom-token`}
-                        type="password"
                         name="customToken"
                         value={customToken}
                         onChange={(event) => onCustomTokenChange(event.target.value)}
+                        rows={5}
+                        autoCapitalize="off"
+                        autoCorrect="off"
                         autoComplete="off"
                         spellCheck={false}
-                        className={`${FIELD_CLASSES} font-mono`}
+                        aria-describedby={`${ids}-custom-token-help`}
+                        className={`${FIELD_CLASSES} resize-y font-mono text-13`}
                     />
+                    <p
+                        id={`${ids}-custom-token-help`}
+                        className="text-14 max-w-[70ch] text-ax-text-neutral-subtle"
+                    >
+                        Paste a raw access token or JSON containing access_token. Decoded JWT claims cannot be
+                        used as a token: they need a signature.
+                    </p>
                 </div>
             )}
 

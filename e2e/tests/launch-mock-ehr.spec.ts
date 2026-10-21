@@ -259,17 +259,33 @@ test.describe('landing → launch against the mock EHR → report', () => {
         await expect(response.getByText(/HTTP 401/)).toBeVisible()
 
         await authorization.selectOption('custom')
-        await expect(customToken).toHaveAttribute('type', 'password')
-        await customToken.fill('deliberately-invalid-token')
+        await expect(customToken).toBeVisible()
+        await expect(
+            page.getByText(
+                'Paste a raw access token or JSON containing access_token. Decoded JWT claims cannot be used as a token: they need a signature.',
+            ),
+        ).toBeVisible()
+        await customToken.fill(
+            JSON.stringify(
+                { access_token: 'deliberately-invalid-token', refresh_token: 'fake-refresh-token' },
+                null,
+                2,
+            ),
+        )
+        const debugRequest = page.waitForRequest((request) => request.url().endsWith('/api/debug/fhir'))
         await page.getByRole('button', { name: 'Send' }).click()
+        const sent = (await debugRequest).postData() ?? ''
+        expect(JSON.parse(sent).customToken).toBe('deliberately-invalid-token')
+        expect(sent).not.toContain('fake-refresh-token')
         await expect(response.getByText(/HTTP 401/)).toBeVisible()
-        await expect(page.getByText('deliberately-invalid-token')).toHaveCount(0)
+        await expect(response.getByText('deliberately-invalid-token')).toHaveCount(0)
+        await expect(history.getByText('deliberately-invalid-token')).toHaveCount(0)
         await expect(history.getByRole('listitem')).toHaveCount(3)
 
         await page.getByRole('button', { name: 'Read a missing patient' }).click()
         await expect(page.getByLabel('Id (optional)')).toHaveValue('does-not-exist')
         await expect(authorization).toHaveValue('custom')
-        await expect(customToken).toHaveValue('deliberately-invalid-token')
+        await expect(customToken).toHaveValue(/"access_token": "deliberately-invalid-token"/)
 
         await history.getByRole('button').nth(1).click()
         await expect(authorization).toHaveValue('none')

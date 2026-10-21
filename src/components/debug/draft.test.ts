@@ -23,6 +23,61 @@ describe('buildRequest', () => {
         })
     })
 
+    describe('custom token input', () => {
+        const custom = draft({ authentication: 'custom' })
+        const tokenOf = (input: string) => {
+            const result = buildRequest(custom, input)
+            return result.ok ? result.request.customToken : result
+        }
+
+        it('trims a raw token and rejects internal whitespace', () => {
+            expect(tokenOf('  abc.def.ghi\n')).toBe('abc.def.ghi')
+            expect(buildRequest(custom, 'abc def')).toMatchObject({ ok: false })
+        })
+
+        it('extracts only access_token from a pretty-printed token response', () => {
+            const input = JSON.stringify(
+                { access_token: ' abc.def ', refresh_token: 'fake-refresh', token_type: 'Bearer' },
+                null,
+                2,
+            )
+            const result = buildRequest(custom, `\n${input}\n`)
+            expect(result).toMatchObject({ ok: true, request: { customToken: 'abc.def' } })
+            expect(JSON.stringify(result)).not.toContain('fake-refresh')
+        })
+
+        it('does not echo input or parser messages for malformed JSON', () => {
+            const result = buildRequest(custom, '{"access_token": "secret-value-123",')
+            const error = JSON.stringify(result)
+            expect(result.ok).toBe(false)
+            expect(error).not.toContain('secret-value-123')
+            expect(error).not.toMatch(/position|Unexpected|JSON\.parse/i)
+        })
+
+        it.each([
+            ['decoded claims', '{"sub":"123","iss":"https://example.org"}'],
+            ['array', '["abc"]'],
+            ['string', '"abc"'],
+            ['non-string', '{"access_token": 123}'],
+            ['empty', '{"access_token": "  "}'],
+        ])('rejects %s without an access_token', (_name, input) => {
+            const result = buildRequest(custom, input)
+            expect(result).toMatchObject({
+                ok: false,
+                error: expect.stringMatching(/access_token.*signature/),
+            })
+        })
+
+        it('rejects oversize input before parsing', () => {
+            const result = buildRequest(custom, `{"access_token":"${'a'.repeat(MAX_DEBUG_BODY_BYTES)}"}`)
+            expect(result).toMatchObject({ ok: false, error: expect.stringContaining('may not exceed') })
+        })
+
+        it('rejects an invalid extracted bearer token', () => {
+            expect(buildRequest(custom, '{"access_token": "has space"}')).toMatchObject({ ok: false })
+        })
+    })
+
     it('emits the custom token only in custom mode', () => {
         expect(buildRequest(draft({ authentication: 'custom' }), 'tok')).toMatchObject({
             ok: true,

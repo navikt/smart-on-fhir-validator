@@ -31,8 +31,12 @@ test environments only.
     always stays on the server, and it is refreshed first if it has expired.
   - **No token** sends no `Authorization` header, for example to see how the server answers an
     unauthenticated call.
-  - **Custom token** sends a token you type into the masked **Custom access token** field, for example
-    to test an invalid or differently scoped token. It must be a bearer token (letters, digits and
+  - **Custom token** sends a token you paste into the **Custom access token** field, for example
+    to test an invalid or differently scoped token. The field is plain text, not masked, so
+    others can read it from your screen. Paste a raw access token, or JSON containing a top-level
+    `access_token` such as `{"access_token": "abc.def.ghi", "token_type": "Bearer"}`. Only the
+    `access_token` value is sent; other fields such as a refresh token are ignored. Decoded JWT
+    claims are not enough, because a token needs a signature. The token must be a bearer token (letters, digits and
     `-._~+/`, optionally ending in `=`, at most 16384 characters). It is sent to the app in the request body
     and on to the FHIR server. The app holds it in this page's memory only, until you clear the field,
     leave Custom token or reload the page. It is not saved in history or your session, and the

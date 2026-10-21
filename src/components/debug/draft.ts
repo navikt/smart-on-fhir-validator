@@ -56,6 +56,40 @@ export function isWrite(method: string): boolean {
     return !QUERY_METHODS.has(method)
 }
 
+const CUSTOM_TOKEN_JSON_START = /^[{["]/
+const CUSTOM_TOKEN_NOT_FOUND =
+    'No access_token found. Paste a raw access token or JSON containing access_token. Decoded JWT claims cannot be used as a token: they need a signature.'
+
+export type CustomTokenResult = { ok: true; token: string } | { ok: false; error: string }
+
+export function extractCustomToken(input: string): CustomTokenResult {
+    const trimmed = input.trim()
+    if (!CUSTOM_TOKEN_JSON_START.test(trimmed)) return { ok: true, token: trimmed }
+
+    if (utf8ByteLength(trimmed) > MAX_DEBUG_BODY_BYTES) {
+        return { ok: false, error: `The pasted text may not exceed ${MAX_DEBUG_BODY_BYTES} bytes.` }
+    }
+
+    let parsed: unknown
+    try {
+        parsed = JSON.parse(trimmed)
+    } catch {
+        return {
+            ok: false,
+            error: 'The pasted text looks like JSON but could not be parsed. Paste a raw access token or valid JSON containing access_token.',
+        }
+    }
+
+    const token =
+        typeof parsed === 'object' && parsed !== null && !Array.isArray(parsed)
+            ? (parsed as Record<string, unknown>).access_token
+            : undefined
+    if (typeof token !== 'string' || token.trim() === '') {
+        return { ok: false, error: CUSTOM_TOKEN_NOT_FOUND }
+    }
+    return { ok: true, token: token.trim() }
+}
+
 export function buildRequest(draft: RequestDraft, customToken = ''): DraftResult {
     const method = effectiveMethod(draft)
     if (method === '') return { ok: false, error: 'Enter a method.' }
@@ -76,6 +110,13 @@ export function buildRequest(draft: RequestDraft, customToken = ''): DraftResult
 
     const contentType = body === null ? null : method === 'PATCH' ? draft.contentType : FHIR_JSON
 
+    let token: string | null = null
+    if (draft.authentication === 'custom') {
+        const extracted = extractCustomToken(customToken)
+        if (!extracted.ok) return extracted
+        token = extracted.token
+    }
+
     const validated = validateDebugRequest({
         method,
         resourceType: draft.resourceType,
@@ -84,7 +125,7 @@ export function buildRequest(draft: RequestDraft, customToken = ''): DraftResult
         body,
         contentType,
         authentication: draft.authentication,
-        customToken: draft.authentication === 'custom' ? customToken : null,
+        customToken: token,
     })
 
     if ('error' in validated) return { ok: false, error: validated.detail ?? validated.error }
