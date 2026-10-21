@@ -34,7 +34,7 @@ export default async function DebugPage(): Promise<ReactElement> {
     if (session?.state !== 'active') return <DebugUnavailable />
 
     return (
-        <main className="mx-auto max-w-[960px] px-6 pt-8 pb-24">
+        <main className="mx-auto max-w-[1280px] px-6 pt-8 pb-24">
             <DebugConsole session={toDebugSessionView(session)} />
         </main>
     )

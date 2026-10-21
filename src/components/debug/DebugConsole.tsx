@@ -1,7 +1,7 @@
 'use client'
 
 import Link from 'next/link'
-import { useId, useState, type FormEvent, type ReactElement } from 'react'
+import { useId, useRef, useState, type FormEvent, type ReactElement } from 'react'
 
 import type { DebugSessionView } from '#core/debug/session-view'
 import { JSON_PATCH, FHIR_JSON } from '#core/debug/request'
@@ -21,18 +21,21 @@ import {
     type MethodOption,
     type RequestDraft,
 } from './draft'
+import { CapabilitySidebar, useCapabilities } from './CapabilitySidebar'
+import { ErrorNote } from './ErrorNote'
+import { pushHistory, type HistoryEntry } from './history'
+import { HistoryList } from './HistoryList'
 import { summarizeResponse } from './outcome'
-
-type DebugResult =
-    | { kind: 'exchange'; exchange: HttpExchange; bodyTruncated: boolean }
-    | { kind: 'failure'; error: string; detail: string }
+import { examplePresets, launchShortcuts, sidebarDraft } from './presets'
+import { PresetGroup } from './PresetGroup'
+import type { DebugResult } from './result'
+import { EYEBROW_CLASSES } from './styles'
+import { TokenPanel } from './TokenPanel'
 
 const FIELD_CLASSES =
     'text-16 min-h-11 rounded border border-ax-border-neutral bg-white px-3 py-2 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ax-border-focus'
 
 const LABEL_CLASSES = 'text-14 font-semibold text-ax-text-neutral-subtle'
-
-const EYEBROW_CLASSES = 'text-13 font-bold tracking-eyebrow text-ax-text-neutral-subtle uppercase'
 
 async function sendRequest(request: unknown): Promise<DebugResult> {
     let response: Response
@@ -98,18 +101,6 @@ function WriteWarning(): ReactElement {
                 Requests other than GET and HEAD use your launch token and write to the connected FHIR server.
                 Check the resource, id and body before sending.
             </p>
-        </div>
-    )
-}
-
-function ErrorNote({ title, detail }: { title: string; detail: string }): ReactElement {
-    return (
-        <div
-            role="alert"
-            className="text-16 rounded border border-l-8 border-ax-border-danger bg-ax-bg-danger-soft px-4 py-3 text-ax-text-danger"
-        >
-            <p className="font-bold">{title}</p>
-            <p className="mt-1 max-w-[70ch] break-words">{detail}</p>
         </div>
     )
 }
@@ -415,17 +406,29 @@ function ResponseView({
     )
 }
 
-export function DebugConsole({
-    session,
-    resourceTypeOptions = [],
-}: {
-    session: DebugSessionView
-    resourceTypeOptions?: readonly string[]
-}): ReactElement {
+export function DebugConsole({ session }: { session: DebugSessionView }): ReactElement {
     const [draft, setDraft] = useState<RequestDraft>(EMPTY_DRAFT)
     const [sending, setSending] = useState(false)
     const [draftError, setDraftError] = useState<string | null>(null)
     const [result, setResult] = useState<DebugResult | null>(null)
+    const [history, setHistory] = useState<HistoryEntry[]>([])
+    const nextHistoryId = useRef(1)
+    const capabilities = useCapabilities()
+
+    const context = {
+        patient: session.patient,
+        encounter: session.encounter,
+        fhirUser: session.fhirUser,
+    }
+    const resourceTypeOptions =
+        capabilities.state.status === 'ready'
+            ? capabilities.state.summary.resources.map((resource) => resource.type)
+            : []
+
+    const prefill = (next: RequestDraft): void => {
+        setDraft(next)
+        setDraftError(null)
+    }
 
     const send = async (): Promise<void> => {
         const built = buildRequest(draft)
@@ -434,13 +437,28 @@ export function DebugConsole({
             return
         }
 
+        const snapshot = draft
         setDraftError(null)
         setSending(true)
         try {
-            setResult(await sendRequest(built.request))
+            const outcome = await sendRequest(built.request)
+            setResult(outcome)
+            const entry: HistoryEntry = {
+                id: nextHistoryId.current++,
+                draft: snapshot,
+                result: outcome,
+                createdAt: new Date().toISOString(),
+            }
+            setHistory((previous) => pushHistory(previous, entry))
         } finally {
             setSending(false)
         }
+    }
+
+    const restore = (entry: HistoryEntry): void => {
+        setDraft(entry.draft)
+        setResult(entry.result)
+        setDraftError(null)
     }
 
     return (
@@ -461,23 +479,53 @@ export function DebugConsole({
                 </Link>
             </header>
 
-            <RequestBuilder
-                draft={draft}
-                onChange={setDraft}
-                onSend={() => void send()}
-                sending={sending}
-                resourceTypeOptions={resourceTypeOptions}
-            />
+            <TokenPanel session={session} />
 
-            {draftError && <ErrorNote title="Fix the request" detail={draftError} />}
+            <div className="grid gap-6 lg:grid-cols-[300px_minmax(0,1fr)]">
+                <CapabilitySidebar
+                    state={capabilities.state}
+                    onRetry={capabilities.retry}
+                    onSelect={(resource) => prefill(sidebarDraft(resource, context))}
+                />
 
-            <div aria-live="polite" className="flex flex-col gap-6">
-                {result?.kind === 'failure' && (
-                    <ErrorNote title={`Request failed (${result.error})`} detail={result.detail} />
-                )}
-                {result?.kind === 'exchange' && (
-                    <ResponseView exchange={result.exchange} bodyTruncated={result.bodyTruncated} />
-                )}
+                <div className="flex min-w-0 flex-col gap-6">
+                    <PresetGroup
+                        title="Launch shortcuts"
+                        intro="Fill in the request from this launch. Nothing is sent until you press Send."
+                        presets={launchShortcuts(context)}
+                        onSelect={prefill}
+                        layout="chips"
+                    />
+
+                    <PresetGroup
+                        title="Examples"
+                        intro="Fill in the request with a worked example. Nothing is sent until you press Send."
+                        presets={examplePresets(context)}
+                        onSelect={prefill}
+                        layout="list"
+                    />
+
+                    <RequestBuilder
+                        draft={draft}
+                        onChange={setDraft}
+                        onSend={() => void send()}
+                        sending={sending}
+                        resourceTypeOptions={resourceTypeOptions}
+                    />
+
+                    {draftError && <ErrorNote title="Fix the request" detail={draftError} />}
+
+                    <div aria-live="polite" className="flex flex-col gap-6">
+                        {result?.kind === 'failure' && (
+                            <ErrorNote title={`Request failed (${result.error})`} detail={result.detail} />
+                        )}
+                        {result?.kind === 'exchange' && (
+                            <ResponseView exchange={result.exchange} bodyTruncated={result.bodyTruncated} />
+                        )}
+                    </div>
+
+                    <HistoryList entries={history} onRestore={restore} />
+                </div>
             </div>
         </div>
     )

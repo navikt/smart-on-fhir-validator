@@ -192,6 +192,30 @@ test.describe('landing → launch against the mock EHR → report', () => {
         const bodyText = await page.locator('body').innerText()
         expect(bodyText).not.toMatch(/Bearer\s+(?!\[REDACTED\])[A-Za-z0-9\-_.]+/)
         expect(bodyText).not.toMatch(/"access_token"\s*:\s*"(?!\[REDACTED\])[^"]+"/)
+
+        await expect(page.getByRole('complementary', { name: 'CapabilityStatement' })).toContainText(
+            'Not listed in the CapabilityStatement? Type any resource name in the box.',
+        )
+        await page.getByRole('button', { name: /^Condition\?patient=/ }).click()
+        await expect(page.getByLabel('Resource type')).toHaveValue('Condition')
+        await expect(page.getByLabel('Query (without the leading ?)')).toHaveValue(/^patient=.+/)
+        await page.getByRole('button', { name: 'Send' }).click()
+        await expect(response.getByText(/HTTP 200/)).toBeVisible()
+        await expect(response.getByRole('code')).toContainText('"resourceType": "Bundle"')
+
+        await page.getByRole('button', { name: 'Read a missing patient' }).click()
+        await page.getByRole('button', { name: 'Send' }).click()
+        await expect(response.getByText(/HTTP 404/)).toBeVisible()
+        await expect(response.getByRole('code')).toContainText('"resourceType": "OperationOutcome"')
+
+        const history = page.getByRole('region', { name: 'History' })
+        await expect(history.getByRole('listitem')).toHaveCount(3)
+        await history.getByRole('button').last().click()
+        await expect(page.getByLabel('Id (optional)')).toHaveValue('patient-espen-eksempel')
+
+        await page.getByText('Launch token').click()
+        const tokenText = await page.locator('details').innerText()
+        expect(tokenText).not.toMatch(/access_token|refresh_token|id_token|Bearer/)
     })
 
     test('debug mode without an active session shows the unavailable page and no request builder', async ({
