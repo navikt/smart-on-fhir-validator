@@ -358,14 +358,6 @@ function RequestBuilder({
                             </code>
                         </p>
                     </div>
-                    <a
-                        href="https://github.com/navikt/smart-on-fhir-validator/blob/main/docs/debug-mode.md#custom-access-tokens"
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="text-16 text-ax-text-accent inline-flex min-h-11 items-center self-start underline"
-                    >
-                        See accepted formats and common mistakes
-                    </a>
                 </div>
             )}
 
