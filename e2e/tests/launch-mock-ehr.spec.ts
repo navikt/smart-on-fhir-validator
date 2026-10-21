@@ -235,6 +235,55 @@ test.describe('landing → launch against the mock EHR → report', () => {
         expect(tokenText).not.toMatch(/access_token|refresh_token|id_token|Bearer/)
     })
 
+    test('debug mode supports session, no and custom tokens and keeps the token out of history', async ({
+        page,
+    }) => {
+        await launchAgainstMockEhr(page)
+        await page.getByRole('link', { name: 'Open Debug mode' }).click()
+        await expect(page).toHaveURL(/\/debug$/)
+
+        const authorization = page.getByLabel('Authorization')
+        const customToken = page.getByLabel('Custom access token')
+        const response = page.getByRole('region', { name: 'Response' })
+        const history = page.getByRole('region', { name: 'History' })
+
+        await expect(authorization).toHaveValue('session')
+        await expect(customToken).toHaveCount(0)
+        await page.getByLabel('Resource type').selectOption('Patient')
+        await page.getByLabel('Id (optional)').fill('patient-espen-eksempel')
+        await page.getByRole('button', { name: 'Send' }).click()
+        await expect(response.getByText(/HTTP 200/)).toBeVisible()
+
+        await authorization.selectOption('none')
+        await page.getByRole('button', { name: 'Send' }).click()
+        await expect(response.getByText(/HTTP 401/)).toBeVisible()
+
+        await authorization.selectOption('custom')
+        await expect(customToken).toHaveAttribute('type', 'password')
+        await customToken.fill('deliberately-invalid-token')
+        await page.getByRole('button', { name: 'Send' }).click()
+        await expect(response.getByText(/HTTP 401/)).toBeVisible()
+        await expect(page.getByText('deliberately-invalid-token')).toHaveCount(0)
+        await expect(history.getByRole('listitem')).toHaveCount(3)
+
+        await page.getByRole('button', { name: 'Read a missing patient' }).click()
+        await expect(page.getByLabel('Id (optional)')).toHaveValue('does-not-exist')
+        await expect(authorization).toHaveValue('custom')
+        await expect(customToken).toHaveValue('deliberately-invalid-token')
+
+        await history.getByRole('button').nth(1).click()
+        await expect(authorization).toHaveValue('none')
+
+        await history.getByRole('button').first().click()
+        await expect(authorization).toHaveValue('custom')
+        await expect(customToken).toHaveValue('')
+
+        await history.getByRole('button').last().click()
+        await expect(authorization).toHaveValue('session')
+        await page.getByRole('button', { name: 'Send' }).click()
+        await expect(response.getByText(/HTTP 200/)).toBeVisible()
+    })
+
     test('debug mode without an active session shows the unavailable page and no request builder', async ({
         page,
     }) => {

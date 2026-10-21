@@ -4,7 +4,7 @@ import Link from 'next/link'
 import { useId, useRef, useState, type FormEvent, type ReactElement } from 'react'
 
 import type { DebugSessionView } from '#core/debug/session-view'
-import { JSON_PATCH, FHIR_JSON } from '#core/debug/request'
+import { JSON_PATCH, FHIR_JSON, type AuthenticationMode } from '#core/debug/request'
 import type { HttpExchange } from '#core/http/exchange'
 
 import { HeadersTable } from '#components/exchange/HeadersTable'
@@ -102,7 +102,7 @@ function WriteWarning(): ReactElement {
         >
             <p className="font-bold">This changes the real EHR</p>
             <p className="mt-1 max-w-[70ch]">
-                Requests other than GET and HEAD use your launch token and write to the connected FHIR server.
+                Requests other than GET and HEAD write to the connected FHIR server, with or without a token.
                 Check the resource, id and body before sending.
             </p>
         </div>
@@ -111,13 +111,17 @@ function WriteWarning(): ReactElement {
 
 function RequestBuilder({
     draft,
+    customToken,
     onChange,
+    onCustomTokenChange,
     onSend,
     sending,
     resourceTypeOptions,
 }: {
     draft: RequestDraft
+    customToken: string
     onChange: (next: RequestDraft) => void
+    onCustomTokenChange: (next: string) => void
     onSend: () => void
     sending: boolean
     resourceTypeOptions: readonly string[]
@@ -295,6 +299,50 @@ function RequestBuilder({
                 </div>
             )}
 
+            <div className="flex flex-col gap-1">
+                <label htmlFor={`${ids}-auth`} className={LABEL_CLASSES}>
+                    Authorization
+                </label>
+                <select
+                    id={`${ids}-auth`}
+                    name="authentication"
+                    value={draft.authentication}
+                    onChange={(event) => {
+                        const authentication = event.target.value as AuthenticationMode
+                        if (authentication !== 'custom') onCustomTokenChange('')
+                        set('authentication', authentication)
+                    }}
+                    className={`${FIELD_CLASSES} max-w-xs`}
+                >
+                    <option value="session">Session token</option>
+                    <option value="none">No token</option>
+                    <option value="custom">Custom token</option>
+                </select>
+                <p className="text-14 max-w-[70ch] text-ax-text-neutral-subtle">
+                    Session token sends your launch access token, which always stays on the server. No token
+                    sends no Authorization header. Custom token uses the value below. It is not saved in
+                    history or your session.
+                </p>
+            </div>
+
+            {draft.authentication === 'custom' && (
+                <div className="flex flex-col gap-1">
+                    <label htmlFor={`${ids}-custom-token`} className={LABEL_CLASSES}>
+                        Custom access token
+                    </label>
+                    <input
+                        id={`${ids}-custom-token`}
+                        type="password"
+                        name="customToken"
+                        value={customToken}
+                        onChange={(event) => onCustomTokenChange(event.target.value)}
+                        autoComplete="off"
+                        spellCheck={false}
+                        className={`${FIELD_CLASSES} font-mono`}
+                    />
+                </div>
+            )}
+
             {isWrite(method) && <WriteWarning />}
 
             <div>
@@ -431,6 +479,7 @@ function ResponseView({
 
 export function DebugConsole({ session }: { session: DebugSessionView }): ReactElement {
     const [draft, setDraft] = useState<RequestDraft>(EMPTY_DRAFT)
+    const [customToken, setCustomToken] = useState('')
     const [sending, setSending] = useState(false)
     const [draftError, setDraftError] = useState<string | null>(null)
     const [result, setResult] = useState<DebugResult | null>(null)
@@ -451,12 +500,12 @@ export function DebugConsole({ session }: { session: DebugSessionView }): ReactE
 
     const prefill = (next: RequestDraft): void => {
         setBuilderKey((key) => key + 1)
-        setDraft(next)
+        setDraft({ ...next, authentication: draft.authentication })
         setDraftError(null)
     }
 
     const send = async (): Promise<void> => {
-        const built = buildRequest(draft)
+        const built = buildRequest(draft, customToken)
         if (!built.ok) {
             setDraftError(built.error)
             return
@@ -483,6 +532,7 @@ export function DebugConsole({ session }: { session: DebugSessionView }): ReactE
     const restore = (entry: HistoryEntry): void => {
         setBuilderKey((key) => key + 1)
         setDraft(entry.draft)
+        setCustomToken('')
         setResult(entry.result)
         setDraftError(null)
     }
@@ -542,7 +592,9 @@ export function DebugConsole({ session }: { session: DebugSessionView }): ReactE
                     <RequestBuilder
                         key={builderKey}
                         draft={draft}
+                        customToken={customToken}
                         onChange={setDraft}
+                        onCustomTokenChange={setCustomToken}
                         onSend={() => void send()}
                         sending={sending}
                         resourceTypeOptions={resourceTypeOptions}

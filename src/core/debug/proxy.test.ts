@@ -42,6 +42,8 @@ function request(overrides: Partial<DebugRequest> = {}): DebugRequest {
         query: '',
         body: null,
         contentType: null,
+        authentication: 'session',
+        customToken: null,
         ...overrides,
     }
 }
@@ -74,6 +76,9 @@ const fhirResponse = () =>
         status: 200,
         headers: { 'Content-Type': 'application/fhir+json' },
     })
+
+const authorizationOf = (fetchImpl: Fetch): unknown =>
+    new Headers(fetchImpl.mock.calls[0]?.[1]?.headers).get('Authorization')
 
 describe('executeDebugRequest', () => {
     it('rejects a missing session', async () => {
@@ -199,6 +204,64 @@ describe('executeDebugRequest', () => {
         const result = await executeDebugRequest(SESSION_ID, request(), deps)
 
         expect(isDebugError(result) ? null : result.exchange.error).toContain('connection refused')
+    })
+
+    describe('authentication modes', () => {
+        const expired = { expiresAt: '2023-12-31T00:00:00.000Z' }
+        const custom = { authentication: 'custom', customToken: 'custom-abc' } as const
+
+        it('omits Authorization for none and defaults an omitted mode to the session token', async () => {
+            const fetchImpl: Fetch = vi.fn<typeof fetch>(async () => fhirResponse())
+            const { deps } = await setup(session(), fetchImpl)
+
+            await executeDebugRequest(SESSION_ID, request({ authentication: 'none' }), deps)
+            expect(authorizationOf(fetchImpl)).toBeNull()
+            expect(fetchImpl.mock.calls[0]?.[1]).toMatchObject({ redirect: 'manual' })
+
+            const { authentication: _a, customToken: _c, ...legacy } = request()
+            fetchImpl.mockClear()
+            await executeDebugRequest(SESSION_ID, legacy, deps)
+            expect(authorizationOf(fetchImpl)).toBe('Bearer secret-access-token')
+        })
+
+        it('sends the custom token but redacts it in the exchange', async () => {
+            const fetchImpl: Fetch = vi.fn<typeof fetch>(async () => fhirResponse())
+            const { deps } = await setup(session(), fetchImpl)
+
+            const result = await executeDebugRequest(SESSION_ID, request(custom), deps)
+
+            expect(authorizationOf(fetchImpl)).toBe('Bearer custom-abc')
+            expect(JSON.stringify(result)).not.toContain('custom-abc')
+            expect(JSON.stringify(result)).not.toContain('secret-access-token')
+        })
+
+        it.each([
+            ['none', { authentication: 'none' }],
+            ['custom', custom],
+        ] as const)('does not refresh an expired session in %s mode', async (_name, overrides) => {
+            const fetchImpl: Fetch = vi.fn<typeof fetch>(async () => fhirResponse())
+            const { deps, set } = await setup(session(expired), fetchImpl)
+
+            const result = await executeDebugRequest(SESSION_ID, request(overrides), deps)
+
+            expect(isDebugError(result)).toBe(false)
+            expect(fetchImpl).toHaveBeenCalledTimes(1)
+            expect(String(fetchImpl.mock.calls[0]?.[0])).toBe(`${BASE}/Patient/123`)
+            expect(set).not.toHaveBeenCalled()
+        })
+
+        it.each([
+            ['none', { authentication: 'none' }],
+            ['custom', custom],
+        ] as const)('still requires an active session in %s mode', async (_name, overrides) => {
+            const fetchImpl: Fetch = vi.fn<typeof fetch>()
+            const { deps } = await setup(null, fetchImpl)
+
+            expect(await executeDebugRequest(SESSION_ID, request(overrides), deps)).toMatchObject({
+                error: 'no_session',
+            })
+            expect(fetchImpl).not.toHaveBeenCalled()
+        })
     })
 
     describe('expiry', () => {

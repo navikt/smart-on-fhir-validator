@@ -7,7 +7,17 @@ import { requireSuccessfulLaunch } from '#test/mock-ehr'
 import { type DebugResult, executeDebugRequest, isDebugError } from './proxy'
 
 function debugRequest(overrides: Partial<DebugRequest>): DebugRequest {
-    return { method: 'GET', resourceType: '', id: '', query: '', body: null, contentType: null, ...overrides }
+    return {
+        method: 'GET',
+        resourceType: '',
+        id: '',
+        query: '',
+        body: null,
+        contentType: null,
+        authentication: 'session',
+        customToken: null,
+        ...overrides,
+    }
 }
 
 async function launch() {

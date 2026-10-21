@@ -2,6 +2,7 @@ import {
     FHIR_JSON,
     JSON_PATCH,
     MAX_DEBUG_BODY_BYTES,
+    type AuthenticationMode,
     normaliseMethod,
     utf8ByteLength,
     validateDebugRequest,
@@ -20,6 +21,7 @@ export type RequestDraft = {
     query: string
     body: string
     contentType: typeof FHIR_JSON | typeof JSON_PATCH
+    authentication: AuthenticationMode
 }
 
 export const EMPTY_DRAFT: RequestDraft = {
@@ -30,6 +32,7 @@ export const EMPTY_DRAFT: RequestDraft = {
     query: '',
     body: '',
     contentType: FHIR_JSON,
+    authentication: 'session',
 }
 
 export type DraftResult = { ok: true; request: DebugRequest } | { ok: false; error: string }
@@ -53,7 +56,7 @@ export function isWrite(method: string): boolean {
     return !QUERY_METHODS.has(method)
 }
 
-export function buildRequest(draft: RequestDraft): DraftResult {
+export function buildRequest(draft: RequestDraft, customToken = ''): DraftResult {
     const method = effectiveMethod(draft)
     if (method === '') return { ok: false, error: 'Enter a method.' }
 
@@ -80,6 +83,8 @@ export function buildRequest(draft: RequestDraft): DraftResult {
         query: allowsQuery(method) ? draft.query.replace(/^\?/, '') : '',
         body,
         contentType,
+        authentication: draft.authentication,
+        customToken: draft.authentication === 'custom' ? customToken : null,
     })
 
     if ('error' in validated) return { ok: false, error: validated.detail ?? validated.error }

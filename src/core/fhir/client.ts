@@ -14,6 +14,7 @@ export type FhirRequestOptions = {
     url: string
     body: string | null
     contentType: string | null
+    accessToken?: string | null
 }
 
 /**
@@ -102,12 +103,21 @@ export class FhirClient {
         })
     }
 
-    request({ method, url, body, contentType }: FhirRequestOptions): Promise<RecordedResponse> {
+    request({ method, url, body, contentType, accessToken }: FhirRequestOptions): Promise<RecordedResponse> {
         const hasBody = body !== null && contentType !== null
+        const extra: Record<string, string> = hasBody ? { 'Content-Type': contentType } : {}
+        const headers =
+            accessToken === undefined
+                ? this.headers(extra)
+                : {
+                      Accept: 'application/fhir+json',
+                      ...(accessToken === null ? {} : { Authorization: `Bearer ${accessToken}` }),
+                      ...extra,
+                  }
 
         return this.http.send('debug', url, {
             method,
-            headers: this.headers(hasBody ? { 'Content-Type': contentType } : {}),
+            headers,
             redirect: 'manual',
             ...(hasBody ? { body } : {}),
         })

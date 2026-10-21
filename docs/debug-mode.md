@@ -13,7 +13,8 @@ mock EHR on the front page, and try again.
 ## Warning: writes change the real EHR
 
 Debug mode sends whatever you build to the FHIR server of your session. Any method other than GET or HEAD
-may change data there. Check the method, target and body before you send. Use test environments only.
+may change data there, whichever token you send. Check the method, target and body before you send. Use
+test environments only.
 
 ## Building a request
 
@@ -25,6 +26,22 @@ may change data there. Check the method, target and body before you send. Use te
 - **Body.** JSON, for methods that take one. The content type is `application/fhir+json`; PATCH can
   also use `application/json-patch+json`.
 
+- **Authorization.** Choose how the request is authenticated:
+  - **Session token** (default) sends your launch access token as the `Authorization` header. The token
+    always stays on the server, and it is refreshed first if it has expired.
+  - **No token** sends no `Authorization` header, for example to see how the server answers an
+    unauthenticated call.
+  - **Custom token** sends a token you type into the masked **Custom access token** field, for example
+    to test an invalid or differently scoped token. It must be a bearer token (letters, digits and
+    `-._~+/`, optionally ending in `=`, at most 16384 characters). It is sent to the app in the request body
+    and on to the FHIR server. The app holds it in this page's memory only, until you clear the field,
+    leave Custom token or reload the page. It is not saved in history or your session, and the
+    `Authorization` header is redacted in the recorded exchange. Page memory is lost on reload, unlike
+    persistent storage such as cookies or local storage. The app cannot control what the FHIR server logs.
+
+  All three modes need an active launch session. Only the session token is refreshed, so No token and
+  Custom token still work after the launch token has expired.
+
 The request always goes to the FHIR base URL of your session. Nothing outside it can be reached.
 
 ## Shortcuts and predefined terms
@@ -33,7 +50,8 @@ The request always goes to the FHIR base URL of your session. Nothing outside it
 user, and searches for that patient's conditions and observations. A shortcut only appears when the
 launch returned the value it needs.
 
-The five **predefined terms** load a request into the form when you click them. Nothing is sent until you press Send, and you can edit the request first:
+The five **predefined terms** load a request into the form when you click them. Nothing is sent until you press Send, and you can edit the request first. Shortcuts, predefined terms and the sidebar keep the current
+**Authorization** choice and any custom token you typed:
 
 | Predefined term               | What it does                                                    |
 |-------------------------------|-----------------------------------------------------------------|
@@ -58,12 +76,14 @@ ID token. The raw access, refresh and ID tokens never reach the browser.
   before the URL is built.
 - The app only accepts a same-origin `Origin` header and a JSON content type.
 - Redirects from the FHIR server are not followed.
-- The `Authorization` header is added on the server and redacted in the exchange you see.
+- The session token is added to the `Authorization` header on the server. Whatever the mode, the header
+  is redacted in the exchange you see.
 
 ## History
 
 The last 20 requests are kept in browser memory so you can open them again. Reloading the page clears
-them.
+them. Each entry remembers its **Authorization** choice but never a custom token: opening an entry
+restores the choice and clears the token field, so enter it again.
 
 ## Limits
 

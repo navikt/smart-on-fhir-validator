@@ -102,7 +102,7 @@ export async function executeDebugRequest(
     if (isSmartError(url)) return { error: 'invalid_request', detail: url.detail ?? url.error }
 
     const now = (deps.now ?? (() => new Date()))()
-    const active = await refreshIfNeeded(session, deps, now)
+    const active = request.authentication === 'session' ? await refreshIfNeeded(session, deps, now) : session
     if ('error' in active) return active
 
     const client = new FhirClient({
@@ -121,6 +121,12 @@ export async function executeDebugRequest(
         url: url.toString(),
         body: request.body,
         contentType: request.contentType,
+        accessToken:
+            request.authentication === 'session'
+                ? undefined
+                : request.authentication === 'none'
+                  ? null
+                  : request.customToken,
     })
 
     return { exchange: response.exchange, bodyTruncated: response.bodyTruncated }

@@ -17,7 +17,20 @@ describe('buildRequest', () => {
                 query: '_summary=true',
                 body: null,
                 contentType: null,
+                authentication: 'session',
+                customToken: null,
             },
+        })
+    })
+
+    it('emits the custom token only in custom mode', () => {
+        expect(buildRequest(draft({ authentication: 'custom' }), 'tok')).toMatchObject({
+            ok: true,
+            request: { authentication: 'custom', customToken: 'tok' },
+        })
+        expect(buildRequest(draft({ authentication: 'none' }), 'tok')).toMatchObject({
+            ok: true,
+            request: { authentication: 'none', customToken: null },
         })
     })
 

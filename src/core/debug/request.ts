@@ -18,6 +18,12 @@ const OPERATION_SEGMENT = /^\$[A-Za-z][A-Za-z0-9-]{0,63}$/
 const ID_SEGMENT = /^[A-Za-z0-9\-.]{1,64}$/
 const UNSAFE_PATH_CHARACTERS = /[\\?#%\s]/u
 
+export const AUTHENTICATION_MODES = ['session', 'none', 'custom'] as const
+export type AuthenticationMode = (typeof AUTHENTICATION_MODES)[number]
+
+export const MAX_CUSTOM_TOKEN_LENGTH = 16384
+const BEARER_TOKEN = /^[A-Za-z0-9\-._~+/]+=*$/
+
 export const debugRequestSchema = z.object({
     method: z.string(),
     resourceType: z.string(),
@@ -25,6 +31,8 @@ export const debugRequestSchema = z.object({
     query: z.string(),
     body: z.string().nullable(),
     contentType: z.enum([FHIR_JSON, JSON_PATCH]).nullable(),
+    authentication: z.enum(AUTHENTICATION_MODES).default('session'),
+    customToken: z.string().nullable().default(null),
 })
 
 export type DebugRequest = z.infer<typeof debugRequestSchema>
@@ -43,6 +51,25 @@ function invalid(detail: string): SmartError {
 
 function isValidId(segment: string): boolean {
     return ID_SEGMENT.test(segment) && segment !== '.' && segment !== '..'
+}
+
+function checkCustomToken(request: DebugRequest): SmartError | null {
+    const { authentication, customToken } = request
+
+    if (authentication !== 'custom') {
+        return customToken === null
+            ? null
+            : invalid('A custom access token can only be used with the Custom token option.')
+    }
+    if (customToken === null || customToken === '') return invalid('Enter a custom access token.')
+    if (customToken.length > MAX_CUSTOM_TOKEN_LENGTH) {
+        return invalid(`The custom access token may not exceed ${MAX_CUSTOM_TOKEN_LENGTH} characters.`)
+    }
+    if (!BEARER_TOKEN.test(customToken)) {
+        return invalid('The custom access token must be a valid bearer token without spaces or line breaks.')
+    }
+
+    return null
 }
 
 function checkMethod(method: string): SmartError | null {
@@ -159,6 +186,7 @@ export function validateDebugRequest(input: unknown): DebugRequest | SmartError 
     const request = { ...parsed.data, method }
 
     return (
+        checkCustomToken(request) ??
         checkMethod(method) ??
         checkPath(request, method) ??
         checkQuery(request.query) ??

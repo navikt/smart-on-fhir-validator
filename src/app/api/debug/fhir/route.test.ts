@@ -188,6 +188,30 @@ describe('POST /api/debug/fhir', () => {
         expect(response.status).toBe(400)
     })
 
+    it('rejects an invalid custom token with 400 and no echo', async () => {
+        const response = await POST(
+            post(JSON.stringify({ ...input, authentication: 'custom', customToken: 'bad token' })),
+        )
+
+        expect(response.status).toBe(400)
+        expect(JSON.stringify(await response.json())).not.toContain('bad token')
+        expect(fetch).not.toHaveBeenCalled()
+    })
+
+    it('sends no Authorization header for none and the supplied token for custom', async () => {
+        await POST(post(JSON.stringify({ ...input, authentication: 'none' })))
+        expect(new Headers(vi.mocked(fetch).mock.calls[0]?.[1]?.headers).has('Authorization')).toBe(false)
+
+        const response = await POST(
+            post(JSON.stringify({ ...input, authentication: 'custom', customToken: 'custom-abc' })),
+        )
+        const text = JSON.stringify(await response.json())
+        expect(new Headers(vi.mocked(fetch).mock.calls[1]?.[1]?.headers).get('Authorization')).toBe(
+            'Bearer custom-abc',
+        )
+        expect(text).not.toContain('custom-abc')
+    })
+
     it('proxies the call and returns the redacted exchange', async () => {
         const response = await POST(post(JSON.stringify(input)))
         const json = await response.json()

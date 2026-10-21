@@ -21,6 +21,8 @@ function request(overrides: Partial<DebugRequest> = {}): DebugRequest {
         query: '',
         body: null,
         contentType: null,
+        authentication: 'session',
+        customToken: null,
         ...overrides,
     }
 }
@@ -135,6 +137,43 @@ describe('query', () => {
         expect(
             isSmartError(validateDebugRequest(request({ query: 'a'.repeat(MAX_DEBUG_QUERY_LENGTH) }))),
         ).toBe(false)
+    })
+})
+
+describe('authentication', () => {
+    it('defaults to the session token when the fields are omitted', () => {
+        const { authentication: _a, customToken: _c, ...legacy } = request()
+
+        expect(validateDebugRequest(legacy)).toMatchObject({ authentication: 'session', customToken: null })
+    })
+
+    it('accepts none and a valid custom token', () => {
+        expect(validateDebugRequest(request({ authentication: 'none' }))).toMatchObject({
+            authentication: 'none',
+        })
+        expect(
+            validateDebugRequest(request({ authentication: 'custom', customToken: 'abc.DEF-1_2~3+/=' })),
+        ).toMatchObject({ authentication: 'custom', customToken: 'abc.DEF-1_2~3+/=' })
+    })
+
+    it.each([
+        ['an unknown mode', { authentication: 'basic' }],
+        ['a non-string token', { authentication: 'custom', customToken: 123 }],
+        ['a missing token', { authentication: 'custom', customToken: null }],
+        ['an empty token', { authentication: 'custom', customToken: '' }],
+        ['a token with a space', { authentication: 'custom', customToken: 'abc def' }],
+        ['a token with CRLF', { authentication: 'custom', customToken: 'abc\r\nX-Evil: 1' }],
+        ['a token that is too long', { authentication: 'custom', customToken: 'a'.repeat(16385) }],
+        ['a token in session mode', { authentication: 'session', customToken: 'secret-token' }],
+        ['a token in none mode', { authentication: 'none', customToken: 'secret-token' }],
+    ])('rejects %s without echoing the input', (_name, overrides) => {
+        const result = validateDebugRequest({ ...request(), ...overrides })
+
+        expect(result).toMatchObject({ error: 'invalid_request' })
+        const text = JSON.stringify(result)
+        expect(text).not.toContain('secret-token')
+        expect(text).not.toContain('Evil')
+        expect(text).not.toContain('abc')
     })
 })
 
