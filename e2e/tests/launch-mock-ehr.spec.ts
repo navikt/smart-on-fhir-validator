@@ -335,6 +335,21 @@ test.describe('landing → launch against the mock EHR → report', () => {
         await expect(authorization).toHaveValue('session')
         await page.getByRole('button', { name: 'Send' }).click()
         await expect(response.getByText(/HTTP 200/)).toBeVisible()
+
+        const showMore = history.getByRole('button', { name: 'Show more (1)' })
+        await expect(history.getByRole('listitem')).toHaveCount(3)
+        await expect(showMore).toHaveAttribute('aria-expanded', 'false')
+        await showMore.click()
+        await expect(history.getByRole('listitem')).toHaveCount(4)
+
+        await history.getByRole('listitem').last().getByRole('button').click()
+        await expect(authorization).toHaveValue('session')
+        await expect(page.getByLabel('Id (optional)')).toHaveValue('patient-espen-eksempel')
+
+        const showLess = history.getByRole('button', { name: 'Show less' })
+        await expect(showLess).toHaveAttribute('aria-expanded', 'true')
+        await showLess.click()
+        await expect(history.getByRole('listitem')).toHaveCount(3)
     })
 
     test('debug mode without an active session shows the unavailable page and no request builder', async ({

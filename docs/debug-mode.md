@@ -130,6 +130,8 @@ The last 20 requests are kept in browser memory so you can open them again. Relo
 them. Each entry remembers its **Authorization** choice but never a custom token: opening an entry
 restores the choice and clears the token field, so enter it again.
 
+The list shows the newest three. **Show more** reveals the older ones, up to 20, and **Show less** collapses it again.
+
 ## Limits
 
 | Limit                | Value                                                      |
