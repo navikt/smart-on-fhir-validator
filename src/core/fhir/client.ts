@@ -9,6 +9,13 @@ export type FhirClientOptions = {
     accessToken: string
 }
 
+export type FhirRequestOptions = {
+    method: string
+    url: string
+    body: string | null
+    contentType: string | null
+}
+
 /**
  * Builds a FHIR R4 search URL. The read phase must reach every resource from launch context
  * alone, so searches are built from named parameters rather than from a known id.
@@ -92,6 +99,17 @@ export class FhirClient {
             method: 'POST',
             headers: this.headers({ 'Content-Type': contentType }),
             body,
+        })
+    }
+
+    request({ method, url, body, contentType }: FhirRequestOptions): Promise<RecordedResponse> {
+        const hasBody = body !== null && contentType !== null
+
+        return this.http.send('debug', url, {
+            method,
+            headers: this.headers(hasBody ? { 'Content-Type': contentType } : {}),
+            redirect: 'manual',
+            ...(hasBody ? { body } : {}),
         })
     }
 
