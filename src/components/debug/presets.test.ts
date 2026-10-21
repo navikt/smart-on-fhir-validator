@@ -103,6 +103,52 @@ const resource = (type: string, names: string[], interactions = ['read', 'search
     operations: [],
 })
 
+describe('advertised patient search parameter', () => {
+    const subjectOnly = [resource('Condition', ['subject', 'encounter'])]
+
+    it('uses subject for conditions when only subject is advertised', () => {
+        const shortcut = launchShortcuts(full, subjectOnly).find((item) => item.key === 'conditions')
+        const example = examplePresets(full, subjectOnly).find((item) => item.key === 'search-conditions')
+
+        expect(shortcut?.label).toBe('Condition?subject=Patient/p1')
+        for (const draft of [shortcut?.draft, example?.draft]) {
+            expect(draft?.query).toBe('subject=Patient/p1')
+            expect(draft && buildRequest(draft).ok).toBe(true)
+        }
+    })
+
+    it('applies the same selection to observations and keeps the sort', () => {
+        const shortcuts = launchShortcuts(full, [resource('Observation', ['subject', 'code'])])
+
+        expect(shortcuts.at(-1)?.label).toBe('Observation?subject=Patient/p1&_sort=-date')
+        expect(shortcuts.at(-1)?.draft.query).toBe('subject=Patient/p1&_sort=-date')
+    })
+
+    it('prefers patient when both are advertised', () => {
+        const both = [resource('Condition', ['subject', 'patient'])]
+
+        expect(launchShortcuts(full, both).find((item) => item.key === 'conditions')?.draft.query).toBe(
+            'patient=p1',
+        )
+        expect(examplePresets(full, both).find((item) => item.key === 'search-conditions')?.draft.query).toBe(
+            'patient=p1',
+        )
+    })
+
+    it.each([
+        ['no capabilities', undefined],
+        ['an unlisted resource', [resource('Encounter', ['subject'])]],
+        ['no search parameters', [resource('Condition', [])]],
+    ])('falls back to patient with %s', (_name, resources) => {
+        expect(launchShortcuts(full, resources).find((item) => item.key === 'conditions')?.draft.query).toBe(
+            'patient=p1',
+        )
+        expect(
+            examplePresets(full, resources).find((item) => item.key === 'search-conditions')?.draft.query,
+        ).toBe('patient=p1')
+    })
+})
+
 describe('sidebarDraft', () => {
     it('uses the launch patient for a patient search parameter', () => {
         expect(sidebarDraft(resource('Condition', ['patient', 'code']), full)).toMatchObject({
@@ -121,6 +167,10 @@ describe('sidebarDraft', () => {
         expect(sidebarDraft(resource('Patient', ['name', 'birthdate']), empty).query).toBe('name=example')
         expect(sidebarDraft(resource('Organization', ['name']), empty).query).toBe('name=example')
         expect(sidebarDraft(resource('Location', ['status']), empty).query).toBe('status=example')
+    })
+
+    it('keeps the generic fallback when neither patient nor subject is listed', () => {
+        expect(sidebarDraft(resource('Condition', ['code']), full).query).toBe('code=example')
     })
 
     it('leaves the query empty when the type cannot be searched', () => {

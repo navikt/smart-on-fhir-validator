@@ -511,10 +511,9 @@ export function DebugConsole({ session }: { session: DebugSessionView }): ReactE
         encounter: session.encounter,
         fhirUser: session.fhirUser,
     }
-    const resourceTypeOptions =
-        capabilities.state.status === 'ready'
-            ? capabilities.state.summary.resources.map((resource) => resource.type)
-            : []
+    const capabilityResources =
+        capabilities.state.status === 'ready' ? capabilities.state.summary.resources : undefined
+    const resourceTypeOptions = capabilityResources?.map((resource) => resource.type) ?? []
 
     const prefill = (next: RequestDraft): void => {
         setBuilderKey((key) => key + 1)
@@ -594,7 +593,7 @@ export function DebugConsole({ session }: { session: DebugSessionView }): ReactE
                     <PresetGroup
                         title="Launch shortcuts"
                         intro="Fill in the request from this launch. Nothing is sent until you press Send."
-                        presets={launchShortcuts(context)}
+                        presets={launchShortcuts(context, capabilityResources)}
                         onSelect={prefill}
                         layout="chips"
                     />
@@ -602,7 +601,7 @@ export function DebugConsole({ session }: { session: DebugSessionView }): ReactE
                     <PresetGroup
                         title="Predefined terms"
                         intro="Click a term to load it into the request below. Nothing is sent until you press Send."
-                        presets={examplePresets(context)}
+                        presets={examplePresets(context, capabilityResources)}
                         onSelect={prefill}
                         layout="list"
                     />

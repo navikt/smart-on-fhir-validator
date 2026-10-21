@@ -90,7 +90,10 @@ has expired or was issued for a different audience.
 
 **Launch shortcuts** fill the form from your launch context: the patient, the encounter, the signed-in
 user, and searches for that patient's conditions and observations. A shortcut only appears when the
-launch returned the value it needs.
+launch returned the value it needs. The condition and observation searches use `patient=` or
+`subject=Patient/{id}`, whichever the CapabilityStatement lists for that resource, and `patient=` when it
+lists neither or could not be loaded. Both are valid [R4 search parameters](https://hl7.org/fhir/R4/condition.html#search)
+on Condition (`patient` is limited to Patient subjects, `subject` also accepts Group), but a server may implement only one.
 
 The five **predefined terms** load a request into the form when you click them. Nothing is sent until you press Send, and you can edit the request first. Shortcuts, predefined terms and the sidebar keep the current
 **Authorization** choice and any custom token you typed:

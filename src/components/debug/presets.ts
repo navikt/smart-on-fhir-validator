@@ -38,9 +38,23 @@ const get = (resourceType: string, id = '', query = ''): RequestDraft => ({
     query,
 })
 
+function advertisedPatientQuery(resource: CapabilityResource | undefined, patient: string): string | null {
+    const names = new Set(resource?.searchParams.map((param) => param.name))
+    if (names.has('patient')) return `patient=${patient}`
+    if (names.has('subject')) return `subject=Patient/${patient}`
+    return null
+}
+
+function findResource(
+    resources: CapabilityResource[] | undefined,
+    type: string,
+): CapabilityResource | undefined {
+    return resources?.find((resource) => resource.type === type)
+}
+
 const MISSING_PATIENT = 'This launch did not return a patient.'
 
-export function launchShortcuts(context: LaunchContext): Preset[] {
+export function launchShortcuts(context: LaunchContext, resources?: CapabilityResource[]): Preset[] {
     const patient = isSafeId(context.patient) ? context.patient : null
     const encounter = isSafeId(context.encounter) ? context.encounter : null
     const fhirUser = parseFhirUserReference(context.fhirUser)
@@ -74,19 +88,24 @@ export function launchShortcuts(context: LaunchContext): Preset[] {
         })
     }
     if (patient) {
+        const conditionQuery =
+            advertisedPatientQuery(findResource(resources, 'Condition'), patient) ?? `patient=${patient}`
+        const observationQuery = `${
+            advertisedPatientQuery(findResource(resources, 'Observation'), patient) ?? `patient=${patient}`
+        }&_sort=-date`
         shortcuts.push(
             {
                 key: 'conditions',
-                label: `Condition?patient=${patient}`,
+                label: `Condition?${conditionQuery}`,
                 description: 'Search the launch patient\u2019s conditions.',
-                draft: get('Condition', '', `patient=${patient}`),
+                draft: get('Condition', '', conditionQuery),
                 disabledReason: null,
             },
             {
                 key: 'observations',
-                label: `Observation?patient=${patient}&_sort=-date`,
+                label: `Observation?${observationQuery}`,
                 description: 'Search the launch patient\u2019s observations, newest first.',
-                draft: get('Observation', '', `patient=${patient}&_sort=-date`),
+                draft: get('Observation', '', observationQuery),
                 disabledReason: null,
             },
         )
@@ -95,10 +114,12 @@ export function launchShortcuts(context: LaunchContext): Preset[] {
     return shortcuts
 }
 
-export function examplePresets(context: LaunchContext): Preset[] {
+export function examplePresets(context: LaunchContext, resources?: CapabilityResource[]): Preset[] {
     const patient = isSafeId(context.patient) ? context.patient : null
     const disabledReason = patient ? null : MISSING_PATIENT
     const patientId = patient ?? ''
+    const conditionQuery =
+        advertisedPatientQuery(findResource(resources, 'Condition'), patientId) ?? `patient=${patientId}`
 
     const documentReference = {
         resourceType: 'DocumentReference',
@@ -119,7 +140,7 @@ export function examplePresets(context: LaunchContext): Preset[] {
             key: 'search-conditions',
             label: 'Search conditions',
             description: 'A search returns a Bundle, here the conditions that reference the patient.',
-            draft: get('Condition', '', `patient=${patientId}`),
+            draft: get('Condition', '', conditionQuery),
             disabledReason,
         },
         {
@@ -156,16 +177,15 @@ const PREFERRED_FALLBACKS = ['name', 'identifier', '_id']
 export function sidebarDraft(resource: CapabilityResource, context: LaunchContext): RequestDraft {
     const patient = isSafeId(context.patient) ? context.patient : null
     const names = new Set(resource.searchParams.map((param) => param.name))
+    const patientQuery = patient ? advertisedPatientQuery(resource, patient) : null
     const canSearch = resource.interactions.includes('search-type')
 
     let query = ''
     if (canSearch) {
         if (resource.type === 'Patient') {
             query = names.has('name') ? 'name=example' : ''
-        } else if (patient && names.has('patient')) {
-            query = `patient=${patient}`
-        } else if (patient && names.has('subject')) {
-            query = `subject=Patient/${patient}`
+        } else if (patientQuery) {
+            query = patientQuery
         } else {
             const fallback =
                 PREFERRED_FALLBACKS.find((name) => names.has(name)) ??

@@ -235,6 +235,46 @@ test.describe('landing → launch against the mock EHR → report', () => {
         expect(tokenText).not.toMatch(/access_token|refresh_token|id_token|Bearer/)
     })
 
+    test('debug presets search conditions by subject when only subject is advertised', async ({ page }) => {
+        await page.route('**/api/debug/capabilities', async (route) => {
+            const response = await route.fetch()
+            const payload = await response.json()
+            const resources = payload.capabilities.resources.map((resource: { type: string }) =>
+                resource.type === 'Condition'
+                    ? {
+                          ...resource,
+                          searchParams: [
+                              { name: 'subject', type: 'reference' },
+                              { name: 'encounter', type: 'reference' },
+                          ],
+                      }
+                    : resource,
+            )
+            await route.fulfill({
+                response,
+                json: { ...payload, capabilities: { ...payload.capabilities, resources } },
+            })
+        })
+        await launchAgainstMockEhr(page)
+        await page.getByRole('link', { name: 'Open Debug mode' }).click()
+        await expect(page).toHaveURL(/\/debug$/)
+
+        const response = page.getByRole('region', { name: 'Response' })
+        const query = page.getByLabel('Query (without the leading ?)')
+
+        await page.getByRole('button', { name: /^Condition\?subject=Patient\// }).click()
+        await expect(query).toHaveValue(/^subject=Patient\/.+/)
+        await page.getByRole('button', { name: 'Send' }).click()
+        await expect(response.getByText(/HTTP 200/)).toBeVisible()
+        await expect(response.getByRole('code')).toContainText('"resourceType": "Bundle"')
+
+        await page.getByRole('button', { name: 'Search conditions' }).click()
+        await expect(query).toHaveValue(/^subject=Patient\/.+/)
+        await page.getByRole('button', { name: 'Send' }).click()
+        await expect(response.getByText(/HTTP 200/)).toBeVisible()
+        await expect(response.getByRole('code')).toContainText('"resourceType": "Bundle"')
+    })
+
     test('debug mode supports session, no and custom tokens and keeps the token out of history', async ({
         page,
     }) => {
