@@ -300,6 +300,9 @@ findings, and [docs/troubleshooting.md](docs/troubleshooting.md) for common laun
 failures and their fixes. `src/mocks/defects.ts` is the catalogue of deliberate non-conformances
 the test suite uses to prove each one is detected.
 
+After a launch you can also send your own FHIR requests from the report. See
+[docs/debug-mode.md](docs/debug-mode.md).
+
 ## Running it locally
 
 ```sh

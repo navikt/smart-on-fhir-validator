@@ -468,6 +468,14 @@ export function DebugConsole({ session }: { session: DebugSessionView }): ReactE
                 <p className="text-16 mt-2 max-w-[70ch]">
                     Send FHIR requests to the server from your launch. The access token stays on the server.
                 </p>
+                <a
+                    href="https://github.com/navikt/smart-on-fhir-validator/blob/main/docs/debug-mode.md"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="text-16 text-ax-text-accent inline-flex min-h-11 items-center underline"
+                >
+                    Read the Debug mode guide
+                </a>
                 <p className="text-14 mt-2 font-mono break-all text-ax-text-neutral-subtle">
                     {session.fhirBaseUrl}
                 </p>
