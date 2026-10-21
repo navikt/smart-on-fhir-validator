@@ -48,14 +48,6 @@ export function PresetGroup({
                             >
                                 <span className="text-16 font-semibold">{preset.label}</span>
                                 <span className="text-14">{preset.disabledReason ?? preset.description}</span>
-                                {preset.disabledReason === null && (
-                                    <span
-                                        aria-hidden="true"
-                                        className="text-14 mt-auto pt-1 font-semibold underline"
-                                    >
-                                        Load into request
-                                    </span>
-                                )}
                             </button>
                         )}
                     </li>
