@@ -51,6 +51,7 @@ describe('buildRequest', () => {
             const error = JSON.stringify(result)
             expect(result.ok).toBe(false)
             expect(error).not.toContain('secret-value-123')
+            expect(error).toContain('Copy the entire response again')
             expect(error).not.toMatch(/position|Unexpected|JSON\.parse/i)
         })
 
@@ -64,7 +65,7 @@ describe('buildRequest', () => {
             const result = buildRequest(custom, input)
             expect(result).toMatchObject({
                 ok: false,
-                error: expect.stringMatching(/access_token.*signature/),
+                error: expect.stringContaining('does not contain an access token'),
             })
         })
 

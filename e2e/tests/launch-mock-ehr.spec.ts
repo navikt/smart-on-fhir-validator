@@ -260,11 +260,11 @@ test.describe('landing → launch against the mock EHR → report', () => {
 
         await authorization.selectOption('custom')
         await expect(customToken).toBeVisible()
+        await expect(customToken).toHaveAccessibleDescription(/Example format, not a working token/)
+        await expect(page.getByText('{"access_token": "your-token-here"}')).toBeVisible()
         await expect(
-            page.getByText(
-                'Paste a raw access token or JSON containing access_token. Decoded JWT claims cannot be used as a token: they need a signature.',
-            ),
-        ).toBeVisible()
+            page.getByRole('link', { name: 'See accepted formats and common mistakes' }),
+        ).toHaveAttribute('href', /debug-mode\.md#custom-access-tokens$/)
         await customToken.fill(
             JSON.stringify(
                 { access_token: 'deliberately-invalid-token', refresh_token: 'fake-refresh-token' },

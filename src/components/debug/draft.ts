@@ -58,7 +58,7 @@ export function isWrite(method: string): boolean {
 
 const CUSTOM_TOKEN_JSON_START = /^[{["]/
 const CUSTOM_TOKEN_NOT_FOUND =
-    'No access_token found. Paste a raw access token or JSON containing access_token. Decoded JWT claims cannot be used as a token: they need a signature.'
+    'This response does not contain an access token. Copy the value labelled access_token from the sign-in response.'
 
 export type CustomTokenResult = { ok: true; token: string } | { ok: false; error: string }
 
@@ -76,7 +76,7 @@ export function extractCustomToken(input: string): CustomTokenResult {
     } catch {
         return {
             ok: false,
-            error: 'The pasted text looks like JSON but could not be parsed. Paste a raw access token or valid JSON containing access_token.',
+            error: 'We could not read this response. Copy the entire response again, or paste just the access token.',
         }
     }
 

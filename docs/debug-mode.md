@@ -32,21 +32,59 @@ test environments only.
   - **No token** sends no `Authorization` header, for example to see how the server answers an
     unauthenticated call.
   - **Custom token** sends a token you paste into the **Custom access token** field, for example
-    to test an invalid or differently scoped token. The field is plain text, not masked, so
-    others can read it from your screen. Paste a raw access token, or JSON containing a top-level
-    `access_token` such as `{"access_token": "abc.def.ghi", "token_type": "Bearer"}`. Only the
-    `access_token` value is sent; other fields such as a refresh token are ignored. Decoded JWT
-    claims are not enough, because a token needs a signature. The token must be a bearer token (letters, digits and
-    `-._~+/`, optionally ending in `=`, at most 16384 characters). It is sent to the app in the request body
-    and on to the FHIR server. The app holds it in this page's memory only, until you clear the field,
-    leave Custom token or reload the page. It is not saved in history or your session, and the
-    `Authorization` header is redacted in the recorded exchange. Page memory is lost on reload, unlike
-    persistent storage such as cookies or local storage. The app cannot control what the FHIR server logs.
+    to test an invalid or differently scoped token. See [Custom access tokens](#custom-access-tokens).
 
   All three modes need an active launch session. Only the session token is refreshed, so No token and
   Custom token still work after the launch token has expired.
 
 The request always goes to the FHIR base URL of your session. Nothing outside it can be reached.
+
+## Custom access tokens
+
+Normally choose **Session token**, which needs no copying. Use **Custom token** only to test a token you
+supply yourself.
+
+The field is plain text, not masked, so others can read it from your screen. Paste only your own approved
+test credentials, and never put credentials into external tools. The token must be a bearer token
+(letters, digits and `-._~+/`, optionally ending in `=`, at most 16384 characters). It is sent to the app
+in the request body and on to the FHIR server. The app holds it in this page's memory only, until you
+clear the field, leave Custom token or reload the page. It is not saved in history or your session, and
+the `Authorization` header is redacted in the recorded exchange. The app cannot control what the FHIR
+server logs.
+
+### Accepted formats
+
+Paste the token value alone:
+
+```text
+your-token-here
+```
+
+Or paste the whole sign-in response. Only the `access_token` value is sent; the rest is ignored:
+
+```json
+{
+  "access_token": "your-token-here",
+  "token_type": "Bearer",
+  "refresh_token": "your-refresh-token-here"
+}
+```
+
+These examples are fake. They are not valid credentials, and a real server may also reject a token that
+has expired or was issued for a different audience.
+
+### Common mistakes
+
+- **A decoded JWT payload**, such as `{"sub": "123", "aud": "https://example.org", "exp": 1700000000}`.
+  These are the claims inside a token, not the token. The app does not sign modified token details and
+  cannot create a token the server will accept.
+- **The encoded JWT in pieces or edited.** If the token is a signed JWT, paste it exactly as issued.
+  Changing the contents invalidates the signature. Not every access token is a JWT: opaque tokens are
+  also valid, so paste whatever the sign-in response gives.
+- **A `Bearer ` prefix.** Paste the value only. The app adds `Bearer` itself.
+- **A refresh token or ID token.** Only the access token authorizes FHIR requests.
+- **Incomplete JSON**, for example a response cut off before the closing brace. Copy the entire response
+  again, or paste just the token.
 
 ## Shortcuts and predefined terms
 

@@ -343,13 +343,29 @@ function RequestBuilder({
                         aria-describedby={`${ids}-custom-token-help`}
                         className={`${FIELD_CLASSES} resize-y font-mono text-13`}
                     />
-                    <p
+                    <div
                         id={`${ids}-custom-token-help`}
-                        className="text-14 max-w-[70ch] text-ax-text-neutral-subtle"
+                        className="text-14 flex max-w-[70ch] flex-col gap-2 text-ax-text-neutral-subtle"
                     >
-                        Paste a raw access token or JSON containing access_token. Decoded JWT claims cannot be
-                        used as a token: they need a signature.
-                    </p>
+                        <p>
+                            Paste the access token from your sign-in response, or paste the whole response. To
+                            use the token from this launch, choose Session token above.
+                        </p>
+                        <p>
+                            Example format, not a working token:{' '}
+                            <code className="rounded bg-ax-bg-neutral-soft px-1 font-mono text-13 text-ax-text-neutral">
+                                {'{"access_token": "your-token-here"}'}
+                            </code>
+                        </p>
+                    </div>
+                    <a
+                        href="https://github.com/navikt/smart-on-fhir-validator/blob/main/docs/debug-mode.md#custom-access-tokens"
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="text-16 text-ax-text-accent inline-flex min-h-11 items-center self-start underline"
+                    >
+                        See accepted formats and common mistakes
+                    </a>
                 </div>
             )}
 
