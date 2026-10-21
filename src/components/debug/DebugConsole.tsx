@@ -35,6 +35,10 @@ import { TokenPanel } from './TokenPanel'
 const FIELD_CLASSES =
     'text-16 min-h-11 rounded border border-ax-border-neutral bg-white px-3 py-2 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ax-border-focus'
 
+const CUSTOM_VALUE = '__custom__'
+
+const METADATA_TYPE = 'metadata'
+
 const LABEL_CLASSES = 'text-14 font-semibold text-ax-text-neutral-subtle'
 
 async function sendRequest(request: unknown): Promise<DebugResult> {
@@ -119,11 +123,19 @@ function RequestBuilder({
     resourceTypeOptions: readonly string[]
 }): ReactElement {
     const ids = useId()
+    const [customOpen, setCustomOpen] = useState(false)
+    const typeChoices = [...new Set([METADATA_TYPE, ...resourceTypeOptions])]
+    const isCustom = customOpen || (draft.resourceType !== '' && !typeChoices.includes(draft.resourceType))
     const method = effectiveMethod(draft)
     const showQuery = allowsQuery(method)
     const showBody = allowsBody(method)
     const set = <K extends keyof RequestDraft>(key: K, value: RequestDraft[K]): void =>
         onChange({ ...draft, [key]: value })
+
+    const chooseType = (value: string): void => {
+        setCustomOpen(value === CUSTOM_VALUE)
+        if (value !== CUSTOM_VALUE) set('resourceType', value)
+    }
 
     const submit = (event: FormEvent<HTMLFormElement>): void => {
         event.preventDefault()
@@ -142,22 +154,33 @@ function RequestBuilder({
                     <label htmlFor={`${ids}-type`} className={LABEL_CLASSES}>
                         Resource type
                     </label>
-                    <input
+                    <select
                         id={`${ids}-type`}
-                        name="resourceType"
-                        value={draft.resourceType}
-                        onChange={(event) => set('resourceType', event.target.value)}
-                        list={`${ids}-types`}
-                        placeholder="Patient"
-                        autoComplete="off"
-                        spellCheck={false}
+                        name="resourceTypeChoice"
+                        value={isCustom ? CUSTOM_VALUE : draft.resourceType}
+                        onChange={(event) => chooseType(event.target.value)}
                         className={`${FIELD_CLASSES} font-mono`}
-                    />
-                    <datalist id={`${ids}-types`}>
-                        {resourceTypeOptions.map((option) => (
-                            <option key={option} value={option} />
+                    >
+                        <option value="">None (system level)</option>
+                        {typeChoices.map((option) => (
+                            <option key={option} value={option}>
+                                {option}
+                            </option>
                         ))}
-                    </datalist>
+                        <option value={CUSTOM_VALUE}>Custom</option>
+                    </select>
+                    {isCustom && (
+                        <input
+                            aria-label="Custom type name"
+                            name="resourceType"
+                            value={draft.resourceType}
+                            onChange={(event) => set('resourceType', event.target.value)}
+                            placeholder="Patient"
+                            autoComplete="off"
+                            spellCheck={false}
+                            className={`${FIELD_CLASSES} font-mono`}
+                        />
+                    )}
                 </div>
 
                 <span aria-hidden="true" className="text-20 pb-2 text-ax-text-neutral-subtle">
@@ -412,6 +435,7 @@ export function DebugConsole({ session }: { session: DebugSessionView }): ReactE
     const [draftError, setDraftError] = useState<string | null>(null)
     const [result, setResult] = useState<DebugResult | null>(null)
     const [history, setHistory] = useState<HistoryEntry[]>([])
+    const [builderKey, setBuilderKey] = useState(0)
     const nextHistoryId = useRef(1)
     const capabilities = useCapabilities()
 
@@ -426,6 +450,7 @@ export function DebugConsole({ session }: { session: DebugSessionView }): ReactE
             : []
 
     const prefill = (next: RequestDraft): void => {
+        setBuilderKey((key) => key + 1)
         setDraft(next)
         setDraftError(null)
     }
@@ -456,6 +481,7 @@ export function DebugConsole({ session }: { session: DebugSessionView }): ReactE
     }
 
     const restore = (entry: HistoryEntry): void => {
+        setBuilderKey((key) => key + 1)
         setDraft(entry.draft)
         setResult(entry.result)
         setDraftError(null)
@@ -506,14 +532,15 @@ export function DebugConsole({ session }: { session: DebugSessionView }): ReactE
                     />
 
                     <PresetGroup
-                        title="Examples"
-                        intro="Fill in the request with a worked example. Nothing is sent until you press Send."
+                        title="Predefined terms"
+                        intro="Click a term to load it into the request below. Nothing is sent until you press Send."
                         presets={examplePresets(context)}
                         onSelect={prefill}
                         layout="list"
                     />
 
                     <RequestBuilder
+                        key={builderKey}
                         draft={draft}
                         onChange={setDraft}
                         onSend={() => void send()}

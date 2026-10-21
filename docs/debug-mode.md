@@ -18,7 +18,7 @@ may change data there. Check the method, target and body before you send. Use te
 ## Building a request
 
 - **Resource type and id.** The CapabilityStatement in the sidebar guides you, but it does not limit
-  what you can request. You can type any resource type the server might support.
+  what you can request. The **Resource type** list offers every type the server advertises, `metadata`, and **None (system level)**. Choose **Custom** to type any resource type the server might support.
 - **Method.** GET, POST, PUT, PATCH, DELETE, HEAD, or **Other** for a custom method. CONNECT and TRACE
   are rejected.
 - **Query.** Search parameters, up to 2048 characters.
@@ -27,15 +27,15 @@ may change data there. Check the method, target and body before you send. Use te
 
 The request always goes to the FHIR base URL of your session. Nothing outside it can be reached.
 
-## Shortcuts and examples
+## Shortcuts and predefined terms
 
 **Launch shortcuts** fill the form from your launch context: the patient, the encounter, the signed-in
 user, and searches for that patient's conditions and observations. A shortcut only appears when the
 launch returned the value it needs.
 
-The five **examples** fill the form with a request you can edit and send:
+The five **predefined terms** load a request into the form when you click them. Nothing is sent until you press Send, and you can edit the request first:
 
-| Example                       | What it does                                                    |
+| Predefined term               | What it does                                                    |
 |-------------------------------|-----------------------------------------------------------------|
 | Read the launch patient       | A read by id.                                                   |
 | Search conditions             | A search that returns a Bundle.                                 |
@@ -43,7 +43,7 @@ The five **examples** fill the form with a request you can edit and send:
 | Read the CapabilityStatement  | Reads `metadata`.                                               |
 | Read a missing patient        | Fails on purpose to show an OperationOutcome.                   |
 
-Examples that need a patient are disabled when the launch did not return one.
+Predefined terms that need a patient are disabled when the launch did not return one.
 
 ## Launch token panel
 

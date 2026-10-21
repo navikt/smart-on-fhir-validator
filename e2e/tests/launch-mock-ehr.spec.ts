@@ -180,7 +180,7 @@ test.describe('landing → launch against the mock EHR → report', () => {
         await page.getByRole('link', { name: 'Open Debug mode' }).click()
         await expect(page).toHaveURL(/\/debug$/)
 
-        await page.getByLabel('Resource type').fill('Patient')
+        await page.getByLabel('Resource type').selectOption('Patient')
         await page.getByLabel('Id (optional)').fill('patient-espen-eksempel')
         await page.getByLabel('Method', { exact: true }).selectOption('GET')
         await page.getByRole('button', { name: 'Send' }).click()
@@ -194,7 +194,7 @@ test.describe('landing → launch against the mock EHR → report', () => {
         expect(bodyText).not.toMatch(/"access_token"\s*:\s*"(?!\[REDACTED\])[^"]+"/)
 
         await expect(page.getByRole('complementary', { name: 'CapabilityStatement' })).toContainText(
-            'Not listed in the CapabilityStatement? Type any resource name in the box.',
+            'Not listed in the CapabilityStatement? Choose Custom in the Resource type list and type any resource name.',
         )
         await page.getByRole('button', { name: /^Condition\?patient=/ }).click()
         await expect(page.getByLabel('Resource type')).toHaveValue('Condition')
@@ -203,7 +203,23 @@ test.describe('landing → launch against the mock EHR → report', () => {
         await expect(response.getByText(/HTTP 200/)).toBeVisible()
         await expect(response.getByRole('code')).toContainText('"resourceType": "Bundle"')
 
+        await page.getByLabel('Resource type').selectOption('Condition')
+        await page.getByLabel('Resource type').selectOption('Patient')
+        await expect(page.getByLabel('Resource type')).toHaveValue('Patient')
+
+        await page.getByLabel('Resource type').selectOption({ label: 'Custom' })
+        await page.getByLabel('Custom type name').fill('Patient')
+        await expect(page.getByLabel('Custom type name')).toBeVisible()
+        await page.getByLabel('Custom type name').fill('Basic')
+        await expect(page.getByLabel('Custom type name')).toHaveValue('Basic')
+
+        await page.getByRole('button', { name: 'Read the CapabilityStatement' }).click()
+        await expect(page.getByLabel('Resource type')).toHaveValue('metadata')
+        await expect(page.getByRole('region', { name: 'History' }).getByRole('listitem')).toHaveCount(2)
+
         await page.getByRole('button', { name: 'Read a missing patient' }).click()
+        await expect(page.getByLabel('Id (optional)')).toHaveValue('does-not-exist')
+        await expect(page.getByRole('region', { name: 'History' }).getByRole('listitem')).toHaveCount(2)
         await page.getByRole('button', { name: 'Send' }).click()
         await expect(response.getByText(/HTTP 404/)).toBeVisible()
         await expect(response.getByRole('code')).toContainText('"resourceType": "OperationOutcome"')
@@ -211,6 +227,7 @@ test.describe('landing → launch against the mock EHR → report', () => {
         const history = page.getByRole('region', { name: 'History' })
         await expect(history.getByRole('listitem')).toHaveCount(3)
         await history.getByRole('button').last().click()
+        await expect(page.getByLabel('Resource type')).toHaveValue('Patient')
         await expect(page.getByLabel('Id (optional)')).toHaveValue('patient-espen-eksempel')
 
         await page.getByText('Launch token').click()

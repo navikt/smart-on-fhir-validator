@@ -97,7 +97,8 @@ export function CapabilitySidebar({
                         {state.summary.resources.length} resource types. Select one to fill in the request.
                     </p>
                     <p className="text-14">
-                        Not listed in the CapabilityStatement? Type any resource name in the box.
+                        Not listed in the CapabilityStatement? Choose Custom in the Resource type list and
+                        type any resource name.
                     </p>
                     {state.summary.resources.length === 0 ? (
                         <p className="text-14 text-ax-text-neutral-subtle">
