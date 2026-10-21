@@ -175,6 +175,35 @@ test.describe('landing → launch against the mock EHR → report', () => {
         await expect(page.getByRole('link', { name: 'Launch the mock EHR' })).toBeVisible()
     })
 
+    test('debug mode sends a GET through the proxy and never shows the bearer token', async ({ page }) => {
+        await launchAgainstMockEhr(page)
+        await page.getByRole('link', { name: 'Open Debug mode' }).click()
+        await expect(page).toHaveURL(/\/debug$/)
+
+        await page.getByLabel('Resource type').fill('Patient')
+        await page.getByLabel('Id (optional)').fill('patient-espen-eksempel')
+        await page.getByLabel('Method', { exact: true }).selectOption('GET')
+        await page.getByRole('button', { name: 'Send' }).click()
+
+        const response = page.getByRole('region', { name: 'Response' })
+        await expect(response.getByText(/HTTP 200/)).toBeVisible()
+        await expect(response.getByRole('code')).toContainText('"resourceType": "Patient"')
+
+        const bodyText = await page.locator('body').innerText()
+        expect(bodyText).not.toMatch(/Bearer\s+(?!\[REDACTED\])[A-Za-z0-9\-_.]+/)
+        expect(bodyText).not.toMatch(/"access_token"\s*:\s*"(?!\[REDACTED\])[^"]+"/)
+    })
+
+    test('debug mode without an active session shows the unavailable page and no request builder', async ({
+        page,
+    }) => {
+        await page.goto('/debug')
+
+        await expect(page.getByRole('heading', { name: 'Debug mode is not available' })).toBeVisible()
+        await expect(page.getByRole('link', { name: '← Back to the validator' })).toBeVisible()
+        await expect(page.getByLabel('Resource type')).toHaveCount(0)
+    })
+
     test('a single launch reaches a real report, its evidence expands, it downloads as JSON, and no credential ever leaks', async ({
         page,
     }) => {
