@@ -15,9 +15,9 @@ function DebugUnavailable(): ReactElement {
             <main id="main-content" className="mx-auto max-w-[960px] px-6 pt-8 pb-24">
                 <h1 className="text-32 text-balance font-bold">Debug mode is not available</h1>
                 <p className="text-16 mt-2 max-w-[70ch]">
-                    Debug mode needs a completed SMART launch in this browser. Launch the validator from your EHR,
-                    or use the mock EHR on the front page, then open Debug mode from the report. The session may
-                    also have expired.
+                    Debug mode needs a completed SMART launch in this browser. Launch the validator from your
+                    EHR, or use the mock EHR on the front page, then open Debug mode from the report. The
+                    session may also have expired.
                 </p>
                 <Link
                     href="/"
