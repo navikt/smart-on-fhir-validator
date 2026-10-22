@@ -308,6 +308,27 @@ describe('createMockEhr: FHIR resource access', () => {
 
         expect(response.status).toBe(200)
     })
+
+    it("finds the launch patient's conditions with the patient search parameter", async () => {
+        const app = await createMockEhr({ baseUrl: BASE_URL, clientAuth: 'public', clientId: CLIENT_ID })
+        const tokenResponse = await performAuthorizationCodeFlow(
+            app,
+            CLIENT_ID,
+            { body: { client_id: CLIENT_ID } },
+            FULL_SCOPE,
+        )
+        const headers = { Authorization: `Bearer ${tokenResponse.access_token as string}` }
+
+        for (const value of [PATIENT_ID, `Patient/${PATIENT_ID}`]) {
+            const response = await get(app, `/Condition?patient=${encodeURIComponent(value)}`, headers)
+            const bundle = (await response.json()) as { total: number }
+            expect(response.status).toBe(200)
+            expect(bundle.total).toBe(1)
+        }
+
+        const other = await get(app, '/Condition?patient=someone-else', headers)
+        expect(((await other.json()) as { total: number }).total).toBe(0)
+    })
 })
 
 describe('createMockEhr: Bundle batch and transaction semantics', () => {
