@@ -26,6 +26,21 @@ const SCOPE = 'openid fhirUser launch/patient offline_access patient/Patient.rea
 /** Broader than `SCOPE`: needed by tests that create/read a resource `SCOPE` doesn't cover (e.g. Binary). */
 const FULL_SCOPE = 'openid fhirUser launch/patient offline_access patient/*.*'
 
+async function accessToken(app: Hono): Promise<string> {
+    const token = await performAuthorizationCodeFlow(app, CLIENT_ID, { body: { client_id: CLIENT_ID } })
+    return token.access_token as string
+}
+
+async function bearerToken(app: Hono): Promise<string> {
+    const token = await performAuthorizationCodeFlow(
+        app,
+        CLIENT_ID,
+        { body: { client_id: CLIENT_ID } },
+        FULL_SCOPE,
+    )
+    return token.access_token as string
+}
+
 async function get(app: Hono, path: string, headers: Record<string, string> = {}): Promise<Response> {
     return await app.fetch(new Request(`${BASE_URL}${path}`, { headers }))
 }
@@ -264,11 +279,6 @@ describe('createMockEhr: authorize endpoint guards', () => {
 })
 
 describe('createMockEhr: FHIR resource access', () => {
-    async function accessToken(app: Hono): Promise<string> {
-        const token = await performAuthorizationCodeFlow(app, CLIENT_ID, { body: { client_id: CLIENT_ID } })
-        return token.access_token as string
-    }
-
     it('rejects a FHIR request with no bearer token', async () => {
         const app = await createMockEhr({ baseUrl: BASE_URL, clientAuth: 'public', clientId: CLIENT_ID })
 
@@ -332,16 +342,6 @@ describe('createMockEhr: FHIR resource access', () => {
 })
 
 describe('createMockEhr: Bundle batch and transaction semantics', () => {
-    async function bearerToken(app: Hono): Promise<string> {
-        const token = await performAuthorizationCodeFlow(
-            app,
-            CLIENT_ID,
-            { body: { client_id: CLIENT_ID } },
-            FULL_SCOPE,
-        )
-        return token.access_token as string
-    }
-
     it('processes a batch Bundle entry-by-entry: one failing entry does not fail the others', async () => {
         const app = await createMockEhr({ baseUrl: BASE_URL, clientAuth: 'public', clientId: CLIENT_ID })
         const token = await bearerToken(app)

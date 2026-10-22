@@ -18,6 +18,10 @@ const DEFAULT_KEY_ID = 'smart-on-fhir-validator'
 /** JWK members that only ever appear on a private key. Never let these reach `getPublicJwks`. */
 const PRIVATE_JWK_MEMBERS = ['d', 'p', 'q', 'dp', 'dq', 'qi', 'k'] as const
 
+function isPrivateMember(key: string): boolean {
+    return (PRIVATE_JWK_MEMBERS as readonly string[]).includes(key)
+}
+
 type SigningAlgorithm = 'RS384' | 'ES384'
 
 type SigningIdentity = {
@@ -72,7 +76,6 @@ async function generateEphemeralIdentity(): Promise<SigningIdentity> {
 }
 
 function toPublicJwk(jwk: JWK, kid: string, alg: string): JWK {
-    const isPrivateMember = (key: string): boolean => (PRIVATE_JWK_MEMBERS as readonly string[]).includes(key)
     const publicMembers = Object.fromEntries(Object.entries(jwk).filter(([key]) => !isPrivateMember(key)))
 
     return { ...publicMembers, kid, alg, use: 'sig' }
