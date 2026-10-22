@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest'
 
-import { redactBody, redactFormBody, redactHeaders, redactJson, redactUrl } from './redact'
+import { DEBUG_REDACTION, redactBody, redactFormBody, redactHeaders, redactJson, redactUrl } from './redact'
 
 const REDACTED = '[REDACTED]'
 
@@ -232,5 +232,31 @@ describe('redactBody', () => {
         const body = 'not actually json'
 
         expect(redactBody(body, 'application/json')).toBe(body)
+    })
+})
+
+describe('DEBUG_REDACTION', () => {
+    it('keeps the FHIR code search parameter and element but still redacts credentials', () => {
+        const url = redactUrl(
+            'https://ehr.example.com/Condition?code=http://snomed.info/sct|123&access_token=abc',
+            DEBUG_REDACTION,
+        )
+        expect(new URL(url).searchParams.get('code')).toBe('http://snomed.info/sct|123')
+        expect(new URL(url).searchParams.get('access_token')).toBe(REDACTED)
+
+        expect(
+            redactJson(
+                { code: { text: 'x' }, access_token: 'abc', nested: [{ client_secret: 's' }] },
+                DEBUG_REDACTION,
+            ),
+        ).toEqual({
+            code: { text: 'x' },
+            access_token: REDACTED,
+            nested: [{ client_secret: REDACTED }],
+        })
+    })
+
+    it('leaves the default report redaction of code unchanged', () => {
+        expect(redactJson({ code: 'abc' })).toEqual({ code: REDACTED })
     })
 })

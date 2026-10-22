@@ -95,7 +95,7 @@ function statesMatch(expected: string, actual: string): boolean {
  * client's auth mode cannot travel from launch to callback. `launch.ts` always registers as a
  * public client, so falling back to `{ type: 'public' }` here is exactly correct.
  */
-function resolveCallbackIssuerConfig(
+export function resolveCallbackIssuerConfig(
     fhirBaseUrl: string,
     clientId: string,
     findIssuerConfig: FindIssuerConfig,

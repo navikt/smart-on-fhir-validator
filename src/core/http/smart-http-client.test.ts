@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest'
 
 import { createExchangeRecorder } from './exchange'
-import { SmartHttpClient } from './smart-http-client'
+import { SmartHttpClient, TRUNCATED_BODY_MARKER } from './smart-http-client'
 
 const REDACTED = '[REDACTED]'
 
@@ -122,7 +122,9 @@ describe('SmartHttpClient', () => {
     it.each([
         [
             'a cause message that already names the code',
-            Object.assign(new Error('getaddrinfo ENOTFOUND ehr.example.com'), { code: 'ENOTFOUND' }),
+            Object.assign(new Error('getaddrinfo ENOTFOUND ehr.example.com'), {
+                code: 'ENOTFOUND',
+            }),
             'fetch failed (getaddrinfo ENOTFOUND ehr.example.com)',
         ],
         [
@@ -132,7 +134,9 @@ describe('SmartHttpClient', () => {
         ],
         [
             'a cause whose message omits the code',
-            Object.assign(new Error('Connect Timeout Error'), { code: 'UND_ERR_CONNECT_TIMEOUT' }),
+            Object.assign(new Error('Connect Timeout Error'), {
+                code: 'UND_ERR_CONNECT_TIMEOUT',
+            }),
             'fetch failed (UND_ERR_CONNECT_TIMEOUT: Connect Timeout Error)',
         ],
     ])('includes the underlying network cause for %s', async (_, cause, expected) => {
@@ -166,7 +170,10 @@ describe('SmartHttpClient', () => {
 
     it('redacts the Authorization header of the recorded request', async () => {
         const recorder = createExchangeRecorder()
-        const client = new SmartHttpClient({ recorder, fetchImpl: stubFetch(() => jsonResponse({})) })
+        const client = new SmartHttpClient({
+            recorder,
+            fetchImpl: stubFetch(() => jsonResponse({})),
+        })
 
         await client.get('fhir-read', 'https://ehr.example.com/fhir/Patient/1', {
             Authorization: 'Bearer super-secret-token',
@@ -177,7 +184,10 @@ describe('SmartHttpClient', () => {
 
     it('redacts sensitive query parameters in the recorded request URL, preserving FHIR search parameters', async () => {
         const recorder = createExchangeRecorder()
-        const client = new SmartHttpClient({ recorder, fetchImpl: stubFetch(() => jsonResponse({})) })
+        const client = new SmartHttpClient({
+            recorder,
+            fetchImpl: stubFetch(() => jsonResponse({})),
+        })
 
         await client.get(
             'fhir-read',
@@ -191,7 +201,10 @@ describe('SmartHttpClient', () => {
 
     it('redacts sensitive fields in a postForm body while preserving other form fields', async () => {
         const recorder = createExchangeRecorder()
-        const client = new SmartHttpClient({ recorder, fetchImpl: stubFetch(() => jsonResponse({})) })
+        const client = new SmartHttpClient({
+            recorder,
+            fetchImpl: stubFetch(() => jsonResponse({})),
+        })
 
         await client.postForm('token', 'https://ehr.example.com/oauth/token', {
             grant_type: 'authorization_code',
@@ -209,9 +222,14 @@ describe('SmartHttpClient', () => {
 
     it('sets the correct Content-Type and method for postForm', async () => {
         const recorder = createExchangeRecorder()
-        const client = new SmartHttpClient({ recorder, fetchImpl: stubFetch(() => jsonResponse({})) })
+        const client = new SmartHttpClient({
+            recorder,
+            fetchImpl: stubFetch(() => jsonResponse({})),
+        })
 
-        await client.postForm('token', 'https://ehr.example.com/oauth/token', { grant_type: 'refresh_token' })
+        await client.postForm('token', 'https://ehr.example.com/oauth/token', {
+            grant_type: 'refresh_token',
+        })
 
         const request = recorder.all()[0]?.request
         expect(request?.method).toBe('POST')
@@ -220,7 +238,10 @@ describe('SmartHttpClient', () => {
 
     it('redacts sensitive fields nested in a postJson body while preserving id_token', async () => {
         const recorder = createExchangeRecorder()
-        const client = new SmartHttpClient({ recorder, fetchImpl: stubFetch(() => jsonResponse({})) })
+        const client = new SmartHttpClient({
+            recorder,
+            fetchImpl: stubFetch(() => jsonResponse({})),
+        })
 
         await client.postJson('registration', 'https://ehr.example.com/register', {
             client_name: 'Nav SMART Validator',
@@ -238,9 +259,14 @@ describe('SmartHttpClient', () => {
 
     it('sets the correct Content-Type and method for postJson', async () => {
         const recorder = createExchangeRecorder()
-        const client = new SmartHttpClient({ recorder, fetchImpl: stubFetch(() => jsonResponse({})) })
+        const client = new SmartHttpClient({
+            recorder,
+            fetchImpl: stubFetch(() => jsonResponse({})),
+        })
 
-        await client.postJson('registration', 'https://ehr.example.com/register', { client_name: 'App' })
+        await client.postJson('registration', 'https://ehr.example.com/register', {
+            client_name: 'App',
+        })
 
         const request = recorder.all()[0]?.request
         expect(request?.method).toBe('POST')
@@ -253,29 +279,44 @@ describe('SmartHttpClient', () => {
             recorder,
             fetchImpl: stubFetch(
                 () =>
-                    new Response(JSON.stringify({ access_token: 'live-token', patient: 'Patient/1' }), {
-                        status: 200,
-                        headers: {
-                            'Content-Type': 'application/json',
-                            'Set-Cookie': 'session=abc',
+                    new Response(
+                        JSON.stringify({
+                            access_token: 'live-token',
+                            patient: 'Patient/1',
+                        }),
+                        {
+                            status: 200,
+                            headers: {
+                                'Content-Type': 'application/json',
+                                'Set-Cookie': 'session=abc',
+                            },
                         },
-                    }),
+                    ),
             ),
         })
 
         const result = await client.get('token', 'https://ehr.example.com/oauth/token')
 
         // The caller-facing, unredacted body still carries the real token.
-        expect(result.body).toEqual({ access_token: 'live-token', patient: 'Patient/1' })
+        expect(result.body).toEqual({
+            access_token: 'live-token',
+            patient: 'Patient/1',
+        })
 
         const exchange = recorder.all()[0]
-        expect(exchange?.response?.body).toEqual({ access_token: REDACTED, patient: 'Patient/1' })
+        expect(exchange?.response?.body).toEqual({
+            access_token: REDACTED,
+            patient: 'Patient/1',
+        })
         expect(exchange?.response?.headers['set-cookie']).toBe(REDACTED)
     })
 
     it('uses GET as the default method and merges custom headers', async () => {
         const recorder = createExchangeRecorder()
-        const client = new SmartHttpClient({ recorder, fetchImpl: stubFetch(() => jsonResponse({})) })
+        const client = new SmartHttpClient({
+            recorder,
+            fetchImpl: stubFetch(() => jsonResponse({})),
+        })
 
         await client.get('capability', 'https://ehr.example.com/fhir/metadata', {
             Accept: 'application/fhir+json',
@@ -288,12 +329,134 @@ describe('SmartHttpClient', () => {
 
     it('accumulates exchanges across multiple calls on the same recorder', async () => {
         const recorder = createExchangeRecorder()
-        const client = new SmartHttpClient({ recorder, fetchImpl: stubFetch(() => jsonResponse({})) })
+        const client = new SmartHttpClient({
+            recorder,
+            fetchImpl: stubFetch(() => jsonResponse({})),
+        })
 
         await client.get('discovery', 'https://ehr.example.com/a')
         await client.get('capability', 'https://ehr.example.com/b')
 
         expect(recorder.all()).toHaveLength(2)
         expect(recorder.all().map((exchange) => exchange.phase)).toEqual(['discovery', 'capability'])
+    })
+
+    it('preserves code but redacts credentials for the debug phase', async () => {
+        const recorder = createExchangeRecorder()
+        const client = new SmartHttpClient({
+            recorder,
+            fetchImpl: stubFetch(() => jsonResponse({ resourceType: 'Condition', code: { text: 'x' } })),
+        })
+
+        const result = await client.get(
+            'debug',
+            'https://ehr.example.com/Condition?code=abc&access_token=t',
+            {
+                Authorization: 'Bearer secret',
+            },
+        )
+
+        const [exchange] = recorder.all()
+        expect(new URL(exchange!.request.url).searchParams.get('code')).toBe('abc')
+        expect(new URL(exchange!.request.url).searchParams.get('access_token')).toBe(REDACTED)
+        expect(exchange!.request.headers.authorization).toBe(REDACTED)
+        expect(exchange!.response?.body).toEqual({
+            resourceType: 'Condition',
+            code: { text: 'x' },
+        })
+        expect(result.bodyTruncated).toBe(false)
+    })
+
+    it('truncates bodies over maxResponseBytes and cancels the stream', async () => {
+        let cancelled = false
+        const encoder = new TextEncoder()
+        const stream = new ReadableStream<Uint8Array>({
+            pull(controller) {
+                controller.enqueue(encoder.encode('a'.repeat(400)))
+            },
+            cancel() {
+                cancelled = true
+            },
+        })
+        const recorder = createExchangeRecorder()
+        const client = new SmartHttpClient({
+            recorder,
+            maxResponseBytes: 1000,
+            fetchImpl: stubFetch(() => new Response(stream, { status: 200 })),
+        })
+
+        const result = await client.get('debug', 'https://ehr.example.com/Binary/1')
+
+        expect(result.bodyTruncated).toBe(true)
+        expect(result.body).toBe(TRUNCATED_BODY_MARKER)
+        expect(recorder.all()[0]!.response?.body).toBe(TRUNCATED_BODY_MARKER)
+        expect(cancelled).toBe(true)
+    })
+
+    it('never records a truncated body prefix, so nested secrets cannot leak', async () => {
+        const recorder = createExchangeRecorder()
+        const client = new SmartHttpClient({
+            recorder,
+            maxResponseBytes: 60,
+            fetchImpl: stubFetch(
+                () =>
+                    new Response(
+                        '{"data":{"access_token":"super-secret-token","refresh_token":"r-secret"}}'.padEnd(
+                            500,
+                            ' ',
+                        ),
+                        {
+                            status: 200,
+                            headers: { 'Content-Type': 'application/json', 'X-Test': 'kept' },
+                        },
+                    ),
+            ),
+        })
+
+        const result = await client.get('debug', 'https://ehr.example.com/Patient/1')
+        const serialized = JSON.stringify(recorder.all())
+
+        expect(result.bodyTruncated).toBe(true)
+        expect(serialized).not.toContain('super-secret-token')
+        expect(recorder.all()[0]!.response).toMatchObject({
+            status: 200,
+            body: TRUNCATED_BODY_MARKER,
+        })
+        expect(recorder.all()[0]!.durationMs).toBeGreaterThanOrEqual(0)
+    })
+
+    it('does not flag bodies within maxResponseBytes', async () => {
+        const client = new SmartHttpClient({
+            recorder: createExchangeRecorder(),
+            maxResponseBytes: 1000,
+            fetchImpl: stubFetch(() => jsonResponse({ ok: true })),
+        })
+
+        const result = await client.get('debug', 'https://ehr.example.com/Patient/1')
+
+        expect(result.bodyTruncated).toBe(false)
+        expect(result.body).toEqual({ ok: true })
+    })
+
+    it.each([-1, 1.5, Number.NaN, Number.POSITIVE_INFINITY])(
+        'rejects invalid maxResponseBytes %s',
+        (value) => {
+            expect(
+                () => new SmartHttpClient({ recorder: createExchangeRecorder(), maxResponseBytes: value }),
+            ).toThrow(RangeError)
+        },
+    )
+
+    it('accepts maxResponseBytes of zero and truncates any non-empty body', async () => {
+        const client = new SmartHttpClient({
+            recorder: createExchangeRecorder(),
+            maxResponseBytes: 0,
+            fetchImpl: stubFetch(() => jsonResponse({ ok: true })),
+        })
+
+        const result = await client.get('debug', 'https://ehr.example.com/Patient/1')
+
+        expect(result.status).toBe(200)
+        expect(result.bodyTruncated).toBe(true)
     })
 })

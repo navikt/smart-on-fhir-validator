@@ -13,6 +13,7 @@ export function conditionRouter(state: MockState) {
         store: state.resources.Condition,
         searchParams: {
             subject: (resource, value) => referenceMatches(resource.subject.reference, value),
+            patient: (resource, value) => referenceMatches(resource.subject.reference, value),
             encounter: (resource, value) => referenceMatches(resource.encounter?.reference, value),
         },
         auth: requireBearerAuth(state, 'Condition'),
