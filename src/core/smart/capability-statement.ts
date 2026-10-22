@@ -14,9 +14,15 @@ import type { SmartError } from './types'
 export async function fetchCapabilityStatement(
     client: SmartHttpClient,
     fhirBaseUrl: string,
+    options: { redirect?: RequestInit['redirect'] } = {},
 ): Promise<{ capabilityStatement: unknown; exchange: HttpExchange } | SmartError> {
     const base = fhirBaseUrl.endsWith('/') ? fhirBaseUrl.slice(0, -1) : fhirBaseUrl
-    const response = await client.get('capability', `${base}/metadata`, { Accept: 'application/fhir+json' })
+    const response = await client.get(
+        'capability',
+        `${base}/metadata`,
+        { Accept: 'application/fhir+json' },
+        options.redirect,
+    )
 
     if (!response.ok) {
         return {

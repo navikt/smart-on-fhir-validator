@@ -175,6 +175,193 @@ test.describe('landing → launch against the mock EHR → report', () => {
         await expect(page.getByRole('link', { name: 'Launch the mock EHR' })).toBeVisible()
     })
 
+    test('debug mode sends a GET through the proxy and never shows the bearer token', async ({ page }) => {
+        await launchAgainstMockEhr(page)
+        await page.getByRole('link', { name: 'Open Debug mode' }).click()
+        await expect(page).toHaveURL(/\/debug$/)
+
+        await page.getByLabel('Resource type').selectOption('Patient')
+        await page.getByLabel('Id (optional)').fill('patient-espen-eksempel')
+        await page.getByLabel('Method', { exact: true }).selectOption('GET')
+        await page.getByRole('button', { name: 'Send' }).click()
+
+        const response = page.getByRole('region', { name: 'Response' })
+        await expect(response.getByText(/HTTP 200/)).toBeVisible()
+        await expect(response.getByRole('code')).toContainText('"resourceType": "Patient"')
+
+        const bodyText = await page.locator('body').innerText()
+        expect(bodyText).not.toMatch(/Bearer\s+(?!\[REDACTED\])[A-Za-z0-9\-_.]+/)
+        expect(bodyText).not.toMatch(/"access_token"\s*:\s*"(?!\[REDACTED\])[^"]+"/)
+
+        await expect(page.getByRole('complementary', { name: 'CapabilityStatement' })).toContainText(
+            'Not listed in the CapabilityStatement? Choose Custom in the Resource type list and type any resource name.',
+        )
+        await page.getByRole('button', { name: /^Condition\?patient=/ }).click()
+        await expect(page.getByLabel('Resource type')).toHaveValue('Condition')
+        await expect(page.getByLabel('Query (without the leading ?)')).toHaveValue(/^patient=.+/)
+        await page.getByRole('button', { name: 'Send' }).click()
+        await expect(response.getByText(/HTTP 200/)).toBeVisible()
+        await expect(response.getByRole('code')).toContainText('"resourceType": "Bundle"')
+
+        await page.getByLabel('Resource type').selectOption('Condition')
+        await page.getByLabel('Resource type').selectOption('Patient')
+        await expect(page.getByLabel('Resource type')).toHaveValue('Patient')
+
+        await page.getByLabel('Resource type').selectOption({ label: 'Custom' })
+        await page.getByLabel('Custom type name').fill('Patient')
+        await expect(page.getByLabel('Custom type name')).toBeVisible()
+        await page.getByLabel('Custom type name').fill('Basic')
+        await expect(page.getByLabel('Custom type name')).toHaveValue('Basic')
+
+        await page.getByRole('button', { name: 'Read the CapabilityStatement' }).click()
+        await expect(page.getByLabel('Resource type')).toHaveValue('metadata')
+        await expect(page.getByRole('region', { name: 'History' }).getByRole('listitem')).toHaveCount(2)
+
+        await page.getByRole('button', { name: 'Read a missing patient' }).click()
+        await expect(page.getByLabel('Id (optional)')).toHaveValue('does-not-exist')
+        await expect(page.getByRole('region', { name: 'History' }).getByRole('listitem')).toHaveCount(2)
+        await page.getByRole('button', { name: 'Send' }).click()
+        await expect(response.getByText(/HTTP 404/)).toBeVisible()
+        await expect(response.getByRole('code')).toContainText('"resourceType": "OperationOutcome"')
+
+        const history = page.getByRole('region', { name: 'History' })
+        await expect(history.getByRole('listitem')).toHaveCount(3)
+        await history.getByRole('button').last().click()
+        await expect(page.getByLabel('Resource type')).toHaveValue('Patient')
+        await expect(page.getByLabel('Id (optional)')).toHaveValue('patient-espen-eksempel')
+
+        await page.getByText('Launch token').click()
+        const tokenText = await page.locator('details').innerText()
+        expect(tokenText).not.toMatch(/access_token|refresh_token|id_token|Bearer/)
+    })
+
+    test('debug presets search conditions by subject when only subject is advertised', async ({ page }) => {
+        await page.route('**/api/debug/capabilities', async (route) => {
+            const response = await route.fetch()
+            const payload = await response.json()
+            const resources = payload.capabilities.resources.map((resource: { type: string }) =>
+                resource.type === 'Condition'
+                    ? {
+                          ...resource,
+                          searchParams: [
+                              { name: 'subject', type: 'reference' },
+                              { name: 'encounter', type: 'reference' },
+                          ],
+                      }
+                    : resource,
+            )
+            await route.fulfill({
+                response,
+                json: { ...payload, capabilities: { ...payload.capabilities, resources } },
+            })
+        })
+        await launchAgainstMockEhr(page)
+        await page.getByRole('link', { name: 'Open Debug mode' }).click()
+        await expect(page).toHaveURL(/\/debug$/)
+
+        const response = page.getByRole('region', { name: 'Response' })
+        const query = page.getByLabel('Query (without the leading ?)')
+
+        await page.getByRole('button', { name: /^Condition\?subject=Patient\// }).click()
+        await expect(query).toHaveValue(/^subject=Patient\/.+/)
+        await page.getByRole('button', { name: 'Send' }).click()
+        await expect(response.getByText(/HTTP 200/)).toBeVisible()
+        await expect(response.getByRole('code')).toContainText('"resourceType": "Bundle"')
+
+        await page.getByRole('button', { name: 'Search conditions' }).click()
+        await expect(query).toHaveValue(/^subject=Patient\/.+/)
+        await page.getByRole('button', { name: 'Send' }).click()
+        await expect(response.getByText(/HTTP 200/)).toBeVisible()
+        await expect(response.getByRole('code')).toContainText('"resourceType": "Bundle"')
+    })
+
+    test('debug mode supports session, no and custom tokens and keeps the token out of history', async ({
+        page,
+    }) => {
+        await launchAgainstMockEhr(page)
+        await page.getByRole('link', { name: 'Open Debug mode' }).click()
+        await expect(page).toHaveURL(/\/debug$/)
+
+        const authorization = page.getByLabel('Authorization')
+        const customToken = page.getByLabel('Custom access token')
+        const response = page.getByRole('region', { name: 'Response' })
+        const history = page.getByRole('region', { name: 'History' })
+
+        await expect(authorization).toHaveValue('session')
+        await expect(customToken).toHaveCount(0)
+        await page.getByLabel('Resource type').selectOption('Patient')
+        await page.getByLabel('Id (optional)').fill('patient-espen-eksempel')
+        await page.getByRole('button', { name: 'Send' }).click()
+        await expect(response.getByText(/HTTP 200/)).toBeVisible()
+
+        await authorization.selectOption('none')
+        await page.getByRole('button', { name: 'Send' }).click()
+        await expect(response.getByText(/HTTP 401/)).toBeVisible()
+
+        await authorization.selectOption('custom')
+        await expect(customToken).toBeVisible()
+        await expect(customToken).toHaveAccessibleDescription(/Example format, not a working token/)
+        await expect(page.getByText('{"access_token": "your-token-here"}')).toBeVisible()
+        await customToken.fill(
+            JSON.stringify(
+                { access_token: 'deliberately-invalid-token', refresh_token: 'fake-refresh-token' },
+                null,
+                2,
+            ),
+        )
+        const debugRequest = page.waitForRequest((request) => request.url().endsWith('/api/debug/fhir'))
+        await page.getByRole('button', { name: 'Send' }).click()
+        const sent = (await debugRequest).postData() ?? ''
+        expect(JSON.parse(sent).customToken).toBe('deliberately-invalid-token')
+        expect(sent).not.toContain('fake-refresh-token')
+        await expect(response.getByText(/HTTP 401/)).toBeVisible()
+        await expect(response.getByText('deliberately-invalid-token')).toHaveCount(0)
+        await expect(history.getByText('deliberately-invalid-token')).toHaveCount(0)
+        await expect(history.getByRole('listitem')).toHaveCount(3)
+
+        await page.getByRole('button', { name: 'Read a missing patient' }).click()
+        await expect(page.getByLabel('Id (optional)')).toHaveValue('does-not-exist')
+        await expect(authorization).toHaveValue('custom')
+        await expect(customToken).toHaveValue(/"access_token": "deliberately-invalid-token"/)
+
+        await history.getByRole('button').nth(1).click()
+        await expect(authorization).toHaveValue('none')
+
+        await history.getByRole('button').first().click()
+        await expect(authorization).toHaveValue('custom')
+        await expect(customToken).toHaveValue('')
+
+        await history.getByRole('button').last().click()
+        await expect(authorization).toHaveValue('session')
+        await page.getByRole('button', { name: 'Send' }).click()
+        await expect(response.getByText(/HTTP 200/)).toBeVisible()
+
+        const showMore = history.getByRole('button', { name: 'Show more (1)' })
+        await expect(history.getByRole('listitem')).toHaveCount(3)
+        await expect(showMore).toHaveAttribute('aria-expanded', 'false')
+        await showMore.click()
+        await expect(history.getByRole('listitem')).toHaveCount(4)
+
+        await history.getByRole('listitem').last().getByRole('button').click()
+        await expect(authorization).toHaveValue('session')
+        await expect(page.getByLabel('Id (optional)')).toHaveValue('patient-espen-eksempel')
+
+        const showLess = history.getByRole('button', { name: 'Show less' })
+        await expect(showLess).toHaveAttribute('aria-expanded', 'true')
+        await showLess.click()
+        await expect(history.getByRole('listitem')).toHaveCount(3)
+    })
+
+    test('debug mode without an active session shows the unavailable page and no request builder', async ({
+        page,
+    }) => {
+        await page.goto('/debug')
+
+        await expect(page.getByRole('heading', { name: 'Debug mode is not available' })).toBeVisible()
+        await expect(page.getByRole('link', { name: '← Back to the validator' })).toBeVisible()
+        await expect(page.getByLabel('Resource type')).toHaveCount(0)
+    })
+
     test('a single launch reaches a real report, its evidence expands, it downloads as JSON, and no credential ever leaks', async ({
         page,
     }) => {
