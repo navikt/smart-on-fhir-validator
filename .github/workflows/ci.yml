@@ -39,9 +39,10 @@ jobs:
   e2e:
     name: End-to-end
     # Gated behind verify so a PR that fails lint/typecheck/tests never pays for a Chromium
-    # download and browser-dependency install, the slowest part of this pipeline.
+    # download, the slowest part of this pipeline.
     needs: [verify]
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
     steps:
       - uses: actions/checkout@v7
       - run: corepack enable
@@ -55,6 +56,7 @@ jobs:
           path: ~/.cache/ms-playwright
           key: playwright-chromium-${{ runner.os }}-${{ hashFiles('yarn.lock') }}
       - run: yarn e2e:install
+        timeout-minutes: 5
       # ENABLE_MOCK_EHR is read at build time, so it must be set here rather than only at runtime.
       - run: yarn build
         env:
