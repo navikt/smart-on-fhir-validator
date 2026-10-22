@@ -11,6 +11,8 @@ function bySeverity(config: SmartConfiguration, severity: Severity) {
     return validateSmartConfiguration(config, EXCHANGE_ID).filter((v) => v.severity === severity)
 }
 
+const emptyConfigFindings = () => validateSmartConfiguration({}, EXCHANGE_ID)
+
 /** Mirrors the sample response from the SMART App Launch conformance page, verbatim. */
 const CONFORMANT_CONFIG: SmartConfiguration = {
     issuer: 'https://ehr.example.com',
@@ -80,8 +82,6 @@ describe('validateSmartConfiguration: fully conformant document', () => {
 })
 
 describe('validateSmartConfiguration: empty document', () => {
-    const findings = () => validateSmartConfiguration({}, EXCHANGE_ID)
-
     it('flags every REQUIRED field as an ERROR', () => {
         const messages = bySeverity({}, 'ERROR').map((v) => v.message)
 
@@ -93,7 +93,7 @@ describe('validateSmartConfiguration: empty document', () => {
     })
 
     it('does not flag CONDITIONAL fields when their triggering capability is absent', () => {
-        const messages = findings().map((v) => v.message)
+        const messages = emptyConfigFindings().map((v) => v.message)
 
         expect(messages.some((m) => m.includes('`issuer`'))).toBe(false)
         expect(messages.some((m) => m.includes('`jwks_uri`'))).toBe(false)
