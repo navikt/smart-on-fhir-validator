@@ -1,3 +1,4 @@
+import Link from 'next/link'
 import type { ReactElement } from 'react'
 
 import type { ValidationReport } from '#core/run'
@@ -36,7 +37,13 @@ export function RunDetailsCard({ report }: { report: ValidationReport }): ReactE
                 </dl>
             </div>
 
-            <div className="px-5 pb-3.5">
+            <div className="flex flex-wrap gap-x-6 px-5 pb-3.5">
+                <Link
+                    href="/debug"
+                    className="text-16 font-semibold text-ax-text-accent inline-flex min-h-11 items-center underline"
+                >
+                    Open Debug mode
+                </Link>
                 <a
                     href="/report/download"
                     download

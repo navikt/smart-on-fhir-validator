@@ -83,6 +83,7 @@ spec:
 
   envFrom:
     - secret: smart-on-fhir-validator-clients
+    - secret: smart-on-fhir-validator-config
 
   env:
     - name: NEXT_PUBLIC_ENVIRONMENT
@@ -112,6 +113,12 @@ spec:
     - name: SMART_ISSUERS
       value: |
         [
+          {
+            "name": "Nav EPJ",
+            "fhirBaseUrl": "https://epj.ekstern.dev.nav.no/fhir",
+            "clientId": "NAV_SMART_on_FHIR_validator",
+            "authType": "asymmetric"
+          },
           {
             "name": "Medro",
             "fhirBaseUrl": "https://dev.medro.no/api/fhir",

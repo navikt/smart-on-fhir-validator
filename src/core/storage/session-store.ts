@@ -56,6 +56,7 @@ const exchangePhaseSchema = z.enum([
     'capability',
     'fhir-read',
     'fhir-write',
+    'debug',
 ])
 
 const httpExchangeSchema = z.object({
