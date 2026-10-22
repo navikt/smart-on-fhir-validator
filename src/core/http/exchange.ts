@@ -15,6 +15,7 @@ export type ExchangePhase =
     | 'capability'
     | 'fhir-read'
     | 'fhir-write'
+    | 'debug'
 
 export type HttpExchange = {
     /** Links a validation finding back to the call that produced it. */
