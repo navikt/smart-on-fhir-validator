@@ -12,7 +12,7 @@ const REDACTED = '[REDACTED]'
 
 const SENSITIVE_HEADERS = new Set(['authorization', 'cookie', 'set-cookie', 'proxy-authorization'])
 
-const SENSITIVE_PARAMS = new Set([
+const REPORT_PARAMS = new Set([
     'access_token',
     'refresh_token',
     'id_token',
@@ -26,7 +26,7 @@ const SENSITIVE_PARAMS = new Set([
  * Keys redacted anywhere in a JSON body, at any depth. `id_token` is deliberately absent: its
  * claims are the subject of validation, it is not a bearer credential, and it is short-lived.
  */
-const SENSITIVE_BODY_KEYS = new Set([
+const REPORT_BODY_KEYS = new Set([
     'access_token',
     'refresh_token',
     'client_secret',
@@ -36,6 +36,19 @@ const SENSITIVE_BODY_KEYS = new Set([
     'private_key',
     'registration_access_token',
 ])
+
+export type RedactionSets = {
+    params: ReadonlySet<string>
+    bodyKeys: ReadonlySet<string>
+}
+
+export const REPORT_REDACTION: RedactionSets = { params: REPORT_PARAMS, bodyKeys: REPORT_BODY_KEYS }
+
+/** Credential-only: the FHIR `code` search parameter and element are data the user is inspecting. */
+export const DEBUG_REDACTION: RedactionSets = {
+    params: new Set([...REPORT_PARAMS].filter((key) => key !== 'code')),
+    bodyKeys: new Set([...REPORT_BODY_KEYS].filter((key) => key !== 'code')),
+}
 
 export function redactHeaders(headers: Headers | Record<string, string>): Record<string, string> {
     const entries = headers instanceof Headers ? [...headers.entries()] : Object.entries(headers)
@@ -53,7 +66,7 @@ export function redactHeaders(headers: Headers | Record<string, string>): Record
  * see the exact search that was issued (that is the point of the report), so only credential
  * parameters are masked, never search parameters.
  */
-export function redactUrl(url: string): string {
+export function redactUrl(url: string, sets: RedactionSets = REPORT_REDACTION): string {
     let parsed: URL
     try {
         parsed = new URL(url)
@@ -62,29 +75,29 @@ export function redactUrl(url: string): string {
     }
 
     for (const key of parsed.searchParams.keys()) {
-        if (SENSITIVE_PARAMS.has(key)) parsed.searchParams.set(key, REDACTED)
+        if (sets.params.has(key)) parsed.searchParams.set(key, REDACTED)
     }
 
     return parsed.toString()
 }
 
 /** Redacts an `application/x-www-form-urlencoded` body, as used by the token endpoint. */
-export function redactFormBody(body: string): string {
+export function redactFormBody(body: string, sets: RedactionSets = REPORT_REDACTION): string {
     const params = new URLSearchParams(body)
     for (const key of params.keys()) {
-        if (SENSITIVE_PARAMS.has(key)) params.set(key, REDACTED)
+        if (sets.params.has(key)) params.set(key, REDACTED)
     }
     return params.toString()
 }
 
-export function redactJson(value: unknown): unknown {
-    if (Array.isArray(value)) return value.map(redactJson)
+export function redactJson(value: unknown, sets: RedactionSets = REPORT_REDACTION): unknown {
+    if (Array.isArray(value)) return value.map((item) => redactJson(item, sets))
 
     if (value !== null && typeof value === 'object') {
         return Object.fromEntries(
             Object.entries(value).map(([key, inner]) => [
                 key,
-                SENSITIVE_BODY_KEYS.has(key) ? REDACTED : redactJson(inner),
+                sets.bodyKeys.has(key) ? REDACTED : redactJson(inner, sets),
             ]),
         )
     }
@@ -92,12 +105,16 @@ export function redactJson(value: unknown): unknown {
     return value
 }
 
-export function redactBody(body: string, contentType: string | null): string {
-    if (contentType?.includes('application/x-www-form-urlencoded')) return redactFormBody(body)
+export function redactBody(
+    body: string,
+    contentType: string | null,
+    sets: RedactionSets = REPORT_REDACTION,
+): string {
+    if (contentType?.includes('application/x-www-form-urlencoded')) return redactFormBody(body, sets)
 
     if (contentType?.includes('json')) {
         try {
-            return JSON.stringify(redactJson(JSON.parse(body)))
+            return JSON.stringify(redactJson(JSON.parse(body), sets))
         } catch {
             return body
         }
