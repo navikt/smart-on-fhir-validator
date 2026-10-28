@@ -1,5 +1,7 @@
 import type { ReactElement } from 'react'
 
+import { PageTransition } from '#components/transitions/PageTransition'
+
 import { getAppOrigin } from './app-origin'
 import { isMockEhrEnabled } from './mock-ehr-enabled'
 
@@ -120,6 +122,7 @@ function StandaloneLaunchCard(): ReactElement {
                     id="iss"
                     name="iss"
                     type="url"
+                    autoComplete="url"
                     required
                     placeholder="https://ehr.example.com/fhir"
                     className="border-ax-border-neutral-strong text-16 font-mono box-border min-h-12 w-full rounded border px-3"
@@ -140,36 +143,41 @@ function StandaloneLaunchCard(): ReactElement {
 
 export default function HomePage(): ReactElement {
     return (
-        <main className="mx-auto max-w-[960px] px-6 pt-10 pb-20">
-            <h1 className="text-32 max-w-[22ch] font-semibold">Check your SMART on FHIR implementation</h1>
+        <PageTransition>
+            <main id="main-content" className="mx-auto max-w-[960px] px-6 pt-10 pb-20">
+                <h1 className="text-32 max-w-[22ch] font-semibold text-balance">
+                    Check your SMART on FHIR implementation
+                </h1>
 
-            <p className="text-18 text-pretty mt-4 max-w-[68ch]">
-                This validator checks that your EHR&apos;s SMART on FHIR and FHIR R4 implementation conforms
-                to the SMART App Launch specification and to Nav&apos;s requirements for the sykmelding
-                write-back flow. Every check is evidence-based: the report shows the exact request this tool
-                sent and the exact response it received, so you can reproduce any finding yourself with{' '}
-                <code>curl</code>.
-            </p>
-
-            <section className="border-ax-border-neutral-subtle bg-ax-bg-neutral-soft mt-8 rounded border p-[22px]">
-                <h2 className="text-13 tracking-eyebrow text-ax-text-neutral-subtle font-bold uppercase">
-                    How a real EHR launches it
-                </h2>
-                <p className="text-16 mt-2">
-                    Configure your EHR to launch this app at <code>/launch</code>. When a user starts the app,
-                    your EHR redirects the browser here with the standard SMART EHR-launch parameters:
+                <p className="text-18 text-pretty mt-4 max-w-[68ch]">
+                    This validator checks that your EHR&apos;s SMART on FHIR and FHIR R4 implementation
+                    conforms to the SMART App Launch specification and to Nav&apos;s requirements for the
+                    sykmelding write-back flow. Every check is evidence-based: the report shows the exact
+                    request this tool sent and the exact response it received, so you can reproduce any
+                    finding yourself with <code>curl</code>.
                 </p>
-                <pre className="border-ax-border-neutral-subtle text-14 mt-3 overflow-x-auto rounded border bg-white p-3 whitespace-pre">
-                    {LAUNCH_CONTRACT}
-                </pre>
-            </section>
 
-            <RegisterEhrSection />
+                <section className="border-ax-border-neutral-subtle bg-ax-bg-neutral-soft mt-8 rounded border p-[22px]">
+                    <h2 className="text-13 tracking-eyebrow text-ax-text-neutral-subtle font-bold uppercase">
+                        How a real EHR launches it
+                    </h2>
+                    <p className="text-16 mt-2">
+                        Configure your EHR to launch this app at <code>/launch</code>. When a user starts the
+                        app, your EHR redirects the browser here with the standard SMART EHR-launch
+                        parameters:
+                    </p>
+                    <pre className="border-ax-border-neutral-subtle text-14 mt-3 overflow-x-auto rounded border bg-white p-3 whitespace-pre">
+                        {LAUNCH_CONTRACT}
+                    </pre>
+                </section>
 
-            <div className="mt-5 grid grid-cols-[repeat(auto-fit,minmax(300px,1fr))] gap-5">
-                <MockEhrCard />
-                <StandaloneLaunchCard />
-            </div>
-        </main>
+                <RegisterEhrSection />
+
+                <div className="mt-5 grid grid-cols-[repeat(auto-fit,minmax(300px,1fr))] gap-5">
+                    <MockEhrCard />
+                    <StandaloneLaunchCard />
+                </div>
+            </main>
+        </PageTransition>
     )
 }

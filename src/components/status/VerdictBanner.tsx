@@ -29,7 +29,7 @@ export function VerdictBanner({ verdict, sentence }: { verdict: Verdict; sentenc
             <p className="text-13 font-bold tracking-eyebrow text-ax-text-neutral-subtle uppercase">
                 Verdict
             </p>
-            <h1 className="text-34 mt-1 font-bold">{VERDICT_LABEL[verdict]}</h1>
+            <h1 className="text-34 mt-1 font-bold text-balance">{VERDICT_LABEL[verdict]}</h1>
             <p className="text-17 mt-2 max-w-[70ch]">{sentence}</p>
         </div>
     )
