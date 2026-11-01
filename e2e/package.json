@@ -8,7 +8,7 @@
         "tsc": "tsc --noEmit"
     },
     "devDependencies": {
-        "@playwright/test": "^1.63.0",
+        "@playwright/test": "^1.64.1",
         "@types/node": "^24.13.4",
         "typescript": "^7.0.2"
     }
